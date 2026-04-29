@@ -111,3 +111,11 @@ body{background:#f3f4f6;font-family:'Inter',sans-serif;overflow:hidden}
 .org-line-horizontal{height:2px;background:#ccc;width:80%;margin:0 auto}
 .hide-scrollbar::-webkit-scrollbar{display:none}
 .hide-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
+
+/* ===== CMS ===== */
+.cms-card{background:#fff;border:1px solid #e5e7eb;border-radius:1rem;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.cms-table{width:100%;border-collapse:collapse;font-size:.875rem}
+.cms-table th,.cms-table td{padding:.8rem 1rem;border-bottom:1px solid #e5e7eb;vertical-align:top}
+.cms-table th{background:#f8fafc;color:#475569;text-align:left;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em}
+.cms-table tr:hover td{background:#fafafa}
+.cms-scroll{overflow-x:auto}

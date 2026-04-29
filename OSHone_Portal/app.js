@@ -21,6 +21,7 @@ function doLogin() {
   document.getElementById('app-shell').style.display = 'flex';
   
   const navItems = document.querySelectorAll('.nav-item');
+  const adminOnlyItems = document.querySelectorAll('.admin-only');
   
   if (userRole === 'report') {
     // Report Role: Hanya boleh lihat Laporan Servis dan Log Keluar
@@ -33,25 +34,14 @@ function doLogin() {
     });
     switchView('view-reports');
   } else if (userRole === 'admin') {
-    // Admin Role: Tunjuk semua + Manage CMS
+    // Admin Role: Tunjuk semua menu termasuk CMS detail
     navItems.forEach(el => el.style.display = 'flex');
-    if (!document.getElementById('nav-cms-admin')) {
-      const cmsNav = document.createElement('div');
-      cmsNav.className = 'nav-item font-bold text-safety';
-      cmsNav.id = 'nav-cms-admin';
-      cmsNav.innerHTML = '🗄️ Manage CMS (Headless)';
-      cmsNav.onclick = function() {
-        window.open('../OSHone_Wix_Setup/page/cms.html', '_blank', 'noopener');
-      };
-      const reportNav = Array.from(navItems).find(el => el.innerText.includes('Laporan Servis'));
-      if(reportNav) reportNav.parentNode.insertBefore(cmsNav, reportNav.nextSibling);
-    }
+    adminOnlyItems.forEach(el => el.style.display = 'flex');
     switchView('view-dashboard');
   } else {
     // Client Role: Tunjuk semua (normal view), tanpa CMS admin
     navItems.forEach(el => el.style.display = 'flex');
-    const cmsNav = document.getElementById('nav-cms-admin');
-    if (cmsNav) cmsNav.style.display = 'none';
+    adminOnlyItems.forEach(el => el.style.display = 'none');
     switchView('view-dashboard');
   }
 }
@@ -77,14 +67,14 @@ function switchView(viewId,navEl){
   renderView(viewId);
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('nav-active'));
   if(navEl)navEl.classList.add('nav-active');
-  const titles={'view-dashboard':'Dashboard','view-organisasi':'Maklumat Organisasi','view-assets':'Mesin & Aset','view-documents':'Pusat Dokumen','view-mykkp':'MyKKP','view-reports':'Laporan Servis','view-training':'Latihan & Permintaan','view-settings':'Tetapan'};
+  const titles={'view-dashboard':'Dashboard','view-organisasi':'Maklumat Organisasi','view-assets':'Mesin & Aset','view-documents':'Pusat Dokumen','view-mykkp':'MyKKP','view-reports':'Laporan Servis','view-cms':'CMS Detail','view-training':'Latihan & Permintaan','view-settings':'Tetapan'};
   document.getElementById('topbar-title').innerText=titles[viewId]||'Dashboard';
   if(window.innerWidth<768){document.getElementById('sidebar').classList.remove('sidebar-open');document.getElementById('sidebar-overlay').classList.remove('overlay-open');}
 }
 
 function renderView(viewId){
   const c=document.getElementById('views-container');
-  const renderers={'view-dashboard':renderDashboard,'view-organisasi':renderOrganisasi,'view-assets':renderAssets,'view-documents':renderDocuments,'view-mykkp':renderMyKKP,'view-reports':renderReports,'view-training':renderTraining,'view-settings':renderSettings};
+  const renderers={'view-dashboard':renderDashboard,'view-organisasi':renderOrganisasi,'view-assets':renderAssets,'view-documents':renderDocuments,'view-mykkp':renderMyKKP,'view-reports':renderReports,'view-cms':renderCMS,'view-training':renderTraining,'view-settings':renderSettings};
   const fn=renderers[viewId];
   if(fn)c.innerHTML=fn();
 }

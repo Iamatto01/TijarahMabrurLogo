@@ -1,26 +1,19 @@
 # OSHone Architecture
 
-This workspace is split into two parts because it serves two different jobs:
+The workspace is now portal-first:
 
 ## 1. `OSHone_Portal/`
-User-facing portal.
+Main application.
 
-- Main web app for login and day-to-day portal usage.
-- Deployed through the root Netlify site.
-- The root `index.html` redirects here so the site opens the portal first.
+- Handles login, portal views, and the admin CMS detail screen.
+- Uses the shared local data model in `data.js` for the mock CMS content.
+- This is the primary UI that Netlify serves.
 
-## 2. `OSHone_Wix_Setup/`
-Wix / headless CMS side.
-
-- Contains CMS-related pages and Velo helpers.
-- Used for managing organizational data, assets, and documents.
-- The admin menu inside the portal opens the CMS hub from here.
-
-## 3. Root `index.html`
+## 2. Root `index.html`
 Netlify entrypoint.
 
-- Keeps the site from showing a 404 on the domain root.
-- Redirects to `OSHone_Portal/index.html`.
+- Prevents a 404 at the site root.
+- Redirects users into `OSHone_Portal/index.html`.
 
 ## Data Flow
 
@@ -30,10 +23,9 @@ Netlify domain
   -> OSHone_Portal/index.html
   -> login
   -> portal views
-  -> admin CMS link
-  -> OSHone_Wix_Setup/page/cms.html
+  -> CMS Detail view inside the portal
 ```
 
-## Why there are two folders
+## Why the setup folder was removed
 
-The portal and the CMS are intentionally separated so the user experience stays simple while the data-management side stays isolated. That makes it easier to deploy the portal on Netlify while keeping Wix-specific pages and headless CMS helpers in their own area.
+The separate Wix setup area was folded into the portal so admins can inspect CMS data without leaving the app. That keeps the structure simpler and makes the deployment target obvious: the portal is the product.

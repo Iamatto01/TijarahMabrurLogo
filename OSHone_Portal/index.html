@@ -64,6 +64,7 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],display:
     <div class="nav-item" onclick="switchView('view-documents',this)">📄 Pusat Dokumen</div>
     <div class="nav-item" onclick="switchView('view-mykkp',this)">🏛️ MyKKP</div>
     <div class="nav-item" onclick="switchView('view-reports',this)">📋 Laporan Servis</div>
+    <div class="nav-item admin-only" onclick="switchView('view-cms',this)">🗄️ CMS Detail</div>
     <div class="nav-item" onclick="switchView('view-training',this)">🎓 Latihan & Permintaan</div>
     <div class="text-xs uppercase text-gray-400 font-semibold px-6 mb-2 mt-6 tracking-wider">Akaun</div>
     <div class="nav-item" onclick="switchView('view-settings',this)">⚙️ Tetapan</div>
@@ -86,7 +87,7 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],display:
       </div>
       <div class="flex gap-3 items-center">
         <button onclick="toggleNotif()" class="relative text-gray-400 hover:text-safety">🔔<span class="notif-badge">3</span></button>
-        <button onclick="switchView('view-settings',document.querySelector('.nav-item:nth-last-child(3)'))" class="text-gray-400 hover:text-navy">👤</button>
+        <button onclick="switchView('view-settings',Array.from(document.querySelectorAll('.nav-item')).find(el=>el.innerText.includes('Tetapan')))" class="text-gray-400 hover:text-navy">👤</button>
       </div>
     </div>
 

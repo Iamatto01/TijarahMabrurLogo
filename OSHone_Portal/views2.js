@@ -237,3 +237,149 @@ function renderSettings() {
     </div>
   </div>`;
 }
+
+function renderCMS() {
+  const summaryCards = [
+    ['Company', 'company', 1, '🏢'],
+    ['User Profile', 'user', 1, '👤'],
+    ['Machines', 'machines', APP_DATA.machines.length, '⚙️'],
+    ['Documents', 'documents', APP_DATA.documents.length, '📄'],
+    ['Reports', 'reports', APP_DATA.reports.length, '📋'],
+    ['Training', 'training', APP_DATA.training.length, '🎓'],
+    ['Certificates', 'certificates', APP_DATA.certificates.length, '🏅'],
+    ['Notifications', 'notifications', Object.keys(APP_DATA.notifications).length, '🔔']
+  ];
+
+  const keyValueRows = (obj) => Object.entries(obj).map(([key, value]) => `
+      <tr>
+        <td class="font-semibold text-slate-700 capitalize">${key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}</td>
+        <td class="text-slate-600">${String(value)}</td>
+      </tr>`).join('');
+
+  const machineRows = APP_DATA.machines.map(m => `
+      <tr>
+        <td class="font-semibold text-slate-800">${m.id}</td>
+        <td>${m.name}</td>
+        <td>${m.pmt}</td>
+        <td>${m.serial}</td>
+        <td>${m.location}</td>
+        <td>${m.type}</td>
+        <td>${m.cfExpiry}</td>
+        <td><span class="badge ${m.status==='valid'?'badge-green':m.status==='expired'?'badge-red':'badge-yellow'}">${m.status}</span></td>
+      </tr>`).join('');
+
+  const documentRows = APP_DATA.documents.map(d => `
+      <tr>
+        <td class="font-semibold text-slate-800">${d.id}</td>
+        <td>${d.name}</td>
+        <td>${d.type}</td>
+        <td>${d.date}</td>
+        <td>${d.status}</td>
+      </tr>`).join('');
+
+  const reportRows = APP_DATA.reports.map(r => `
+      <tr>
+        <td class="font-semibold text-slate-800">${r.id}</td>
+        <td>${r.machineId}</td>
+        <td>${r.type}</td>
+        <td>${r.date}</td>
+        <td>${r.tech}</td>
+        <td><span class="badge ${r.status==='completed'?'badge-green':r.status==='pending'?'badge-yellow':'badge-red'}">${r.status}</span></td>
+      </tr>`).join('');
+
+  const trainingRows = APP_DATA.training.map(t => `
+      <tr>
+        <td class="font-semibold text-slate-800">${t.id}</td>
+        <td>${t.course}</td>
+        <td>${t.date}</td>
+        <td>${t.participants}</td>
+        <td><span class="badge ${t.status==='completed'?'badge-green':t.status==='approved'?'badge-blue':'badge-yellow'}">${t.status}</span></td>
+      </tr>`).join('');
+
+  const certificateRows = APP_DATA.certificates.map(c => `
+      <tr>
+        <td class="font-semibold text-slate-800">${c.id}</td>
+        <td>${c.title}</td>
+        <td>${c.abbr}</td>
+        <td>${c.holder}</td>
+        <td>${c.regNo}</td>
+        <td>${c.validUntil}</td>
+        <td>${c.issuer}</td>
+      </tr>`).join('');
+
+  const notificationRows = Object.entries(APP_DATA.notifications).map(([key, value]) => `
+      <tr>
+        <td class="font-semibold text-slate-800">${key}</td>
+        <td>${value ? 'Enabled' : 'Disabled'}</td>
+      </tr>`).join('');
+
+  const section = (title, description, headers, rows) => `
+    <div class="cms-card overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-200 bg-slate-50">
+        <h3 class="font-bold text-slate-900">${title}</h3>
+        <p class="text-xs text-slate-500 mt-1">${description}</p>
+      </div>
+      <div class="cms-scroll">
+        <table class="cms-table">
+          <thead>
+            <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+
+  return `<div class="max-w-7xl mx-auto space-y-6">
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+      <div>
+        <p class="text-xs uppercase tracking-[0.2em] text-safety font-semibold">Admin CMS</p>
+        <h2 class="text-3xl font-bold text-gray-900 mt-2">CMS Detail Portal</h2>
+        <p class="text-sm text-gray-500 mt-2">Semua table CMS dipaparkan terus dalam portal admin untuk semakan terperinci.</p>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        ${summaryCards.map(([label, _, count, icon]) => `
+          <div class="cms-card px-4 py-3 min-w-[140px]">
+            <div class="text-lg mb-1">${icon}</div>
+            <p class="text-xs text-gray-500">${label}</p>
+            <p class="text-2xl font-bold text-gray-900">${count}</p>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="cms-card overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50">
+          <h3 class="font-bold text-slate-900">Company Table</h3>
+          <p class="text-xs text-slate-500 mt-1">Maklumat organisasi utama</p>
+        </div>
+        <div class="cms-scroll">
+          <table class="cms-table">
+            <thead><tr><th>Field</th><th>Value</th></tr></thead>
+            <tbody>${keyValueRows(APP_DATA.company)}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="cms-card overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50">
+          <h3 class="font-bold text-slate-900">User Table</h3>
+          <p class="text-xs text-slate-500 mt-1">Profil admin yang sedang digunakan</p>
+        </div>
+        <div class="cms-scroll">
+          <table class="cms-table">
+            <thead><tr><th>Field</th><th>Value</th></tr></thead>
+            <tbody>${keyValueRows(APP_DATA.user)}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    ${section('Machines Table', 'Senarai aset/jentera dan status CF', ['ID', 'Name', 'PMT', 'Serial', 'Location', 'Type', 'CF Expiry', 'Status'], machineRows)}
+    ${section('Documents Table', 'Dokumen compliance dan sokongan', ['ID', 'Title', 'Type', 'Date', 'Status'], documentRows)}
+    ${section('Reports Table', 'Laporan servis dan pemeriksaan', ['ID', 'Machine', 'Type', 'Date', 'Technician', 'Status'], reportRows)}
+    ${section('Training Table', 'Permohonan dan aktiviti latihan', ['ID', 'Course', 'Date', 'Participants', 'Status'], trainingRows)}
+    ${section('Certificates Table', 'Rekod sijil kompetensi dan pengesahan', ['ID', 'Title', 'Code', 'Holder', 'Registration No', 'Valid Until', 'Issuer'], certificateRows)}
+    ${section('Notification Flags', 'Status flag notifikasi yang aktif dalam sistem', ['Key', 'State'], notificationRows)}
+  </div>`;
+}
