@@ -40,7 +40,9 @@ function doLogin() {
       cmsNav.className = 'nav-item font-bold text-safety';
       cmsNav.id = 'nav-cms-admin';
       cmsNav.innerHTML = '🗄️ Manage CMS (Headless)';
-      cmsNav.onclick = function() { alert('Akan dibuka menggunakan wixClient SDK (Rujuk wix-headless-demo.js)'); };
+      cmsNav.onclick = function() {
+        window.open('../OSHone_Wix_Setup/page/dashboard.html', '_blank', 'noopener');
+      };
       const reportNav = Array.from(navItems).find(el => el.innerText.includes('Laporan Servis'));
       if(reportNav) reportNav.parentNode.insertBefore(cmsNav, reportNav.nextSibling);
     }
