@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        navy: '#0A2647',
+                        safety: '#E8630A',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: transparent; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        .doc-active {
+            border-left: 4px solid #E8630A;
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    
+    <!-- Loading State -->
+    <div id="loading" class="flex justify-center items-center h-64">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-navy"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="docs-content" class="hidden max-w-6xl mx-auto flex flex-col md:flex-row gap-6 h-[80vh]">
+        
+        <!-- Sidebar: Document List -->
+        <div class="w-full md:w-1/3 glass-card rounded-2xl flex flex-col overflow-hidden h-full">
+            <div class="bg-navy text-white p-4">
+                <h2 class="text-lg font-bold">Senarai Dokumen</h2>
+            </div>
+            
+            <div id="docs-list" class="overflow-y-auto flex-grow bg-white">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
+        <!-- Main Area: Document Viewer -->
+        <div class="w-full md:w-2/3 glass-card rounded-2xl flex flex-col overflow-hidden h-full relative">
+            
+            <div id="no-doc-selected" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-gray-50 z-10">
+                <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <p>Sila pilih dokumen di sebelah kiri untuk dipaparkan</p>
+            </div>
+
+            <!-- Header -->
+            <div id="viewer-header" class="bg-white border-b border-gray-100 p-4 flex justify-between items-center hidden">
+                <h3 id="viewer-title" class="font-semibold text-gray-800">Tajuk Dokumen</h3>
+                <a id="viewer-link" href="#" target="_blank" class="text-sm text-navy hover:text-safety font-medium flex items-center">
+                    Buka Tab Baru
+                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                </a>
+            </div>
+
+            <!-- Iframe embed -->
+            <iframe id="doc-iframe" class="w-full flex-grow bg-gray-100 hidden" frameborder="0"></iframe>
+        </div>
+
+    </div>
+
+    <script>
+        let allDocs = [];
+
+        window.onload = function() {
+            window.parent.postMessage({ type: 'HTML_READY' }, "*");
+        };
+
+        window.onmessage = function(event) {
+            if (event.data && event.data.type === 'DOCS_DATA') {
+                allDocs = event.data.documents;
+                
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('docs-content').classList.remove('hidden');
+                
+                renderDocList(allDocs);
+            }
+        };
+
+        function renderDocList(docs) {
+            const list = document.getElementById('docs-list');
+            list.innerHTML = '';
+            
+            if (docs.length === 0) {
+                list.innerHTML = '<div class="p-6 text-center text-gray-500">Tiada dokumen dijumpai.</div>';
+                return;
+            }
+
+            docs.forEach((doc, index) => {
+                const html = `
+                    <div class="doc-item border-b border-gray-100 p-4 cursor-pointer hover:bg-gray-50 transition-colors" data-id="${doc._id}" onclick="viewDocument('${doc._id}', this)">
+                        <div class="flex items-start">
+                            <div class="bg-blue-50 text-navy rounded p-2 mr-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-900">${doc.title}</h4>
+                                <p class="text-xs text-gray-500 mt-1">Jenis: <span class="font-medium">${doc.docType || 'Umum'}</span></p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                list.innerHTML += html;
+            });
+        }
+
+        function viewDocument(id, element) {
+            // Update active state
+            document.querySelectorAll('.doc-item').forEach(el => el.classList.remove('doc-active'));
+            element.classList.add('doc-active');
+
+            // Find doc
+            const doc = allDocs.find(d => d._id === id);
+            if (doc && doc.embedUrl) {
+                document.getElementById('no-doc-selected').classList.add('hidden');
+                document.getElementById('viewer-header').classList.remove('hidden');
+                document.getElementById('doc-iframe').classList.remove('hidden');
+
+                document.getElementById('viewer-title').innerText = doc.title;
+                document.getElementById('viewer-link').href = doc.embedUrl;
+                document.getElementById('doc-iframe').src = doc.embedUrl;
+            }
+        }
+
+        // UNTUK TESTING / LIVE PREVIEW LUAR WIX
+        if (!window.location.hostname.includes("wix.com") && !window.location.hostname.includes("editorx.io")) {
+            setTimeout(() => {
+                window.postMessage({
+                    type: 'DOCS_DATA',
+                    documents: [
+                        { _id: '1', title: 'HIRARC Loji Utama', docType: 'HIRARC', embedUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
+                        { _id: '2', title: 'CHRA Chemical Store', docType: 'CHRA', embedUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
+                        { _id: '3', title: 'Minit Mesyuarat KKP Bil 1', docType: 'Safety Committee', embedUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' }
+                    ]
+                }, "*");
+            }, 1500); // loading 1.5 saat
+        }
+    </script>
+</body>
+</html>

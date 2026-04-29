@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSHone Portal - Client Mockup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Poppins', 'sans-serif']
+                    },
+                    colors: {
+                        brandDark: '#0B0F19',
+                        brandGreen: '#2D8C61',
+                        brandBlue: '#0D3A6B',
+                        navy: '#0A2647',
+                        safety: '#E8630A',
+                        success: '#2EC4B6',
+                        danger: '#E63946',
+                        warning: '#FFB703',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f3f4f6; margin: 0; padding: 0; overflow: hidden; }
+        
+        /* Layout */
+        .app-container { display: flex; height: 100vh; width: 100vw; overflow: hidden;}
+        
+        .sidebar { 
+            width: 260px; 
+            background-color: #0A2647; 
+            color: white; 
+            display: flex; 
+            flex-direction: column; 
+            flex-shrink: 0; 
+            transition: transform 0.3s ease-in-out;
+            position: fixed;
+            height: 100vh;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            transform: translateX(-100%); /* Hidden on mobile by default */
+        }
+        
+        /* Mobile Overlay */
+        #sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 40;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        /* Desktop Sidebar rules */
+        @media (min-width: 768px) {
+            .sidebar {
+                position: relative;
+                transform: translateX(0) !important;
+            }
+            #sidebar-overlay {
+                display: none !important;
+            }
+        }
+
+        /* When sidebar is open on mobile */
+        .sidebar-open { transform: translateX(0); }
+        .overlay-open { opacity: 1 !important; pointer-events: auto !important; }
+
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; background-color: #F8F9FA; position: relative;}
+        
+        /* Sidebar items */
+        .nav-item { padding: 12px 24px; display: flex; align-items: center; cursor: pointer; transition: all 0.2s; border-left: 4px solid transparent; opacity: 0.8; }
+        .nav-item:hover { background-color: rgba(255,255,255,0.05); opacity: 1; }
+        .nav-active { background-color: rgba(255,255,255,0.1); border-left-color: #E8630A; opacity: 1; font-weight: 500;}
+        .nav-icon { width: 20px; height: 20px; margin-right: 12px; }
+
+        /* Views */
+        .view-section { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .view-active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Custom Header Slant for Maklumat Organisasi */
+        .header-slant {
+            background: linear-gradient(135deg, #2D8C61 0%, #0D3A6B 50%, #0B0F19 100%);
+            clip-path: polygon(0 0, 100% 0, 100% 60%, 0% 100%);
+            height: 250px; /* shorter on mobile */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 0;
+        }
+        @media (min-width: 768px) {
+            .header-slant { height: 350px; }
+        }
+
+        /* Profile Ring */
+        .profile-ring { background: linear-gradient(135deg, #f0f0f0, #e0e0e0); border: 4px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .tab-active { background-color: black !important; color: white !important; font-weight: 600; }
+        .input-line { border: none; border-bottom: 2px solid #ccc; border-radius: 0; padding: 8px 0; background: transparent; font-size: 14px; width: 100%;}
+        .input-line:focus { outline: none; border-bottom-color: #0D3A6B; }
+        .org-line-vertical { width: 2px; height: 20px; background-color: #ccc; margin: 0 auto; }
+        .org-line-horizontal { height: 2px; background-color: #ccc; width: 80%; margin: 0 auto; }
+        
+        .glass-card { background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border-radius: 1rem;}
+        .doc-active { border-left: 4px solid #E8630A; background-color: #f8fafc; }
+        
+        /* Hide scrollbar for tabs */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <!-- MOBILE OVERLAY -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="sidebar shadow-xl">
+        <div class="p-6 mb-4 flex items-center gap-3 border-b border-white/10 relative">
+            <div class="w-10 h-10 bg-safety rounded-lg flex items-center justify-center font-bold text-xl">O</div>
+            <h1 class="font-display font-bold text-xl tracking-wide">OSHone<span class="text-safety">.</span></h1>
+            <!-- Close button on mobile -->
+            <button onclick="toggleSidebar()" class="md:hidden absolute right-4 text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <div class="text-xs uppercase text-gray-400 font-semibold px-6 mb-2 mt-4 tracking-wider">Main Menu</div>
+        <div class="nav-item nav-active" onclick="switchMainView('view-dashboard', this)">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            Dashboard
+        </div>
+        <div class="nav-item" onclick="switchMainView('view-organisasi', this)">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+            Maklumat Organisasi
+        </div>
+        <div class="nav-item" onclick="switchMainView('view-assets', this)">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            Mesin & Aset
+        </div>
+        <div class="nav-item" onclick="switchMainView('view-documents', this)">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Pusat Dokumen
+        </div>
+
+        <div class="mt-auto p-6 border-t border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold">TM</div>
+                <div>
+                    <div class="text-sm font-semibold">Tijarah Mabrur</div>
+                    <div class="text-xs text-gray-400">Pro Plan</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        
+        <!-- Topbar -->
+        <div class="bg-white h-16 shadow-sm flex justify-between items-center px-4 md:px-8 z-30 sticky top-0 flex-shrink-0">
+            <div class="flex items-center">
+                <button onclick="toggleSidebar()" class="md:hidden mr-3 text-gray-600 hover:text-navy">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <div class="text-gray-500 font-medium text-sm md:text-base hidden sm:block" id="topbar-title">Dashboard</div>
+            </div>
+            <div class="flex gap-4 items-center">
+                <button class="text-gray-400 hover:text-safety relative">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <button class="bg-gray-100 px-4 py-1.5 rounded-md text-xs md:text-sm font-medium text-gray-700">Logout</button>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VIEW 1: DASHBOARD (Stats & Alerts)         -->
+        <!-- ========================================== -->
+        <div id="view-dashboard" class="view-section view-active w-full p-4 md:p-8">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-2xl font-bold font-display text-gray-800 mb-6">Ringkasan Sistem</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
+                    <!-- Total Mesin -->
+                    <div class="glass-card p-6 border-l-4 border-l-navy bg-white shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs md:text-sm text-gray-500 font-medium">Jumlah Jentera / Mesin</p>
+                                <p class="text-3xl md:text-4xl font-bold text-gray-800 mt-2">12</p>
+                            </div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-50 flex items-center justify-center text-navy text-xl">🏭</div>
+                        </div>
+                    </div>
+
+                    <!-- Compliance Rate -->
+                    <div class="glass-card p-6 border-l-4 border-l-success bg-white shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs md:text-sm text-gray-500 font-medium">Kadar Pematuhan (CF)</p>
+                                <p class="text-3xl md:text-4xl font-bold text-success mt-2">85%</p>
+                            </div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-green-50 flex items-center justify-center text-success text-xl">✅</div>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2 mt-4">
+                            <div class="bg-success h-2 rounded-full" style="width: 85%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Alerts -->
+                    <div class="glass-card p-6 border-l-4 border-l-danger bg-white shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs md:text-sm text-gray-500 font-medium">Tindakan Segera (Alert)</p>
+                                <p class="text-3xl md:text-4xl font-bold text-danger mt-2">2</p>
+                            </div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-red-50 flex items-center justify-center text-danger text-xl">⚠️</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerts List -->
+                <div class="glass-card overflow-hidden bg-white shadow-sm">
+                    <div class="bg-gray-50 px-4 md:px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                        <h2 class="text-base md:text-lg font-bold text-gray-800 flex items-center">
+                            <span class="mr-2">🔔</span> Notifikasi Peringatan
+                        </h2>
+                    </div>
+                    <div class="p-4 md:p-6 space-y-4">
+                        <div class="flex items-start p-3 md:p-4 rounded-xl border border-red-100 bg-red-50 cursor-pointer">
+                            <div class="text-lg md:text-xl mr-3 md:mr-4 mt-0.5 md:mt-1">🔴</div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800 text-sm md:text-base">Overhead Crane <span class="text-xs md:text-sm font-normal text-gray-500 ml-1 md:ml-2">(PMT-002)</span></h4>
+                                <p class="text-xs md:text-sm mt-1 font-medium text-danger">Telah Tamat Tempoh! (Jan 2022)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start p-3 md:p-4 rounded-xl border border-orange-100 bg-orange-50 cursor-pointer">
+                            <div class="text-lg md:text-xl mr-3 md:mr-4 mt-0.5 md:mt-1">🟡</div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800 text-sm md:text-base">Pressure Vessel <span class="text-xs md:text-sm font-normal text-gray-500 ml-1 md:ml-2">(PMT-003)</span></h4>
+                                <p class="text-xs md:text-sm mt-1 font-medium text-warning">Akan Tamat: 15 Ogos 2024 (Tindakan Diperlukan)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VIEW 2: MAKLUMAT ORGANISASI                -->
+        <!-- ========================================== -->
+        <div id="view-organisasi" class="view-section relative w-full font-display p-4 md:p-8">
+            <div class="header-slant"></div>
+
+            <div class="max-w-6xl mx-auto relative z-10 pt-2 md:pt-6">
+                <!-- Top Badge & Buttons -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                    
+                    <div class="relative flex items-center mb-4 md:mb-0">
+                        <div class="w-16 h-16 md:w-24 md:h-24 lg:w-32 lg:h-32 rounded-full profile-ring flex items-center justify-center relative z-10 bg-white">
+                            <span class="text-xl md:text-3xl font-bold text-navy">TM</span>
+                        </div>
+                        <!-- Responsive welcome tag -->
+                        <div class="bg-white rounded-r-full pl-6 md:pl-8 pr-3 md:pr-4 py-1.5 md:py-2 ml-[-20px] md:ml-[-30px] flex items-center shadow-md relative z-0">
+                            <span class="text-blue-700 font-semibold mr-2 md:mr-4 text-xs md:text-sm">Welcome to OSHONE</span>
+                            <div class="w-6 h-6 md:w-8 md:h-8 bg-black rounded-full flex items-center justify-center text-white text-[10px] md:text-xs">👷</div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 w-full md:w-auto justify-start md:justify-end mt-4 md:mt-0">
+                        <button class="bg-white px-3 py-1.5 md:px-4 md:py-2 rounded-full text-blue-800 text-xs md:text-sm font-semibold shadow hover:bg-gray-50 whitespace-nowrap">Back</button>
+                        <button class="bg-white px-3 py-1.5 md:px-4 md:py-2 rounded-full text-blue-800 text-xs md:text-sm font-semibold shadow hover:bg-gray-50 whitespace-nowrap">Update profile</button>
+                        <button class="bg-white px-3 py-1.5 md:px-4 md:py-2 rounded-full text-blue-800 text-xs md:text-sm font-semibold shadow hover:bg-gray-50 whitespace-nowrap">MyKKP</button>
+                    </div>
+                </div>
+
+                <!-- Logos Static -->
+                <div class="flex flex-wrap items-center gap-2 md:gap-4 mt-6 md:mt-8 pl-0 md:pl-8">
+                    <div class="h-10 md:h-12 bg-white rounded shadow px-2 flex items-center justify-center"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Department_of_Occupational_Safety_and_Health_%28Malaysia%29_logo.png/150px-Department_of_Occupational_Safety_and_Health_%28Malaysia%29_logo.png" class="h-6 md:h-8 object-contain"></div>
+                    <div class="h-10 md:h-12 bg-white rounded shadow px-2 flex items-center justify-center font-bold text-blue-800 text-xs md:text-base">NIOSH</div>
+                    <div class="h-10 md:h-12 bg-white rounded shadow px-2 flex items-center justify-center font-bold text-blue-800 text-xs md:text-base">CIDB</div>
+                </div>
+
+                <h1 class="text-2xl md:text-3xl font-bold mt-8 mb-6 text-gray-900">Maklumat Organisasi</h1>
+
+                <!-- Tabs (Mobile scrollable) -->
+                <div class="flex overflow-x-auto gap-2 mb-6 border-b border-gray-300 pb-2 hide-scrollbar">
+                    <button onclick="switchOrgTab('tab-org', this)" class="org-tab-btn tab-active px-4 md:px-6 py-2 bg-white border border-gray-300 text-gray-700 font-medium text-xs md:text-sm hover:bg-gray-100 transition whitespace-nowrap rounded">Organisasi</button>
+                    <button onclick="switchOrgTab('tab-policy', this)" class="org-tab-btn px-4 md:px-6 py-2 bg-white border border-gray-300 text-gray-700 font-medium text-xs md:text-sm hover:bg-gray-100 transition whitespace-nowrap rounded">Safety Policy</button>
+                    <button onclick="switchOrgTab('tab-committee', this)" class="org-tab-btn px-4 md:px-6 py-2 bg-white border border-gray-300 text-gray-700 font-medium text-xs md:text-sm hover:bg-gray-100 transition whitespace-nowrap rounded">Safety Committee</button>
+                    <button onclick="switchOrgTab('tab-person', this)" class="org-tab-btn px-4 md:px-6 py-2 bg-white border border-gray-300 text-gray-700 font-medium text-xs md:text-sm hover:bg-gray-100 transition whitespace-nowrap rounded">Competent Person</button>
+                    <button onclick="switchOrgTab('tab-layout', this)" class="org-tab-btn px-4 md:px-6 py-2 bg-white border border-gray-300 text-gray-700 font-medium text-xs md:text-sm hover:bg-gray-100 transition whitespace-nowrap rounded">Layout</button>
+                </div>
+
+                <!-- Tab: Organisasi -->
+                <div id="tab-org" class="org-content bg-white p-4 md:p-8 rounded-xl shadow-sm border border-gray-200">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+                        <!-- Sijil -->
+                        <div class="md:col-span-3 flex flex-row md:flex-col gap-2 md:gap-3 overflow-x-auto hide-scrollbar pb-2 md:pb-0">
+                            <h3 class="text-xs md:text-sm font-semibold text-gray-600 text-left md:text-center mb-1 w-full md:w-auto">Sijil</h3>
+                            <button class="bg-[#113C4A] text-white py-2 px-6 md:px-0 rounded font-medium hover:bg-opacity-90 shadow text-sm">SSM</button>
+                            <button class="bg-[#113C4A] text-white py-2 px-6 md:px-0 rounded font-medium hover:bg-opacity-90 shadow text-sm">SLK</button>
+                            <button class="bg-[#113C4A] text-white py-2 px-6 md:px-0 rounded font-medium hover:bg-opacity-90 shadow text-sm">SLK</button>
+                        </div>
+                        <!-- Logo -->
+                        <div class="md:col-span-4 flex flex-col items-center">
+                            <h3 class="text-xs md:text-sm font-semibold text-gray-600 text-center mb-2 md:mb-3">Logo</h3>
+                            <div class="w-full h-32 md:h-48 border border-gray-200 rounded-xl flex items-center justify-center bg-gray-50 shadow-inner overflow-hidden p-4">
+                                <div class="text-2xl md:text-4xl font-black text-blue-600 flex items-center"><div class="w-6 h-6 md:w-10 md:h-10 bg-blue-500 mr-2 rounded text-white flex items-center justify-center text-lg md:text-2xl italic">T</div> TIJARAH</div>
+                            </div>
+                        </div>
+                        <!-- Form -->
+                        <div class="md:col-span-5 flex flex-col justify-center gap-4 mt-4 md:mt-0">
+                            <div>
+                                <label class="text-[10px] md:text-xs font-medium text-gray-500">Nama Organisasi:</label>
+                                <input type="text" value="Tijarah Mabrur Sdn Bhd" class="input-line text-gray-800 font-medium" readonly>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[10px] md:text-xs font-medium text-gray-500">Alamat:</label>
+                                    <input type="text" value="123 Jalan Ampang, KL" class="input-line text-gray-800" readonly>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] md:text-xs font-medium text-gray-500">Nombor Pejabat:</label>
+                                    <input type="text" value="03-1234 5678" class="input-line text-gray-800" readonly>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] md:text-xs font-medium text-gray-500">Email:</label>
+                                    <input type="text" value="admin@tijarah.com" class="input-line text-gray-800" readonly>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] md:text-xs font-medium text-gray-500">Laman Web:</label>
+                                    <input type="text" value="www.tijarah.com" class="input-line text-gray-800" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Safety Policy -->
+                <div id="tab-policy" class="org-content hidden bg-white p-4 md:p-8 rounded-xl shadow-sm border border-gray-200 min-h-[300px] flex items-center justify-center">
+                    <p class="text-gray-400 text-sm md:text-base text-center">Paparan Polisi Keselamatan belum dimuatnaik.</p>
+                </div>
+
+                <!-- Tab: Safety Committee -->
+                <div id="tab-committee" class="org-content hidden bg-white p-4 md:p-8 rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+                    <h2 class="text-center font-bold text-lg md:text-xl mb-8">Safety Committee Members</h2>
+                    <!-- Added min-w so it doesn't squish on mobile, allowing panning -->
+                    <div class="flex flex-col items-center min-w-[600px] md:min-w-full pb-4">
+                        <div class="w-40 md:w-48 bg-[#9CB2A9] rounded-t-lg p-3 md:p-4 flex flex-col items-center shadow border-b-4 border-gray-300">
+                            <div class="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full mb-3 md:mb-4 shadow-inner"></div>
+                            <div class="bg-white w-[115%] text-center py-1.5 md:py-2 font-medium text-xs md:text-sm shadow-md rounded border border-gray-100">Chairman</div>
+                        </div>
+                        <div class="org-line-vertical"></div>
+                        <div class="flex w-full justify-center relative left-16 md:left-24 mb-4">
+                            <div class="w-16 md:w-32 border-t-2 border-[#ccc] absolute left-[-15px] md:left-[-40px] top-[50%] z-0"></div>
+                            <div class="w-32 md:w-40 bg-[#E6DACB] rounded-t-lg p-3 md:p-4 flex flex-col items-center shadow border-b-4 border-gray-300 relative z-10">
+                                <div class="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full mb-2 md:mb-3 shadow-inner"></div>
+                                <div class="bg-white w-[115%] text-center py-1.5 md:py-2 font-medium text-[10px] md:text-sm shadow-md rounded border border-gray-100">Secretary</div>
+                            </div>
+                        </div>
+                        <div class="org-line-vertical h-6 md:h-8"></div>
+                        <div class="org-line-horizontal w-full max-w-3xl"></div>
+                        <div class="flex justify-center gap-2 md:gap-6 mt-4 md:mt-6 flex-wrap w-full max-w-3xl">
+                            <div class="w-28 md:w-40 bg-[#DCE4EC] rounded-t-lg p-3 md:p-4 flex flex-col items-center shadow relative border-b-4 border-gray-300">
+                                <div class="absolute w-1 h-4 md:h-6 bg-[#ccc] top-[-16px] md:top-[-24px]"></div>
+                                <div class="w-14 h-14 md:w-20 md:h-20 bg-white rounded-full mb-2 md:mb-3 shadow-inner"></div>
+                                <div class="bg-white w-[115%] text-center py-1.5 md:py-2 font-medium text-[10px] md:text-sm shadow-md rounded border border-gray-100">Member</div>
+                            </div>
+                            <div class="w-28 md:w-40 bg-[#DCE4EC] rounded-t-lg p-3 md:p-4 flex flex-col items-center shadow relative border-b-4 border-gray-300">
+                                <div class="absolute w-1 h-4 md:h-6 bg-[#ccc] top-[-16px] md:top-[-24px]"></div>
+                                <div class="w-14 h-14 md:w-20 md:h-20 bg-white rounded-full mb-2 md:mb-3 shadow-inner"></div>
+                                <div class="bg-white w-[115%] text-center py-1.5 md:py-2 font-medium text-[10px] md:text-sm shadow-md rounded border border-gray-100">Member</div>
+                            </div>
+                            <div class="w-28 md:w-40 bg-[#DCE4EC] rounded-t-lg p-3 md:p-4 flex flex-col items-center shadow relative border-b-4 border-gray-300">
+                                <div class="absolute w-1 h-4 md:h-6 bg-[#ccc] top-[-16px] md:top-[-24px]"></div>
+                                <div class="w-14 h-14 md:w-20 md:h-20 bg-white rounded-full mb-2 md:mb-3 shadow-inner"></div>
+                                <div class="bg-white w-[115%] text-center py-1.5 md:py-2 font-medium text-[10px] md:text-sm shadow-md rounded border border-gray-100">Member</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Competent Person -->
+                <div id="tab-person" class="org-content hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="h-32 md:h-40 bg-gray-50 flex items-center justify-center border-b border-gray-100"><span class="text-gray-300 text-sm">Sijil OSHC</span></div>
+                            <div class="p-3 md:p-4 flex justify-between items-center bg-white">
+                                <h4 class="font-medium text-xs md:text-sm pr-2">Occupational Safety <br>& Health Coordinator</h4>
+                                <button class="bg-[#113C4A] text-white text-[10px] md:text-xs px-3 py-1.5 md:px-4 md:py-2 rounded font-semibold hover:bg-opacity-90">Certificate</button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="h-32 md:h-40 bg-gray-50 flex items-center justify-center border-b border-gray-100"><span class="text-gray-300 text-sm">Sijil SHO</span></div>
+                            <div class="p-3 md:p-4 flex justify-between items-center bg-white">
+                                <h4 class="font-medium text-xs md:text-sm pr-2">Safety & Health <br>Officer (SHO)</h4>
+                                <button class="bg-[#113C4A] text-white text-[10px] md:text-xs px-3 py-1.5 md:px-4 md:py-2 rounded font-semibold hover:bg-opacity-90">Certificate</button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="h-32 md:h-40 bg-gray-50 flex items-center justify-center border-b border-gray-100"><span class="text-gray-300 text-sm">Sijil Fire</span></div>
+                            <div class="p-3 md:p-4 flex justify-between items-center bg-white">
+                                <h4 class="font-medium text-xs md:text-sm pr-2">Fire Safety <br>Coordinator</h4>
+                                <button class="bg-[#113C4A] text-white text-[10px] md:text-xs px-3 py-1.5 md:px-4 md:py-2 rounded font-semibold hover:bg-opacity-90">Certificate</button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="h-32 md:h-40 bg-gray-50 flex items-center justify-center border-b border-gray-100"><span class="text-gray-300 text-sm">Sijil First Aid</span></div>
+                            <div class="p-3 md:p-4 flex justify-between items-center bg-white">
+                                <h4 class="font-medium text-xs md:text-sm pr-2">First Aider</h4>
+                                <button class="bg-[#113C4A] text-white text-[10px] md:text-xs px-3 py-1.5 md:px-4 md:py-2 rounded font-semibold hover:bg-opacity-90">Certificate</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Layout -->
+                <div id="tab-layout" class="org-content hidden bg-white p-4 md:p-8 rounded-xl shadow-sm border border-gray-200 min-h-[300px] flex items-center justify-center">
+                    <p class="text-gray-400 text-sm md:text-base text-center">Pelan Susun Atur Premis belum dimuatnaik.</p>
+                </div>
+            </div>
+
+            <!-- Floating Chat Widget -->
+            <div class="fixed bottom-6 right-6 flex items-center z-50">
+                <div class="bg-white py-2 px-4 rounded-full shadow-lg mr-3 text-sm font-medium border border-gray-100 hidden sm:block">Contact Us</div>
+                <button class="w-12 h-12 md:w-14 md:h-14 bg-[#0A47FF] rounded-full flex items-center justify-center text-white shadow-lg hover:bg-blue-700 transition transform hover:scale-105">
+                    <svg class="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VIEW 3: ASSETS / MACHINERY                 -->
+        <!-- ========================================== -->
+        <div id="view-assets" class="view-section w-full p-4 md:p-8">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Senarai Mesin & Aset</h2>
+                
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
+                    <div class="relative w-full md:w-96">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                        </div>
+                        <input type="text" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-navy focus:border-navy text-sm" placeholder="Cari Mesin / PMT...">
+                    </div>
+                    <div class="flex items-center space-x-2 w-full md:w-auto">
+                        <span class="text-sm text-gray-500 font-medium whitespace-nowrap">Status:</span>
+                        <select class="block w-full md:w-auto pl-3 pr-10 py-2 border-gray-300 rounded-lg text-sm border focus:ring-navy">
+                            <option>Semua</option>
+                            <option>Sah (Valid)</option>
+                            <option>Tamat Tempoh</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                    <!-- Card 1 -->
+                    <div class="bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-shadow border border-gray-100 flex flex-col">
+                        <div class="p-4 md:p-5 border-b border-gray-100 flex-grow">
+                            <div class="flex justify-between items-start mb-3 md:mb-4">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] md:text-xs font-medium bg-green-100 text-green-800">🟢 Sah</span>
+                            </div>
+                            <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-1">Boiler Unit A</h3>
+                            <div class="space-y-1.5 md:space-y-2 mt-3 md:mt-4 text-xs md:text-sm">
+                                <div class="flex"><span class="text-gray-500 w-20 md:w-24">No PMT:</span><span class="font-medium">PMT-001</span></div>
+                                <div class="flex"><span class="text-gray-500 w-20 md:w-24">Tamat CF:</span><span class="font-medium text-gray-900">01 Dis 2026</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-4 md:px-5 py-3"><button class="w-full text-center text-xs md:text-sm font-medium text-navy hover:text-safety">Lihat Detail →</button></div>
+                    </div>
+                    
+                    <!-- Card 2 -->
+                    <div class="bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-shadow border border-gray-100 flex flex-col">
+                        <div class="p-4 md:p-5 border-b border-gray-100 flex-grow">
+                            <div class="flex justify-between items-start mb-3 md:mb-4">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] md:text-xs font-medium bg-red-100 text-red-800">🔴 Tamat Tempoh</span>
+                            </div>
+                            <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-1">Overhead Crane</h3>
+                            <div class="space-y-1.5 md:space-y-2 mt-3 md:mt-4 text-xs md:text-sm">
+                                <div class="flex"><span class="text-gray-500 w-20 md:w-24">No PMT:</span><span class="font-medium">PMT-002</span></div>
+                                <div class="flex"><span class="text-gray-500 w-20 md:w-24">Tamat CF:</span><span class="font-medium text-red-600">01 Jan 2022</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-4 md:px-5 py-3"><button class="w-full text-center text-xs md:text-sm font-medium text-navy hover:text-safety">Lihat Detail →</button></div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-shadow border border-gray-100 flex flex-col">
+                        <div class="p-4 md:p-5 border-b border-gray-100 flex-grow">
+                            <div class="flex justify-between items-start mb-3 md:mb-4">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] md:text-xs font-medium bg-orange-100 text-orange-800">🟡 Akan Tamat</span>
+                            </div>
+                            <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-1">Pressure Vessel</h3>
+                            <div class="space-y-1.5 md:space-y-2 mt-3 md:mt-4 text-xs md:text-sm">
+                                <div class="flex"><span class="text-gray-500 w-20 md:w-24">No PMT:</span><span class="font-medium">PMT-003</span></div>
+                                <div class="flex"><span class="text-gray-500 w-20 md:w-24">Tamat CF:</span><span class="font-medium text-orange-600">15 Ogos 2024</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-4 md:px-5 py-3"><button class="w-full text-center text-xs md:text-sm font-medium text-navy hover:text-safety">Lihat Detail →</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VIEW 4: DOCUMENT CENTER                    -->
+        <!-- ========================================== -->
+        <div id="view-documents" class="view-section w-full p-4 md:p-8 h-[calc(100vh-64px)] pb-8 flex flex-col">
+            <div class="max-w-6xl mx-auto w-full flex-grow flex flex-col">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 md:mb-6 flex-shrink-0">Pusat Dokumen</h2>
+                
+                <div class="flex flex-col md:flex-row gap-4 md:gap-6 flex-grow overflow-hidden">
+                    <!-- Sidebar list of documents -->
+                    <div class="w-full md:w-1/3 bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden shadow-sm flex-shrink-0 md:flex-shrink" style="max-height: 250px; md:max-height: none;">
+                        <div class="bg-navy text-white p-3 md:p-4 flex-shrink-0">
+                            <h2 class="font-bold text-sm md:text-base">Senarai Dokumen</h2>
+                        </div>
+                        <div class="overflow-y-auto flex-grow">
+                            <div class="doc-active border-b border-gray-100 p-3 md:p-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-start">
+                                <div class="bg-blue-50 text-navy rounded p-1.5 md:p-2 mr-3 text-sm md:text-base">📄</div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900 text-sm md:text-base">HIRARC Loji Utama</h4>
+                                    <p class="text-[10px] md:text-xs text-gray-500 mt-0.5 md:mt-1">Jenis: HIRARC</p>
+                                </div>
+                            </div>
+                            <div class="border-b border-gray-100 p-3 md:p-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-start">
+                                <div class="bg-blue-50 text-navy rounded p-1.5 md:p-2 mr-3 text-sm md:text-base">📄</div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900 text-sm md:text-base">CHRA Chemical Store</h4>
+                                    <p class="text-[10px] md:text-xs text-gray-500 mt-0.5 md:mt-1">Jenis: CHRA</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Document Viewer -->
+                    <div class="w-full md:w-2/3 bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden shadow-sm flex-grow">
+                        <div class="bg-gray-50 border-b border-gray-200 p-3 md:p-4 flex justify-between items-center">
+                            <h3 class="font-semibold text-gray-800 text-sm md:text-base truncate mr-2">HIRARC Loji Utama</h3>
+                            <a href="#" class="text-xs md:text-sm text-navy hover:text-safety font-medium flex items-center whitespace-nowrap">Buka Tab Baru ↗</a>
+                        </div>
+                        <div class="flex-grow flex items-center justify-center bg-gray-100 text-gray-400 p-4">
+                            <div class="text-center">
+                                <div class="text-3xl md:text-4xl mb-2">📄</div>
+                                <p class="text-sm md:text-base">[ PDF Viewer Placeholder ]</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Handle Sidebar Mobile Toggle
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    
+    function toggleSidebar() {
+        sidebar.classList.toggle('sidebar-open');
+        overlay.classList.toggle('overlay-open');
+    }
+
+    // Handle View Switching
+    function switchMainView(viewId, navElement) {
+        // Hide all views
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('view-active'));
+        // Remove active class from navs
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('nav-active'));
+        
+        // Show target
+        document.getElementById(viewId).classList.add('view-active');
+        navElement.classList.add('nav-active');
+
+        // Update Topbar Title
+        document.getElementById('topbar-title').innerText = navElement.innerText.trim();
+
+        // Close sidebar if on mobile
+        if(window.innerWidth < 768) {
+            sidebar.classList.remove('sidebar-open');
+            overlay.classList.remove('overlay-open');
+        }
+    }
+
+    // Handle Maklumat Organisasi Tabs
+    function switchOrgTab(tabId, btnElement) {
+        document.querySelectorAll('.org-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.org-tab-btn').forEach(el => el.classList.remove('tab-active'));
+        
+        document.getElementById(tabId).classList.remove('hidden');
+        btnElement.classList.add('tab-active');
+    }
+</script>
+
+</body>
+</html>

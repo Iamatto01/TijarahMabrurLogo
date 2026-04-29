@@ -1,0 +1,88 @@
+import { createClient, OAuthStrategy, ApiKeyStrategy } from '@wix/sdk';
+import { items } from '@wix/data';
+
+const WIX_CLIENT_ID = '13c286fe-a77c-47ee-9165-a0f896986e93';
+const WIX_ADMIN_API = 'IST.eyJraWQiOiJQb3pIX2FDMiIsImFsZyI6IlJTMjU2In0.eyJkYXRhIjoie1wiaWRcIjpcIjlhMmJiNjViLTEwNzItNDkxYy04ZTIzLTBmZDlkZTIyY2ViZlwiLFwiaWRlbnRpdHlcIjp7XCJ0eXBlXCI6XCJhcHBsaWNhdGlvblwiLFwiaWRcIjpcIjQyZWJlZTE2LTZjNjgtNDZjMC1hNDI1LTI5YjgwMzA4MTZlNlwifSxcInRlbmFudFwiOntcInR5cGVcIjpcImFjY291bnRcIixcImlkXCI6XCIxZDdkZDgwZi04YWRmLTQ5NGEtYjczMy0xZDQ2MzNiY2Q1MjVcIn19IiwiaWF0IjoxNzc3NDQ0NzMwfQ.JfmqXzeoJKwmQD7-UROl8Ueg7He-ugiA1Ayf40qMBgc7G1KuZ7-8i2pAsuTW0AmIQ1WaLK2oJxCgZT6eKU5XbfFIzqRrJY8xM-H4uVwPmUujXdJV_ox9_-bNZ3HVxlhXcuGZRIpHEucE2vpA7lM0FZzzj5EhyYsz2H1jbUSHx_TvvNeXj25rwOaPLHwHQ7tlFi0PgmNEBpqKWxUd72HEk0jDERRtSADBcLPZjWPfS2qXgdWTnyuYGwAZSNCb6wL-RBAA6ie7R2zQY3S69ij_CCKE1BMorgltdCTjBUh8Oe1ziUONRrA9oPxNiC3RwuUBy_rKHFSq1HoMMGDXvFBbAw';
+
+// Initialize the Wix Client for Headless CMS Connection using OAuthStrategy
+const wixClient = createClient({
+    modules: { items },
+    auth: OAuthStrategy({ clientId: WIX_CLIENT_ID })
+});
+
+// Jika perlu akses sebagai Admin (contoh: bypass permissions), anda boleh gunakan ApiKeyStrategy:
+// const adminClient = createClient({
+//     modules: { items },
+//     auth: ApiKeyStrategy({ apiKey: WIX_ADMIN_API, siteId: 'YOUR_SITE_ID' })
+// });
+
+// Function untuk dapatkan data company user (userId dipass dari frontend/session)
+export async function getCurrentUserCompany(userId) {
+    try {
+        if (!userId) {
+            console.error("User ID diperlukan untuk carian company");
+            return null;
+        }
+        
+        // Cari company yang owner dia adalah user yang login menggunakan @wix/sdk
+        const companyQuery = await wixClient.items.queryDataItems({ dataCollectionId: "Companies" })
+            .eq("owner", userId)
+            .find();
+            
+        if (companyQuery.items.length > 0) {
+            // Dalam @wix/sdk, data field sebenar ada di dalam property 'data'
+            return companyQuery.items[0].data;
+        } else {
+            return null; // Admin TMSB atau user takde company
+        }
+    } catch (error) {
+        console.error("Error fetching company from CMS:", error);
+        throw error;
+    }
+}
+
+// Function dapatkan statistik Dashboard
+export async function getDashboardStats(companyId) {
+    if (!companyId) return null;
+
+    const today = new Date();
+    const expiryWarningDate = new Date();
+    expiryWarningDate.setMonth(today.getMonth() + 3); // 3 bulan amaran
+
+    try {
+        // Ambil semua assets untuk company ini
+        const assetsQuery = await wixClient.items.queryDataItems({ dataCollectionId: "Assets" })
+            .eq("company", companyId)
+            .find();
+            
+        // Map data sebenar
+        const assets = assetsQuery.items.map(item => item.data);
+        const totalAssets = assets.length;
+        
+        // Kira CF yang expired / nak expired (merah)
+        const alertAssets = assets.filter(asset => {
+            const cfDate = new Date(asset.cfExpiryDate);
+            return cfDate < expiryWarningDate;
+        });
+        const alertCount = alertAssets.length;
+        
+        // Kira Compliance % (Contoh formula simple: Valid CF / Total Mesin)
+        const validAssets = assets.filter(asset => {
+            const cfDate = new Date(asset.cfExpiryDate);
+            return cfDate >= today;
+        });
+        const validCount = validAssets.length;
+            
+        const complianceRate = totalAssets > 0 ? Math.round((validCount / totalAssets) * 100) : 0;
+
+        return {
+            totalAssets,
+            alertCount,
+            complianceRate,
+            alerts: alertAssets
+        };
+    } catch (error) {
+        console.error("Error fetching dashboard stats from CMS:", error);
+        throw error;
+    }
+}

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSHone Portal</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>
+tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],display:['Poppins','sans-serif']},colors:{brandDark:'#0B0F19',brandGreen:'#2D8C61',brandBlue:'#0D3A6B',navy:'#0A2647',safety:'#E8630A',success:'#2EC4B6',danger:'#E63946',warning:'#FFB703'}}}}
+</script>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="login-screen">
+  <div class="login-bg"></div>
+  <div class="login-card">
+    <div class="flex items-center gap-3 mb-8 justify-center">
+      <div class="w-12 h-12 bg-safety rounded-xl flex items-center justify-center font-bold text-2xl text-white">O</div>
+      <h1 class="font-display font-bold text-2xl text-white tracking-wide">OSHone<span class="text-safety">.</span></h1>
+    </div>
+    <p class="text-gray-400 text-sm text-center mb-6">Portal Keselamatan & Kesihatan Pekerjaan</p>
+    <div class="space-y-4">
+      <div>
+        <label class="text-xs text-gray-400 mb-1 block">Email</label>
+        <input id="login-email" type="email" value="admin@tijarah.com" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-safety">
+      </div>
+      <div>
+        <label class="text-xs text-gray-400 mb-1 block">Password</label>
+        <input id="login-pass" type="password" value="demo123" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-safety">
+      </div>
+      <div>
+        <label class="text-xs text-gray-400 mb-1 block">Peranan (Role)</label>
+        <select id="login-role" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-safety">
+          <option value="admin" class="text-black">Admin (Manage CMS & Reports)</option>
+          <option value="client" class="text-black">Client (Normal View)</option>
+          <option value="report" class="text-black">Report (Only Create Reports)</option>
+        </select>
+      </div>
+      <button onclick="doLogin()" class="w-full bg-safety hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition">Log Masuk</button>
+    </div>
+    <p class="text-gray-500 text-xs text-center mt-6">© 2024 Tijarah Mabrur Sdn Bhd</p>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="app-shell" class="app-container" style="display:none">
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <div id="sidebar" class="sidebar shadow-xl">
+    <div class="p-6 mb-2 flex items-center gap-3 border-b border-white/10 relative">
+      <div class="w-10 h-10 bg-safety rounded-lg flex items-center justify-center font-bold text-xl text-white">O</div>
+      <h1 class="font-display font-bold text-xl tracking-wide">OSHone<span class="text-safety">.</span></h1>
+      <button onclick="toggleSidebar()" class="md:hidden absolute right-4 text-gray-400 hover:text-white">✕</button>
+    </div>
+    <div class="text-xs uppercase text-gray-400 font-semibold px-6 mb-2 mt-4 tracking-wider">Menu Utama</div>
+    <div class="nav-item nav-active" onclick="switchView('view-dashboard',this)">📊 Dashboard</div>
+    <div class="nav-item" onclick="switchView('view-organisasi',this)">🏢 Maklumat Organisasi</div>
+    <div class="nav-item" onclick="switchView('view-assets',this)">⚙️ Mesin & Aset</div>
+    <div class="nav-item" onclick="switchView('view-documents',this)">📄 Pusat Dokumen</div>
+    <div class="nav-item" onclick="switchView('view-mykkp',this)">🏛️ MyKKP</div>
+    <div class="nav-item" onclick="switchView('view-reports',this)">📋 Laporan Servis</div>
+    <div class="nav-item" onclick="switchView('view-training',this)">🎓 Latihan & Permintaan</div>
+    <div class="text-xs uppercase text-gray-400 font-semibold px-6 mb-2 mt-6 tracking-wider">Akaun</div>
+    <div class="nav-item" onclick="switchView('view-settings',this)">⚙️ Tetapan</div>
+    <div class="nav-item" onclick="doLogout()">🚪 Log Keluar</div>
+    <div class="mt-auto p-6 border-t border-white/10">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold">TM</div>
+        <div><div class="text-sm font-semibold">Tijarah Mabrur</div><div class="text-xs text-gray-400">Pro Plan</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div class="main-content">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="flex items-center">
+        <button onclick="toggleSidebar()" class="md:hidden mr-3 text-gray-600 hover:text-navy">☰</button>
+        <span class="text-gray-500 font-medium text-sm" id="topbar-title">Dashboard</span>
+      </div>
+      <div class="flex gap-3 items-center">
+        <button onclick="toggleNotif()" class="relative text-gray-400 hover:text-safety">🔔<span class="notif-badge">3</span></button>
+        <button onclick="switchView('view-settings',document.querySelector('.nav-item:nth-last-child(3)'))" class="text-gray-400 hover:text-navy">👤</button>
+      </div>
+    </div>
+
+    <!-- NOTIFICATION DROPDOWN -->
+    <div id="notif-panel" class="notif-panel hidden">
+      <div class="p-3 border-b font-semibold text-sm">Notifikasi</div>
+      <div class="notif-item notif-danger">🔴 Overhead Crane - CF Tamat Tempoh!</div>
+      <div class="notif-item notif-warn">🟡 Pressure Vessel - CF akan tamat 3 bulan</div>
+      <div class="notif-item notif-info">📋 HIRARC belum dikemaskini</div>
+      <div class="p-2 text-center"><button onclick="toggleNotif()" class="text-xs text-safety">Tutup</button></div>
+    </div>
+
+    <!-- ALL VIEWS LOADED FROM SEPARATE FILES VIA JS -->
+    <div id="views-container" class="p-4 md:p-8"></div>
+  </div>
+</div>
+
+<!-- MODAL CONTAINER -->
+<div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="flex justify-between items-center mb-4">
+      <h3 id="modal-title" class="font-bold text-lg"></h3>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- CERTIFICATE MODAL (fullscreen) -->
+<div id="cert-modal" class="cert-modal hidden" onclick="closeCert()">
+  <div class="cert-content" onclick="event.stopPropagation()">
+    <div class="flex justify-between items-center p-4 border-b">
+      <h3 id="cert-title" class="font-bold">Sijil</h3>
+      <div class="flex gap-2">
+        <button onclick="printCert()" class="bg-navy text-white px-4 py-1.5 rounded text-sm">🖨️ Cetak</button>
+        <button onclick="closeCert()" class="text-gray-400 hover:text-gray-600 text-xl px-2">✕</button>
+      </div>
+    </div>
+    <div id="cert-body" class="p-8 overflow-auto flex-grow"></div>
+  </div>
+</div>
+
+<!-- CHAT WIDGET -->
+<div class="fixed bottom-6 right-6 z-50">
+  <div id="chat-bubble" class="hidden chat-window">
+    <div class="bg-navy text-white p-3 rounded-t-xl flex justify-between items-center">
+      <span class="font-semibold text-sm">💬 Hubungi Kami</span>
+      <button onclick="toggleChat()" class="text-white/60 hover:text-white">✕</button>
+    </div>
+    <div class="bg-white p-4 space-y-2 text-sm">
+      <p class="bg-gray-100 rounded-lg p-3">Assalamualaikum! Ada apa yang boleh kami bantu?</p>
+      <input id="chat-input" placeholder="Taip mesej..." class="w-full border rounded-lg px-3 py-2 text-sm" onkeydown="if(event.key==='Enter')sendChat()">
+    </div>
+  </div>
+  <button onclick="toggleChat()" class="w-14 h-14 bg-[#0A47FF] rounded-full flex items-center justify-center text-white shadow-lg hover:bg-blue-700 transition text-xl">💬</button>
+</div>
+
+<script src="data.js"></script>
+<script src="views.js"></script>
+<script src="views2.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
