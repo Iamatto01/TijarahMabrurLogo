@@ -2,6 +2,19 @@
 
 let userRole = 'client';
 
+function setLoginRole(role, buttonEl) {
+  userRole = role;
+  document.getElementById('login-role').value = role;
+  document.querySelectorAll('.login-role-btn').forEach(el => {
+    el.classList.remove('active');
+    el.classList.add('opacity-70');
+  });
+  if (buttonEl) {
+    buttonEl.classList.add('active');
+    buttonEl.classList.remove('opacity-70');
+  }
+}
+
 function doLogin() {
   userRole = document.getElementById('login-role').value;
   document.getElementById('login-screen').style.display = 'none';

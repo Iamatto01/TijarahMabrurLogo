@@ -21,7 +21,16 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],display:
       <div class="w-12 h-12 bg-safety rounded-xl flex items-center justify-center font-bold text-2xl text-white">O</div>
       <h1 class="font-display font-bold text-2xl text-white tracking-wide">OSHone<span class="text-safety">.</span></h1>
     </div>
-    <p class="text-gray-400 text-sm text-center mb-6">Portal Keselamatan & Kesihatan Pekerjaan</p>
+    <p class="text-gray-400 text-sm text-center mb-4">Portal Keselamatan & Kesihatan Pekerjaan</p>
+    <div class="mb-6">
+      <label class="text-xs text-gray-400 mb-2 block text-center">Peranan (Role)</label>
+      <input id="login-role" type="hidden" value="client">
+      <div class="grid grid-cols-3 gap-2">
+        <button type="button" class="login-role-btn" data-role="admin" onclick="setLoginRole('admin', this)">Admin</button>
+        <button type="button" class="login-role-btn active" data-role="client" onclick="setLoginRole('client', this)">Client</button>
+        <button type="button" class="login-role-btn" data-role="report" onclick="setLoginRole('report', this)">Report</button>
+      </div>
+    </div>
     <div class="space-y-4">
       <div>
         <label class="text-xs text-gray-400 mb-1 block">Email</label>
@@ -30,14 +39,6 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],display:
       <div>
         <label class="text-xs text-gray-400 mb-1 block">Password</label>
         <input id="login-pass" type="password" value="demo123" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-safety">
-      </div>
-      <div>
-        <label class="text-xs text-gray-400 mb-1 block">Peranan (Role)</label>
-        <select id="login-role" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-safety">
-          <option value="admin" class="text-black">Admin (Manage CMS & Reports)</option>
-          <option value="client" class="text-black">Client (Normal View)</option>
-          <option value="report" class="text-black">Report (Only Create Reports)</option>
-        </select>
       </div>
       <button onclick="doLogin()" class="w-full bg-safety hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition">Log Masuk</button>
     </div>
