@@ -41,7 +41,7 @@ function doLogin() {
       cmsNav.id = 'nav-cms-admin';
       cmsNav.innerHTML = '🗄️ Manage CMS (Headless)';
       cmsNav.onclick = function() {
-        window.open('../OSHone_Wix_Setup/page/dashboard.html', '_blank', 'noopener');
+        window.open('../OSHone_Wix_Setup/page/cms.html', '_blank', 'noopener');
       };
       const reportNav = Array.from(navItems).find(el => el.innerText.includes('Laporan Servis'));
       if(reportNav) reportNav.parentNode.insertBefore(cmsNav, reportNav.nextSibling);

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSHone CMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        navy: '#0A2647',
+                        safety: '#E8630A',
+                        success: '#2EC4B6',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0A2647 0%, #0B0F19 50%, #1f3f5f 100%); }
+    </style>
+</head>
+<body class="min-h-screen text-white p-6 md:p-10">
+    <div class="max-w-5xl mx-auto">
+        <div class="bg-white/10 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+                <div>
+                    <p class="text-safety text-sm font-semibold uppercase tracking-[0.2em]">Headless CMS</p>
+                    <h1 class="text-3xl md:text-4xl font-bold mt-2">OSHone CMS Hub</h1>
+                    <p class="text-white/70 mt-2">Pilih modul yang mahu dibuka untuk kemas kini data.</p>
+                </div>
+                <a href="../../OSHone_Portal/index.html" class="inline-flex items-center justify-center rounded-full bg-white text-navy font-semibold px-5 py-3 hover:bg-slate-100 transition">
+                    Kembali ke Portal
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="dashboard.html" class="rounded-2xl bg-white/10 border border-white/10 p-5 hover:bg-white/15 transition">
+                    <div class="text-2xl mb-3">🏢</div>
+                    <h2 class="text-lg font-semibold">Organisasi</h2>
+                    <p class="text-sm text-white/70 mt-2">Maklumat syarikat, policy, committee, dan layout.</p>
+                </a>
+                <a href="assets.html" class="rounded-2xl bg-white/10 border border-white/10 p-5 hover:bg-white/15 transition">
+                    <div class="text-2xl mb-3">⚙️</div>
+                    <h2 class="text-lg font-semibold">Aset</h2>
+                    <p class="text-sm text-white/70 mt-2">Paparan dan semakan data mesin, CF, dan status aset.</p>
+                </a>
+                <a href="documents.html" class="rounded-2xl bg-white/10 border border-white/10 p-5 hover:bg-white/15 transition">
+                    <div class="text-2xl mb-3">📄</div>
+                    <h2 class="text-lg font-semibold">Dokumen</h2>
+                    <p class="text-sm text-white/70 mt-2">Lihat dan buka dokumen yang berkaitan dengan portal.</p>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
