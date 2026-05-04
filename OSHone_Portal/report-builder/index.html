@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PMT Service Report Builder — Tijarah Mabrur</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="report-style.css">
+<script>
+tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif']},colors:{navy:'#0A2647',brand:'#F59E0B',success:'#10B981',danger:'#EF4444'}}}}
+</script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<!-- HEADER -->
+<header class="bg-navy text-white py-4 px-6 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+  <div class="flex items-center gap-3">
+    <div class="w-10 h-10 bg-brand rounded-lg flex items-center justify-center font-bold text-lg text-white">TM</div>
+    <div>
+      <h1 class="font-bold text-lg tracking-wide">PMT Service Report</h1>
+      <p class="text-xs text-white/60">Tijarah Mabrur (M) Sdn Bhd</p>
+    </div>
+  </div>
+  <div class="flex gap-3">
+    <a href="../index.html" class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 no-underline">🏠 Portal</a>
+    <button onclick="exportCSV()" class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">📥 CSV</button>
+    <button onclick="submitToWix()" id="btn-submit" class="bg-brand hover:bg-amber-600 text-white px-5 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2 shadow-md">🚀 Submit to Wix</button>
+  </div>
+</header>
+
+<!-- LOADING INDICATOR -->
+<div id="loading-bar" class="fixed top-0 left-0 w-full h-1 bg-brand/30 z-[60]">
+  <div class="h-full bg-brand animate-pulse" style="width:60%"></div>
+</div>
+
+<main class="max-w-5xl mx-auto p-6 space-y-6">
+
+  <!-- SECTION 1: CLIENT DETAIL -->
+  <section class="report-card">
+    <div class="card-header">
+      <h2>📋 PMT SERVICE AND MAINTENANCE REPORT</h2>
+      <div class="flex items-center gap-2">
+        <span id="data-source-badge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">⏳ Loading...</span>
+        <span class="card-badge">Report Form</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3 class="section-title">CLIENT DETAIL</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- SMART DROPDOWN: Company -->
+        <div class="field-group md:col-span-2">
+          <label>Client Name <span class="text-brand text-xs">(pilih dari CMS)</span></label>
+          <select id="f-client" class="form-select" onchange="onClientSelect()">
+            <option value="">-- Pilih Syarikat --</option>
+          </select>
+        </div>
+        <div class="field-group md:col-span-2">
+          <label>Address</label>
+          <input id="f-address" type="text" placeholder="Auto-isi dari CMS">
+        </div>
+        <div class="field-group">
+          <label>Client Email</label>
+          <input id="f-clientEmail" type="email" placeholder="Auto-isi dari CMS">
+        </div>
+        <div class="field-group">
+          <label>Client Image URL <span class="text-brand text-xs">(auto dari Personal Detail CMS)</span></label>
+          <input id="f-clientImage" type="url" placeholder="https://..." oninput="onClientImageInput()">
+        </div>
+        <div class="field-group md:col-span-2">
+          <label>Client Image Preview</label>
+          <div class="border border-gray-200 rounded-lg bg-gray-50 p-3">
+            <img id="f-clientImagePreview" alt="Client image preview" class="w-28 h-28 object-cover rounded-lg border border-gray-200 hidden">
+            <p id="f-clientImageEmpty" class="text-xs text-gray-500">Tiada imej client dipilih.</p>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Report Date</label>
+          <input id="f-reportDate" type="date">
+        </div>
+        <div class="field-group">
+          <label>Report Number <span class="text-success text-xs">🔒 Auto</span></label>
+          <input id="f-reportNo" type="text" readonly class="bg-emerald-50 font-semibold text-navy cursor-not-allowed">
+        </div>
+        <div class="field-group">
+          <label>Service Date</label>
+          <input id="f-serviceDate" type="date">
+        </div>
+        <div class="field-group">
+          <label>Service By</label>
+          <input id="f-serviceBy" type="text" value="Team 1 (T.M)" placeholder="Team / Person name">
+        </div>
+        <div class="field-group">
+          <label>CF Expired Date</label>
+          <input id="f-cfExpiry" type="text" placeholder="Date or N/A">
+        </div>
+        <div class="field-group">
+          <label>Client Incharge (PIC)</label>
+          <input id="f-clientPIC" type="text" placeholder="PIC name">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: MACHINE / VESSEL DETAIL -->
+  <section class="report-card">
+    <div class="card-body">
+      <h3 class="section-title">MACHINE / VESSEL DETAIL</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- SMART DROPDOWN: Machine -->
+        <div class="field-group md:col-span-2">
+          <label>Machine <span class="text-brand text-xs">(pilih dari senarai client)</span></label>
+          <select id="f-machine" class="form-select" onchange="onMachineSelect()">
+            <option value="">-- Pilih syarikat dahulu --</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>PMT No</label>
+          <input id="f-pmtNo" type="text" placeholder="N/A">
+        </div>
+        <div class="field-group">
+          <label>Machine Name</label>
+          <input id="f-machineName" type="text" placeholder="Auto-isi dari CMS" readonly>
+        </div>
+        <div class="field-group">
+          <label>Manufacturer</label>
+          <input id="f-manufacturer" type="text" placeholder="Manufacturer name">
+        </div>
+        <div class="field-group">
+          <label>Vessel Type</label>
+          <select id="f-vesselType" class="form-select">
+            <option>HORIZONTAL</option>
+            <option>VERTICAL</option>
+            <option>SPHERICAL</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Safety Valve Size</label>
+          <input id="f-svSize" type="text" placeholder="N/A">
+        </div>
+        <div class="field-group">
+          <label>Volume (Litre)</label>
+          <input id="f-volume" type="text" placeholder="N/A">
+        </div>
+        <div class="field-group">
+          <label>Serial No</label>
+          <input id="f-serialNo" type="text" placeholder="Auto-isi dari CMS" readonly>
+        </div>
+        <div class="field-group">
+          <label>Year Built</label>
+          <input id="f-yearBuilt" type="text" placeholder="Year">
+        </div>
+        <div class="field-group">
+          <label>MAWP (Psi)</label>
+          <input id="f-mawp" type="text" placeholder="Psi">
+        </div>
+        <div class="field-group">
+          <label>Location</label>
+          <input id="f-location" type="text" placeholder="Auto-isi dari CMS" readonly>
+        </div>
+        <div class="field-group">
+          <label>Next CF Date</label>
+          <input id="f-nextCF" type="text" placeholder="Auto-isi dari CMS" readonly>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3: SCOPE OF MAINTENANCE -->
+  <section class="report-card">
+    <div class="card-body">
+      <h3 class="section-title">SCOPE OF MAINTENANCE</h3>
+      <div class="overflow-x-auto">
+        <table class="scope-table" id="scope-table">
+          <thead>
+            <tr>
+              <th class="w-10">#</th>
+              <th>Description</th>
+              <th class="w-24 text-center">Status</th>
+              <th class="w-48">Remark</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>External Physical condition service: Cleaning all the visual dirt, grease, dust and etc to the satisfied end (as far as practicable).</td>
+              <td class="text-center"><input type="checkbox" class="scope-check" data-idx="1" checked></td>
+              <td><input type="text" class="remark-input" data-idx="1" value=""></td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>Internal Vessel Service: Cleans all the dirt, oil, water, impurities and etc (as far as practicable). Check for internal corrosion. Touch up with anti-corrosion paint if possible.</td>
+              <td class="text-center"><input type="checkbox" class="scope-check" data-idx="2" checked></td>
+              <td><input type="text" class="remark-input" data-idx="2" value=""></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Safety valve testing: Testing the safety valve functioning manually and in-operation testing at its setting value. Perform calibration check as per TMSB calibration procedure.</td>
+              <td class="text-center"><input type="checkbox" class="scope-check" data-idx="3" checked></td>
+              <td><input type="text" class="remark-input" data-idx="3" value=""></td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>Draining Valve: Ensure valve is functioning and able to drains the vessel appropriately.</td>
+              <td class="text-center"><input type="checkbox" class="scope-check" data-idx="4" checked></td>
+              <td><input type="text" class="remark-input" data-idx="4" value=""></td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Pressure Gauge: 'Zero value' at emptied vessel, marking at MAWP value as designed by manufacturer. Perform calibration check as per TMSB calibration procedure.</td>
+              <td class="text-center"><input type="checkbox" class="scope-check" data-idx="5" checked></td>
+              <td><input type="text" class="remark-input" data-idx="5" value=""></td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>Testing &amp; commissioning: Running the whole system to ensure all parts and system in good shape &amp; works evidently.</td>
+              <td class="text-center"><input type="checkbox" class="scope-check" data-idx="6"></td>
+              <td><input type="text" class="remark-input" data-idx="6" value=""></td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>Saddle, leg or foundation condition.</td>
+              <td class="text-center"><input type="checkbox" class="scope-check" data-idx="7" checked></td>
+              <td><input type="text" class="remark-input" data-idx="7" value=""></td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td>Nozzle / flange connection and insulation condition.</td>
+              <td class="text-center"><input type="checkbox" class="scope-check" data-idx="8" checked></td>
+              <td><input type="text" class="remark-input" data-idx="8" value=""></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4: COMMENT & RECOMMENDATION -->
+  <section class="report-card">
+    <div class="card-body">
+      <h3 class="section-title">COMMENT &amp; RECOMMENDATION</h3>
+      <div id="comments-container" class="space-y-3">
+        <div class="comment-row flex gap-3 items-start">
+          <span class="comment-num">1</span>
+          <textarea class="comment-input" rows="2">Pull the safety valve regularly to avoid malfunction. Contact us promptly in the event of failure. Required to calibrate safety valve and pressure gauge.</textarea>
+          <button onclick="removeComment(this)" class="text-red-400 hover:text-red-600 text-lg mt-1">✕</button>
+        </div>
+      </div>
+      <button onclick="addComment()" class="mt-3 text-sm text-navy font-semibold hover:text-brand transition">+ Add Comment</button>
+    </div>
+  </section>
+
+  <!-- SECTION 5: SUMMARY -->
+  <section class="report-card">
+    <div class="card-body">
+      <h3 class="section-title">SUMMARY</h3>
+      <textarea id="f-summary" class="w-full border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none" rows="3">- Keep this report for record and references.</textarea>
+    </div>
+  </section>
+
+  <!-- SECTION 6: IMAGE UPLOAD -->
+  <section class="report-card">
+    <div class="card-body">
+      <h3 class="section-title">APPENDIX PICTURE</h3>
+      <p class="text-xs text-gray-500 mb-4">Upload photos of service/maintenance process, name plates, internal conditions, etc.</p>
+      <div id="image-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4"></div>
+      <label class="upload-zone cursor-pointer">
+        <input type="file" accept="image/*" multiple onchange="handleImages(this.files)" class="hidden">
+        <div class="text-center">
+          <div class="text-3xl mb-2">📷</div>
+          <p class="text-sm font-medium text-gray-600">Click or drag images here</p>
+          <p class="text-xs text-gray-400 mt-1">JPG, PNG — will be converted to Base64 for Wix</p>
+        </div>
+      </label>
+    </div>
+  </section>
+
+  <!-- SECTION 7: SIGNOFF -->
+  <section class="report-card">
+    <div class="card-body">
+      <h3 class="section-title">REVIEW AND APPROVED BY</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="signoff-box">
+          <div class="field-group"><label>Name</label><input id="f-sign1Name" type="text" value="Syukri Yusof"></div>
+          <div class="field-group"><label>Title</label><input id="f-sign1Title" type="text" value="Crane & Machinery Inspector - NIOSH"></div>
+          <div class="field-group"><label>Mobile</label><input id="f-sign1Mobile" type="text" value="017-5998433"></div>
+          <div class="field-group"><label>Email</label><input id="f-sign1Email" type="text" value="syukri@tijarahmabrur.my"></div>
+        </div>
+        <div class="signoff-box">
+          <div class="field-group"><label>Name</label><input id="f-sign2Name" type="text" value="Shalihin Idris"></div>
+          <div class="field-group"><label>Title</label><input id="f-sign2Title" type="text" value="Consultant, Safety & Health Advisor - NIOSH Cert"></div>
+          <div class="field-group"><label>Mobile</label><input id="f-sign2Mobile" type="text" value="012-3983404"></div>
+          <div class="field-group"><label>Email</label><input id="f-sign2Email" type="text" value="shalihin@tijarahmabrur.my"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUBMITTED REPORTS TRACKER -->
+  <section class="report-card">
+    <div class="card-body">
+      <h3 class="section-title">📊 LAPORAN YANG DIHANTAR</h3>
+      <p class="text-xs text-gray-500 mb-3">Senarai laporan yang telah dihantar. Delete untuk menggunakan semula nombor laporan.</p>
+      <div id="submitted-list" class="space-y-2">
+        <p class="text-gray-400 text-xs">Belum ada laporan dihantar.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="text-center text-xs text-gray-400 py-6">
+    TIJARAH MABRUR (M) SDN BHD · F-6-8, Pusat Komersial Setapak (Starparc Point), Jalan Taman Ibu Kota, Taman Danau Kota 53100 Kuala Lumpur.<br>
+    Tel: +603 41444035 · Whatsapp: +6013 8881300 · Email: admin@tijarahmabrur.my · Website: www.tijarahmabrur.my
+  </footer>
+</main>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="../cms-data.js"></script>
+<script src="report-logic.js"></script>
+</body>
+</html>
