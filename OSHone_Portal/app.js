@@ -366,5 +366,21 @@ window.addEventListener('message', (event) => {
   if (event.data && event.data.type && (event.data.type.startsWith('CMS_') || event.data.type.startsWith('SAVE_'))) {
     console.log('Raw Msg from Wix:', event.data);
     window.wixData = event.data;
+    
+    // --- TEMPORARY DEBUG ON SCREEN ---
+    if (event.data.type === 'CMS_SYNC') {
+      let debugText = "WIX SYNC RECEIVED!\n\n";
+      if (event.data.clients && event.data.clients.length > 0) {
+        debugText += "CLIENT KEYS:\n" + Object.keys(event.data.clients[0]).join(", ") + "\n\n";
+      }
+      if (event.data.machines && event.data.machines.length > 0) {
+        debugText += "MACHINE KEYS:\n" + Object.keys(event.data.machines[0]).join(", ");
+      }
+      
+      const debugDiv = document.createElement('div');
+      debugDiv.style.cssText = "position:fixed; top:10px; left:10px; z-index:9999; background:black; color:lime; padding:20px; font-family:monospace; border-radius:10px; white-space:pre-wrap; font-size:14px; max-width:90vw; overflow:auto;";
+      debugDiv.innerText = debugText;
+      document.body.appendChild(debugDiv);
+    }
   }
 });
