@@ -71,35 +71,39 @@ window.addEventListener('message', (event) => {
 
   // --- Receive full CMS sync from Wix ---
   if (msg.type === 'CMS_SYNC') {
-    console.log('📡 Live CMS data received from Wix!');
+    console.log('📡 Live CMS data received from Wix!', msg);
 
     if (msg.clients && Array.isArray(msg.clients)) {
+      if (msg.clients.length > 0) console.log("RAW Client 0:", msg.clients[0]);
+      
       CMS_DATA.clients = msg.clients.map(c => ({
         id:      c._id || c.id || '',
-        name:    c.clientName || c['Client Name'] || c.title || '',
+        name:    c.clientName || c['Client Name'] || c.title || c.title_1 || 'Unknown Client',
         address: c.address || c['Address'] || '',
         email:   c.email || '',
         image:   resolveImageValue(c.image || c.Image),
-      })).filter(c => c.name);
+      })); // Temporarily removed filter to see what comes through
     }
 
     if (msg.machines && Array.isArray(msg.machines)) {
+      if (msg.machines.length > 0) console.log("RAW Machine 0:", msg.machines[0]);
+      
       CMS_DATA.machines = msg.machines.map(m => ({
         id:         m._id || m.id || '',
-        serialNo:   m.serialNumber || m['Serial Number'] || '',
-        name:       m.machineName || m['Machine Name'] || '',
+        serialNo:   m.serialNumber || m['Serial Number'] || m.title || 'No Serial',
+        name:       m.machineName || m['Machine Name'] || 'Unknown Machine',
         client:     m.client || m['Client'] || '',
         location:   m.location || m['Location'] || '',
         nextCFDate: m.next_Cf_Date || m['Next_CF_Date'] || '',
         priority:   m.priority || m['Priority'] || '',
         workStatus: m.workStatus || m['Work Status'] || '',
         remarks:    m.latestRemarks || m['Latest Remarks'] || '',
-      })).filter(m => m.serialNo);
+      })); // Temporarily removed filter
     }
 
     CMS_DATA.loaded = true;
     CMS_DATA.source = 'wix';
-    console.log(`✅ CMS synced: ${CMS_DATA.clients.length} clients, ${CMS_DATA.machines.length} machines`);
+    console.log(`✅ CMS mapped: ${CMS_DATA.clients.length} clients, ${CMS_DATA.machines.length} machines`);
 
     // Notify report-logic to refresh dropdowns
     if (typeof onCMSDataRefresh === 'function') {
