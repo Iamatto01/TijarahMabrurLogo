@@ -4,62 +4,149 @@ function renderDashboard() {
   const d = APP_DATA;
   const totalM = d.machines.length;
   const valid = d.machines.filter(m=>m.status==='valid').length;
-  const rate = Math.round((valid/totalM)*100);
+  const rate = totalM ? Math.round((valid/totalM)*100) : 0;
   const alerts = d.machines.filter(m=>m.status!=='valid').length;
-  return `<div class="max-w-6xl mx-auto">
-    <h2 class="text-2xl font-bold font-display text-gray-800 mb-6">Ringkasan Sistem</h2>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-      <div class="glass-card stat-card p-5 border-l-4 border-l-navy cursor-pointer" onclick="switchView('view-assets',document.querySelectorAll('.nav-item')[2])">
-        <p class="text-xs text-gray-500 font-medium">Jumlah Mesin</p>
-        <p class="text-3xl font-bold text-gray-800 mt-2">${totalM}</p>
-      </div>
-      <div class="glass-card stat-card p-5 border-l-4 border-l-success">
-        <p class="text-xs text-gray-500 font-medium">Pematuhan CF</p>
-        <p class="text-3xl font-bold text-success mt-2">${rate}%</p>
-        <div class="w-full bg-gray-100 rounded-full h-2 mt-3"><div class="bg-success h-2 rounded-full" style="width:${rate}%"></div></div>
-      </div>
-      <div class="glass-card stat-card p-5 border-l-4 border-l-danger">
-        <p class="text-xs text-gray-500 font-medium">Alert</p>
-        <p class="text-3xl font-bold text-danger mt-2">${alerts}</p>
-      </div>
-      <div class="glass-card stat-card p-5 border-l-4 border-l-warning cursor-pointer" onclick="switchView('view-documents',document.querySelectorAll('.nav-item')[3])">
-        <p class="text-xs text-gray-500 font-medium">Dokumen</p>
-        <p class="text-3xl font-bold text-gray-800 mt-2">${d.documents.length}</p>
-      </div>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-      <div class="glass-card overflow-hidden">
-        <div class="bg-gray-50 px-5 py-4 border-b font-bold text-sm flex items-center">🔔 Peringatan</div>
-        <div class="p-4 space-y-3">
-          ${d.machines.filter(m=>m.status!=='valid').map(m=>`
-          <div class="flex items-start p-3 rounded-xl border ${m.status==='expired'?'border-red-100 bg-red-50':'border-orange-100 bg-orange-50'} cursor-pointer" onclick="switchView('view-assets',document.querySelectorAll('.nav-item')[2])">
-            <div class="text-lg mr-3">${m.status==='expired'?'🔴':'🟡'}</div>
-            <div><h4 class="font-semibold text-sm">${m.name} <span class="text-xs text-gray-500 ml-1">(${m.pmt})</span></h4>
-            <p class="text-xs mt-1 font-medium ${m.status==='expired'?'text-danger':'text-warning'}">${m.status==='expired'?'Telah Tamat Tempoh!':'Akan Tamat Tempoh'} (${m.cfExpiry})</p></div>
-          </div>`).join('')}
-          ${alerts===0?'<p class="text-center text-gray-400 text-sm py-4">Tiada peringatan</p>':''}
+  const pendingReports = d.reports.filter(r => r.status !== 'completed').length;
+  const trainingOpen = d.training.filter(t => t.status !== 'completed').length;
+  const priorityItems = d.machines.filter(m => m.status !== 'valid').slice(0, 5);
+
+  return `<div class="dashboard-shell max-w-7xl mx-auto space-y-6">
+    <section class="dashboard-hero">
+      <div class="flex items-start gap-4 flex-1 min-w-0">
+        <button onclick="toggleSidebar()" class="md:hidden mt-1 text-white/90 text-2xl leading-none">☰</button>
+        <div class="min-w-0">
+          <p class="dashboard-kicker">Overview</p>
+          <h2 class="text-2xl md:text-3xl font-bold font-display text-white tracking-tight">OSHone Portal</h2>
+          <p class="mt-2 text-white/78 text-sm max-w-2xl">Pantau mesin, dokumen, laporan dan latihan dalam satu ruang kerja yang lebih kemas.</p>
+          <div class="flex flex-wrap items-center gap-3 mt-4">
+            <span class="hero-pill">Aktif</span>
+            <span class="hero-pill hero-pill-soft">${rate}% Pematuhan</span>
+          </div>
         </div>
       </div>
-      <div class="glass-card overflow-hidden">
-        <div class="bg-gray-50 px-5 py-4 border-b font-bold text-sm">📊 Aktiviti Terkini</div>
-        <div class="p-4 space-y-3">
-          ${d.reports.slice(0,4).map(r=>{const m=d.machines.find(x=>x.id===r.machineId);return `
-          <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
-            <div class="w-8 h-8 rounded-full ${r.status==='completed'?'bg-green-100 text-green-600':r.status==='pending'?'bg-yellow-100 text-yellow-600':'bg-red-100 text-red-600'} flex items-center justify-center text-xs font-bold">${r.status==='completed'?'✓':r.status==='pending'?'⏳':'!'}</div>
-            <div class="flex-grow"><p class="text-sm font-medium">${r.type}</p><p class="text-xs text-gray-500">${m?m.name:''} · ${r.date}</p></div>
-            <span class="badge ${r.status==='completed'?'badge-green':r.status==='pending'?'badge-yellow':'badge-red'}">${r.status}</span>
-          </div>`}).join('')}
-        </div>
-      </div>
-    </div>
-    <div class="glass-card p-5">
-      <h3 class="font-bold text-sm mb-4">⚡ Tindakan Pantas</h3>
       <div class="flex flex-wrap gap-3">
-        <button onclick="openAddMachine()" class="bg-navy text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-900 transition">+ Tambah Mesin</button>
-        <button onclick="openAddDoc()" class="bg-brandGreen text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition">+ Muat Naik Dokumen</button>
-        <button onclick="openAddTraining()" class="bg-safety text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-600 transition">+ Mohon Latihan</button>
+        <button onclick="switchView('view-reports',document.querySelectorAll('.nav-item')[5])" class="hero-action-btn">📊 Laporan</button>
+        <button onclick="openAddMachine()" class="hero-action-btn hero-action-btn-solid">+ Tambah Mesin</button>
       </div>
-    </div>
+    </section>
+
+    <section class="grid grid-cols-2 xl:grid-cols-4 gap-4">
+      <div class="summary-tile cursor-pointer" onclick="switchView('view-assets',document.querySelectorAll('.nav-item')[2])">
+        <p class="summary-tile-label">Jumlah Mesin</p>
+        <p class="summary-tile-value">${totalM}</p>
+        <p class="summary-tile-meta">${valid} masih sah</p>
+      </div>
+      <div class="summary-tile">
+        <p class="summary-tile-label">Pematuhan CF</p>
+        <p class="summary-tile-value text-indigo-600">${rate}%</p>
+        <div class="compliance-meter"><span style="width:${rate}%"></span></div>
+      </div>
+      <div class="summary-tile">
+        <p class="summary-tile-label">Alert Aktif</p>
+        <p class="summary-tile-value text-rose-600">${alerts}</p>
+        <p class="summary-tile-meta">${alerts===0?'Tiada risiko segera':'Perlu tindakan'}</p>
+      </div>
+      <div class="summary-tile cursor-pointer" onclick="switchView('view-documents',document.querySelectorAll('.nav-item')[3])">
+        <p class="summary-tile-label">Dokumen</p>
+        <p class="summary-tile-value">${d.documents.length}</p>
+        <p class="summary-tile-meta">${pendingReports} laporan terbuka</p>
+      </div>
+    </section>
+
+    <section class="grid xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)] gap-6 items-start">
+      <div class="space-y-6">
+        <article class="glass-card p-5">
+          <div class="flex items-center justify-between mb-4 gap-3">
+            <div>
+              <p class="text-xs uppercase tracking-[0.24em] text-slate-400 font-semibold">Priority Queue</p>
+              <h3 class="text-lg font-bold text-slate-900">Peringatan & Tindakan Segera</h3>
+            </div>
+            <button onclick="switchView('view-assets',document.querySelectorAll('.nav-item')[2])" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700">Lihat semua</button>
+          </div>
+          <div class="space-y-3">
+            ${priorityItems.length ? priorityItems.map(m => `
+              <div class="queue-item ${m.status==='expired'?'border-rose-200 bg-rose-50':'border-amber-200 bg-amber-50'} cursor-pointer" onclick="switchView('view-assets',document.querySelectorAll('.nav-item')[2])">
+                <div class="queue-icon ${m.status==='expired'?'bg-rose-100 text-rose-600':'bg-amber-100 text-amber-600'}">${m.status==='expired'?'🔴':'🟡'}</div>
+                <div class="queue-copy">
+                  <p class="queue-title">${m.name}</p>
+                  <p class="queue-subtitle">${m.pmt} · ${m.type} · CF ${m.cfExpiry}</p>
+                  <p class="queue-subtitle mt-2 font-medium ${m.status==='expired'?'text-rose-600':'text-amber-600'}">${m.status==='expired'?'Telah Tamat Tempoh':'Akan Tamat Tempoh'}</p>
+                </div>
+                <span class="badge ${m.status==='expired'?'badge-red':'badge-yellow'} queue-badge">${m.status==='expired'?'Expired':'Expiring'}</span>
+              </div>`).join('') : '<div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">Tiada alert aktif</div>'}
+          </div>
+        </article>
+
+        <article class="glass-card p-5">
+          <div class="flex items-center justify-between mb-4 gap-3">
+            <div>
+              <p class="text-xs uppercase tracking-[0.24em] text-slate-400 font-semibold">Activity Feed</p>
+              <h3 class="text-lg font-bold text-slate-900">Aktiviti Terkini</h3>
+            </div>
+            <span class="badge badge-blue">Live</span>
+          </div>
+          <div class="space-y-3">
+            ${d.reports.slice(0,4).map(r => { const m = d.machines.find(x => x.id === r.machineId); return `
+              <div class="queue-item">
+                <div class="queue-icon ${r.status==='completed'?'bg-emerald-100 text-emerald-600':r.status==='pending'?'bg-amber-100 text-amber-600':'bg-rose-100 text-rose-600'}">${r.status==='completed'?'✓':r.status==='pending'?'⏳':'!'}</div>
+                <div class="queue-copy">
+                  <p class="queue-title">${r.type}</p>
+                  <p class="queue-subtitle">${m ? m.name : 'N/A'} · ${r.date}</p>
+                </div>
+                <span class="badge ${r.status==='completed'?'badge-green':r.status==='pending'?'badge-yellow':'badge-red'} queue-badge">${r.status}</span>
+              </div>`; }).join('')}
+          </div>
+        </article>
+      </div>
+
+      <aside class="space-y-6">
+        <div class="snapshot-panel">
+          <div class="flex items-center justify-between mb-4 gap-3">
+            <div>
+              <p class="text-xs uppercase tracking-[0.24em] text-slate-400 font-semibold">Project Information</p>
+              <h3 class="text-lg font-bold text-slate-900">Compliance Snapshot</h3>
+            </div>
+            <div class="badge badge-blue">OSH</div>
+          </div>
+          <div class="rounded-3xl bg-white border border-indigo-100 p-4 shadow-sm">
+            <div class="flex items-center justify-between text-sm gap-3">
+              <span class="text-slate-500">Organisasi</span>
+              <span class="font-semibold text-slate-900 text-right">${d.company.name}</span>
+            </div>
+            <div class="flex items-center justify-between text-sm mt-2 gap-3">
+              <span class="text-slate-500">Pematuhan</span>
+              <span class="font-semibold text-indigo-600">${rate}%</span>
+            </div>
+            <div class="compliance-meter mt-4"><span style="width:${rate}%"></span></div>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+              <div class="mini-metric">
+                <p class="mini-metric-label">Latihan</p>
+                <p class="mini-metric-value">${trainingOpen}</p>
+                <p class="text-xs text-slate-500 mt-1">Permohonan terbuka</p>
+              </div>
+              <div class="mini-metric">
+                <p class="mini-metric-label">Laporan</p>
+                <p class="mini-metric-value">${pendingReports}</p>
+                <p class="text-xs text-slate-500 mt-1">Perlu semakan</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card p-5">
+          <div class="flex items-center justify-between mb-4 gap-3">
+            <h3 class="text-lg font-bold text-slate-900">Tindakan Pantas</h3>
+            <span class="badge badge-yellow">4</span>
+          </div>
+          <div class="space-y-3">
+            <button onclick="openAddMachine()" class="w-full rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-sky-50 px-4 py-3 text-left text-sm font-semibold text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200">+ Tambah Mesin</button>
+            <button onclick="openAddDoc()" class="w-full rounded-2xl border border-sky-100 bg-gradient-to-r from-sky-50 to-white px-4 py-3 text-left text-sm font-semibold text-sky-700 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200">+ Muat Naik Dokumen</button>
+            <button onclick="openAddTraining()" class="w-full rounded-2xl border border-amber-100 bg-gradient-to-r from-amber-50 to-white px-4 py-3 text-left text-sm font-semibold text-amber-700 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-200">+ Mohon Latihan</button>
+            <button onclick="switchView('view-mykkp',document.querySelectorAll('.nav-item')[4])" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50">Buka MyKKP</button>
+          </div>
+        </div>
+      </aside>
+    </section>
   </div>`;
 }
 

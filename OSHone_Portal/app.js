@@ -1,6 +1,7 @@
 // ===== APP LOGIC =====
 
 let userRole = 'client';
+let authToken = null;
 
 function setLoginRole(role, buttonEl) {
   userRole = role;
@@ -15,40 +16,41 @@ function setLoginRole(role, buttonEl) {
   }
 }
 
+// Helper to read non‑HttpOnly role cookie set by Netlify OAuth flow
+function getUserRole() {
+  const match = document.cookie.match(/user_role=([^;]+)/);
+  return match ? match[1] : 'client';
+}
+
 function doLogin() {
-  userRole = document.getElementById('login-role').value;
+  // Get role from login form
+  userRole = document.getElementById('login-role').value || 'client';
+  // Set cookie so role persists
+  document.cookie = 'user_role=' + userRole + '; path=/; max-age=86400';
+  // Hide login, show app
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-shell').style.display = 'flex';
-  
-  const navItems = document.querySelectorAll('.nav-item');
-  const adminOnlyItems = document.querySelectorAll('.admin-only');
-  
-  if (userRole === 'report') {
-    // Report Role: Hanya boleh lihat Laporan Servis dan Log Keluar
-    navItems.forEach(el => {
-      if (el.innerText.includes('Laporan Servis') || el.innerText.includes('Log Keluar')) {
-        el.style.display = 'flex';
-      } else {
-        el.style.display = 'none';
-      }
-    });
-    switchView('view-reports');
-  } else if (userRole === 'admin') {
-    // Admin Role: Tunjuk semua menu termasuk CMS detail
-    navItems.forEach(el => el.style.display = 'flex');
-    adminOnlyItems.forEach(el => el.style.display = 'flex');
-    switchView('view-dashboard');
+  // Show/hide admin-only items
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = userRole === 'admin' ? '' : 'none';
+  });
+  // Navigate to default view based on role
+  if (userRole === 'admin') {
+    switchView('view-dashboard', document.querySelectorAll('.nav-item')[0]);
+  } else if (userRole === 'report') {
+    switchView('view-reports', document.querySelectorAll('.nav-item')[5]);
   } else {
-    // Client Role: Tunjuk semua (normal view), tanpa CMS admin
-    navItems.forEach(el => el.style.display = 'flex');
-    adminOnlyItems.forEach(el => el.style.display = 'none');
-    switchView('view-dashboard');
+    switchView('view-dashboard', document.querySelectorAll('.nav-item')[0]);
   }
 }
 
 function doLogout() {
+  // Clear role cookie
+  document.cookie = 'user_role=; Max-Age=0; path=/;';
+  authToken = null;
+  // Show login, hide app
   document.getElementById('app-shell').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-screen').style.display = '';
 }
 // Sidebar
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('sidebar-open');document.getElementById('sidebar-overlay').classList.toggle('overlay-open');}
@@ -62,21 +64,48 @@ function sendChat(){const inp=document.getElementById('chat-input');if(!inp.valu
 
 // View switching
 let currentView='view-dashboard';
-function switchView(viewId,navEl){
-  currentView=viewId;
+function switchView(viewId, navEl){
+  // Allow all roles to access all views (role check removed for local dev)
+  currentView = viewId;
   renderView(viewId);
-  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('nav-active'));
-  if(navEl)navEl.classList.add('nav-active');
-  const titles={'view-dashboard':'Dashboard','view-organisasi':'Maklumat Organisasi','view-assets':'Mesin & Aset','view-documents':'Pusat Dokumen','view-mykkp':'MyKKP','view-reports':'Laporan Servis','view-cms':'CMS Detail','view-training':'Latihan & Permintaan','view-settings':'Tetapan'};
-  document.getElementById('topbar-title').innerText=titles[viewId]||'Dashboard';
-  if(window.innerWidth<768){document.getElementById('sidebar').classList.remove('sidebar-open');document.getElementById('sidebar-overlay').classList.remove('overlay-open');}
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('nav-active'));
+  if (navEl) navEl.classList.add('nav-active');
+  const titles = {
+    'view-dashboard': 'Dashboard',
+    'view-organisasi': 'Maklumat Organisasi',
+    'view-assets': 'Mesin & Aset',
+    'view-documents': 'Pusat Dokumen',
+    'view-mykkp': 'MyKKP',
+    'view-reports': 'Laporan Servis',
+    'view-cms': 'CMS Detail',
+    'view-training': 'Latihan & Permintaan',
+    'view-settings': 'Tetapan'
+  };
+  document.getElementById('topbar-title').innerText = titles[viewId] || 'Dashboard';
+  if (window.innerWidth < 768) {
+    document.getElementById('sidebar').classList.remove('sidebar-open');
+    document.getElementById('sidebar-overlay').classList.remove('overlay-open');
+  }
 }
 
 function renderView(viewId){
-  const c=document.getElementById('views-container');
-  const renderers={'view-dashboard':renderDashboard,'view-organisasi':renderOrganisasi,'view-assets':renderAssets,'view-documents':renderDocuments,'view-mykkp':renderMyKKP,'view-reports':renderReports,'view-cms':renderCMS,'view-training':renderTraining,'view-settings':renderSettings};
-  const fn=renderers[viewId];
-  if(fn)c.innerHTML=fn();
+  const c = document.getElementById('views-container');
+  const renderers = {'view-dashboard':renderDashboard,'view-organisasi':renderOrganisasi,'view-assets':renderAssets,'view-documents':renderDocuments,'view-mykkp':renderMyKKP,'view-reports':renderReports,'view-training':renderTraining,'view-settings':renderSettings, 'view-cms':renderCMS};
+  const fn = renderers[viewId];
+  if (fn) {
+    const result = fn();
+    if (result instanceof Promise) {
+        c.innerHTML = '<div class="p-20 text-center"><div class="text-4xl mb-4 animate-spin">⏳</div><p class="text-gray-500 font-medium animate-pulse">Menyelaras data dengan Wix CMS...</p><p class="text-xs text-gray-400 mt-2">Sila pastikan sambungan stabil untuk paparan data terkini.</p></div>';
+        result.then(html => {
+            c.innerHTML = html;
+        }).catch(err => {
+            c.innerHTML = `<div class="p-20 text-center text-red-500"><p class="font-bold">Ralat memuatkan data Wix CMS!</p><p class="text-sm mt-2">${err.message || err}</p></div>`;
+            console.error(err);
+        });
+    } else {
+        c.innerHTML = result;
+    }
+  }
 }
 
 // Org tabs
@@ -317,4 +346,26 @@ function closeModal(){document.getElementById('modal-overlay').classList.add('hi
 function showToast(msg){const t=document.createElement('div');t.className='fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-lg text-sm z-[100] transition-opacity';t.innerText=msg;document.body.appendChild(t);setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},2500);}
 
 // Init
-document.addEventListener('DOMContentLoaded',()=>{renderView('view-dashboard');});
+document.addEventListener('DOMContentLoaded', () => {
+  // BYPASS FAKE LOGIN (Since Wix handles security)
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'flex';
+  
+  // Default to Admin role so all features are visible (Wix can restrict access to this page entirely)
+  userRole = 'admin';
+  
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = '';
+  });
+  
+  switchView('view-dashboard', document.querySelectorAll('.nav-item')[0]);
+});
+
+// Listen for messages from Wix CMS
+window.addEventListener('message', (event) => {
+  if (event.data) {
+    console.log('Data dari Wix CMS:', event.data);
+    // Optionally expose data globally for UI
+    window.wixData = event.data;
+  }
+});

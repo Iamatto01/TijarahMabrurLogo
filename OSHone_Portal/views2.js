@@ -238,74 +238,84 @@ function renderSettings() {
   </div>`;
 }
 
-function renderCMS() {
+async function renderCMS() {
+  // Use data received from Wix via postMessage, or fallback to default APP_DATA
+  const wixData = window.wixData || {};
+  
+  let wixCompany = wixData.company || APP_DATA.company;
+  let wixMachines = wixData.machines || APP_DATA.machines;
+  let wixDocuments = wixData.documents || APP_DATA.documents;
+  let wixReports = wixData.reports || APP_DATA.reports;
+  let wixTraining = wixData.training || APP_DATA.training;
+  let wixCertificates = wixData.certificates || APP_DATA.certificates;
+
   const summaryCards = [
     ['Company', 'company', 1, '🏢'],
     ['User Profile', 'user', 1, '👤'],
-    ['Machines', 'machines', APP_DATA.machines.length, '⚙️'],
-    ['Documents', 'documents', APP_DATA.documents.length, '📄'],
-    ['Reports', 'reports', APP_DATA.reports.length, '📋'],
-    ['Training', 'training', APP_DATA.training.length, '🎓'],
-    ['Certificates', 'certificates', APP_DATA.certificates.length, '🏅'],
+    ['Machines', 'machines', wixMachines.length, '⚙️'],
+    ['Documents', 'documents', wixDocuments.length, '📄'],
+    ['Reports', 'reports', wixReports.length, '📋'],
+    ['Training', 'training', wixTraining.length, '🎓'],
+    ['Certificates', 'certificates', wixCertificates.length, '🏅'],
     ['Notifications', 'notifications', Object.keys(APP_DATA.notifications).length, '🔔']
   ];
 
   const keyValueRows = (obj) => Object.entries(obj).map(([key, value]) => `
       <tr>
         <td class="font-semibold text-slate-700 capitalize">${key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}</td>
-        <td class="text-slate-600">${String(value)}</td>
+        <td class="text-slate-600">${typeof value === 'object' ? JSON.stringify(value) : String(value)}</td>
       </tr>`).join('');
 
-  const machineRows = APP_DATA.machines.map(m => `
+  const machineRows = wixMachines.length ? wixMachines.map(m => `
       <tr>
-        <td class="font-semibold text-slate-800">${m.id}</td>
-        <td>${m.name}</td>
-        <td>${m.pmt}</td>
-        <td>${m.serial}</td>
-        <td>${m.location}</td>
-        <td>${m.type}</td>
-        <td>${m.cfExpiry}</td>
-        <td><span class="badge ${m.status==='valid'?'badge-green':m.status==='expired'?'badge-red':'badge-yellow'}">${m.status}</span></td>
-      </tr>`).join('');
+        <td class="font-semibold text-slate-800">${m._id || m.id || '-'}</td>
+        <td>${m.name || '-'}</td>
+        <td>${m.pmt || '-'}</td>
+        <td>${m.serial || '-'}</td>
+        <td>${m.location || '-'}</td>
+        <td>${m.type || '-'}</td>
+        <td>${m.cfExpiry || m.cfExpiryDate || '-'}</td>
+        <td><span class="badge ${m.status==='valid'?'badge-green':m.status==='expired'?'badge-red':'badge-yellow'}">${m.status || 'valid'}</span></td>
+      </tr>`).join('') : '<tr><td colspan="8" class="text-center text-gray-400">Tiada Data</td></tr>';
 
-  const documentRows = APP_DATA.documents.map(d => `
+  const documentRows = wixDocuments.length ? wixDocuments.map(d => `
       <tr>
-        <td class="font-semibold text-slate-800">${d.id}</td>
-        <td>${d.name}</td>
-        <td>${d.type}</td>
-        <td>${d.date}</td>
-        <td>${d.status}</td>
-      </tr>`).join('');
+        <td class="font-semibold text-slate-800">${d._id || d.id || '-'}</td>
+        <td>${d.name || '-'}</td>
+        <td>${d.type || '-'}</td>
+        <td>${d.date || '-'}</td>
+        <td>${d.status || '-'}</td>
+      </tr>`).join('') : '<tr><td colspan="5" class="text-center text-gray-400">Tiada Data</td></tr>';
 
-  const reportRows = APP_DATA.reports.map(r => `
+  const reportRows = wixReports.length ? wixReports.map(r => `
       <tr>
-        <td class="font-semibold text-slate-800">${r.id}</td>
-        <td>${r.machineId}</td>
-        <td>${r.type}</td>
-        <td>${r.date}</td>
-        <td>${r.tech}</td>
-        <td><span class="badge ${r.status==='completed'?'badge-green':r.status==='pending'?'badge-yellow':'badge-red'}">${r.status}</span></td>
-      </tr>`).join('');
+        <td class="font-semibold text-slate-800">${r._id || r.id || '-'}</td>
+        <td>${r.machineId || '-'}</td>
+        <td>${r.type || '-'}</td>
+        <td>${r.date || '-'}</td>
+        <td>${r.tech || '-'}</td>
+        <td><span class="badge ${r.status==='completed'?'badge-green':r.status==='pending'?'badge-yellow':'badge-red'}">${r.status || 'pending'}</span></td>
+      </tr>`).join('') : '<tr><td colspan="6" class="text-center text-gray-400">Tiada Data</td></tr>';
 
-  const trainingRows = APP_DATA.training.map(t => `
+  const trainingRows = wixTraining.length ? wixTraining.map(t => `
       <tr>
-        <td class="font-semibold text-slate-800">${t.id}</td>
-        <td>${t.course}</td>
-        <td>${t.date}</td>
-        <td>${t.participants}</td>
-        <td><span class="badge ${t.status==='completed'?'badge-green':t.status==='approved'?'badge-blue':'badge-yellow'}">${t.status}</span></td>
-      </tr>`).join('');
+        <td class="font-semibold text-slate-800">${t._id || t.id || '-'}</td>
+        <td>${t.course || '-'}</td>
+        <td>${t.date || '-'}</td>
+        <td>${t.participants || '-'}</td>
+        <td><span class="badge ${t.status==='completed'?'badge-green':t.status==='approved'?'badge-blue':'badge-yellow'}">${t.status || 'pending'}</span></td>
+      </tr>`).join('') : '<tr><td colspan="5" class="text-center text-gray-400">Tiada Data</td></tr>';
 
-  const certificateRows = APP_DATA.certificates.map(c => `
+  const certificateRows = wixCertificates.length ? wixCertificates.map(c => `
       <tr>
-        <td class="font-semibold text-slate-800">${c.id}</td>
-        <td>${c.title}</td>
-        <td>${c.abbr}</td>
-        <td>${c.holder}</td>
-        <td>${c.regNo}</td>
-        <td>${c.validUntil}</td>
-        <td>${c.issuer}</td>
-      </tr>`).join('');
+        <td class="font-semibold text-slate-800">${c._id || c.id || '-'}</td>
+        <td>${c.title || '-'}</td>
+        <td>${c.abbr || '-'}</td>
+        <td>${c.holder || '-'}</td>
+        <td>${c.regNo || '-'}</td>
+        <td>${c.validUntil || '-'}</td>
+        <td>${c.issuer || '-'}</td>
+      </tr>`).join('') : '<tr><td colspan="7" class="text-center text-gray-400">Tiada Data</td></tr>';
 
   const notificationRows = Object.entries(APP_DATA.notifications).map(([key, value]) => `
       <tr>
@@ -357,7 +367,7 @@ function renderCMS() {
         <div class="cms-scroll">
           <table class="cms-table">
             <thead><tr><th>Field</th><th>Value</th></tr></thead>
-            <tbody>${keyValueRows(APP_DATA.company)}</tbody>
+            <tbody>${keyValueRows(wixCompany)}</tbody>
           </table>
         </div>
       </div>
