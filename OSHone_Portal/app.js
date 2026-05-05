@@ -363,9 +363,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Listen for messages from Wix CMS
 window.addEventListener('message', (event) => {
-  if (event.data) {
-    console.log('Data dari Wix CMS:', event.data);
-    // Optionally expose data globally for UI
+  if (event.data && event.data.type && (event.data.type.startsWith('CMS_') || event.data.type.startsWith('SAVE_'))) {
+    console.log('Raw Msg from Wix:', event.data);
     window.wixData = event.data;
   }
 });
