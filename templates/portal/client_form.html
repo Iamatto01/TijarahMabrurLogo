@@ -1,0 +1,43 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}New Client | Portal{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <h1>New Client Account</h1>
+    <a class="btn ghost" href="{{ url_for('clients_list') }}">← Back</a>
+</div>
+
+<div class="panel" style="max-width:640px">
+    <div class="panel-body">
+        <form method="post">
+            <div class="field">
+                <label>Full Name *</label>
+                <input type="text" name="name" required>
+            </div>
+            <div class="field">
+                <label>Link to Company (shared workspace + logo)</label>
+                <select name="company_id">
+                    <option value="">— No company / individual —</option>
+                    {% for comp in companies %}
+                    <option value="{{ comp.id }}">{{ comp.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label>Company (free text, used if not linked above)</label>
+                <input type="text" name="company" placeholder="e.g. ABC Industries Sdn. Bhd.">
+            </div>
+            <div class="form-row">
+                <div class="field">
+                    <label>Email *</label>
+                    <input type="email" name="email" required>
+                </div>
+                <div class="field">
+                    <label>Password *</label>
+                    <input type="text" name="password" required placeholder="Share this with the client">
+                </div>
+            </div>
+            <button class="btn" type="submit">Create Client</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

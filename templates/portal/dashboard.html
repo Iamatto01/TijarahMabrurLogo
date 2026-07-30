@@ -1,0 +1,82 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}Dashboard | Portal{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <h1>Dashboard</h1>
+    <div class="who">Logged in as <b>{{ user.name }}</b> · <span class="tag {{ user.role }}">{{ user.role }}</span></div>
+</div>
+
+<div class="stat-cards">
+    <div class="card"><div class="num">{{ stats.machinery }}</div><div class="lbl">MACHINERY UNITS</div></div>
+    {% if user.role == 'admin' %}
+    <div class="card"><div class="num">{{ stats.clients }}</div><div class="lbl">CLIENTS</div></div>
+    {% endif %}
+    <div class="card"><div class="num">{{ stats.reports }}</div><div class="lbl">REPORTS</div></div>
+    <div class="card"><div class="num" style="color:var(--err)">{{ stats.expiring }}</div><div class="lbl">INSPECTION DUE ≤ 60 DAYS</div></div>
+</div>
+
+<div class="panel">
+    <div class="panel-head">
+        <h3>Upcoming Inspections</h3>
+        <a class="btn sm ghost" href="{{ url_for('machinery_list') }}">View All Machinery</a>
+    </div>
+    <div class="panel-body tbl-scroll">
+        {% if upcoming %}
+        <table class="tbl">
+            <thead><tr><th>Machine</th><th>Category</th><th>Cert No.</th>{% if user.role == 'admin' %}<th>Owner</th>{% endif %}<th>Status</th><th>Next Inspection</th></tr></thead>
+            <tbody>
+                {% for m in upcoming %}
+                <tr>
+                    <td><b>{{ m.name }}</b></td>
+                    <td>{{ m.category }}</td>
+                    <td>{{ m.cert_no or '—' }}</td>
+                    {% if user.role == 'admin' %}<td>{{ m.owner_company or 'Company' }}</td>{% endif %}
+                    <td><span class="tag {{ m.status }}">{{ m.status }}</span></td>
+                    <td>{{ m.next_inspection }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}<div class="empty">No upcoming inspections.</div>{% endif %}
+    </div>
+</div>
+
+<div class="grid cols-2">
+    <div class="panel">
+        <div class="panel-head">
+            <h3>Recent Machinery</h3>
+            <a class="btn sm" href="{{ url_for('machinery_new') }}">+ Add Machinery</a>
+        </div>
+        <div class="panel-body tbl-scroll">
+            {% if recent_machinery %}
+            <table class="tbl">
+                <thead><tr><th>Name</th><th>Serial</th><th>Status</th></tr></thead>
+                <tbody>
+                    {% for m in recent_machinery %}
+                    <tr><td>{{ m.name }}</td><td>{{ m.serial_no or '—' }}</td><td><span class="tag {{ m.status }}">{{ m.status }}</span></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}<div class="empty">No machinery yet.</div>{% endif %}
+        </div>
+    </div>
+    <div class="panel">
+        <div class="panel-head">
+            <h3>Recent Reports</h3>
+            <a class="btn sm" href="{{ url_for('report_new') }}">+ New Report</a>
+        </div>
+        <div class="panel-body tbl-scroll">
+            {% if recent_reports %}
+            <table class="tbl">
+                <thead><tr><th>Title</th><th>Machine</th><th>Status</th></tr></thead>
+                <tbody>
+                    {% for r in recent_reports %}
+                    <tr><td>{{ r.title }}</td><td>{{ r.machinery_name }}</td><td><span class="tag {{ r.status }}">{{ r.status }}</span></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}<div class="empty">No reports yet.</div>{% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

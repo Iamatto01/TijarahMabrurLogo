@@ -1,0 +1,33 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}Database | Portal{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <h1>Database Viewer</h1>
+</div>
+
+<div class="toolbar">
+    <a class="btn sm {{ '' if table != 'users' else 'ghost' }}" href="{{ url_for('db_viewer', table='users') }}">Users</a>
+    <a class="btn sm {{ '' if table != 'machinery' else 'ghost' }}" href="{{ url_for('db_viewer', table='machinery') }}">Machinery</a>
+    <a class="btn sm {{ '' if table != 'reports' else 'ghost' }}" href="{{ url_for('db_viewer', table='reports') }}">Reports</a>
+    <span style="color:var(--muted);font-size:13px;margin-left:auto">{{ rows|length }} rows · table: <b style="color:var(--accent-2)">{{ table }}</b></span>
+</div>
+
+<div class="panel">
+    <div class="panel-body tbl-scroll">
+        {% if rows %}
+        <table class="tbl">
+            <thead>
+                <tr>{% for c in cols %}<th>{{ c }}</th>{% endfor %}</tr>
+            </thead>
+            <tbody>
+                {% for r in rows %}
+                <tr>{% for c in cols %}<td>{{ r[c] if r[c] not in (None, '') else '—' }}</td>{% endfor %}</tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty">Table is empty.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

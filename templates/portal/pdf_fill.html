@@ -1,0 +1,41 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}Fill {{ t.name }} | Portal{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <h1>Fill: {{ t.name }}</h1>
+    <a class="btn ghost" href="{{ url_for('pdf_list') }}">← Back</a>
+</div>
+
+<div class="panel" style="max-width:820px">
+    <div class="panel-body">
+        {% if fields %}
+        <form method="post">
+            <div class="field">
+                <label>Link to Machinery (optional)</label>
+                <select name="machinery_id">
+                    <option value="">— None —</option>
+                    {% for m in machines %}
+                    <option value="{{ m.id }}">{{ m.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="grid cols-2">
+                {% for f in fields %}
+                <div class="field">
+                    <label>{{ f.label }}</label>
+                    <input type="text" name="{{ f.name }}" placeholder="{{ f.name }}">
+                </div>
+                {% endfor %}
+            </div>
+            <button class="btn" type="submit">Save &amp; Export PDF</button>
+        </form>
+        <p style="color:var(--muted);font-size:13px">Submitting saves the entry to Submissions and downloads the filled PDF immediately.</p>
+        {% else %}
+        <div class="empty">
+            This template has no fields yet.
+            {% if user.role == 'admin' %}<a href="{{ url_for('pdf_edit_fields', tid=t.id) }}">Define fields in the JSON editor</a>.{% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

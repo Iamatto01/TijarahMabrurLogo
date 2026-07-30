@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Register | Tijarah Mabrur{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <div class="card">
+        <h1>Create Account</h1>
+        <p style="color:var(--muted);font-size:14px;margin-top:-8px">Register your company to access the client portal.</p>
+        <form method="post">
+            <div class="field">
+                <label>Full Name</label>
+                <input type="text" name="name" required autofocus placeholder="Your full name" value="{{ name or '' }}">
+            </div>
+            <div class="field">
+                <label>Email</label>
+                <input type="email" name="email" required placeholder="you@company.com" value="{{ email or '' }}">
+            </div>
+            <div class="field">
+                <label>Company Name</label>
+                <input type="text" name="company_name" required placeholder="Your company name" value="{{ company_name or '' }}">
+            </div>
+            <div class="field">
+                <label>Password</label>
+                <input type="password" name="password" required placeholder="At least 6 characters">
+            </div>
+            <div class="field">
+                <label>Confirm Password</label>
+                <input type="password" name="confirm" required placeholder="Re-enter password">
+            </div>
+            <button class="btn" type="submit" style="width:100%">Create Account</button>
+        </form>
+        <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">
+            Already have an account? <a href="{{ url_for('login') }}">Log in</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

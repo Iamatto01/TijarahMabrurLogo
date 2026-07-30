@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tijarah Mabrur (M) Sdn. Bhd.{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container inner">
+            <a class="brand" href="{{ url_for('home') }}" style="text-decoration:none">
+                <img src="{{ url_for('static', filename='img/main-logo.png') }}" alt="Tijarah Mabrur" class="brand-logo">
+                <span>TIJARAH MABRUR<small>YOUR RELIABLE PARTNER</small></span>
+            </a>
+            <nav class="nav">
+                <a href="{{ url_for('home') }}">Home</a>
+                <a href="{{ url_for('home') }}#about">About Us</a>
+                <a href="{{ url_for('home') }}#core">Our Core</a>
+                <a href="{{ url_for('home') }}#expertise">Expertise</a>
+                <a href="{{ url_for('home') }}#services">Services</a>
+                <a href="{{ url_for('home') }}#contact">Contact</a>
+                {% if user %}
+                    <a class="btn ghost sm" href="{{ url_for('dashboard') }}">Portal</a>
+                {% else %}
+                    <a class="btn sm" href="{{ url_for('register') }}">Register</a>
+                    <a class="btn ghost sm" href="{{ url_for('login') }}">Log In</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+            <div class="flash {{ cat }} container">{{ msg }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    <!-- ===== FLOATING CHAT WIDGET ===== -->
+    <div class="chat-widget" id="chatWidget">
+        <button class="chat-toggle" id="chatToggle" aria-label="Chat with us">
+            <span class="chat-icon">💬</span>
+        </button>
+        <div class="chat-panel" id="chatPanel">
+            <div class="chat-head">
+                <span>Hubungi Kami</span>
+                <button class="chat-close" id="chatClose">✕</button>
+            </div>
+            <div class="chat-body">
+                <p style="text-align:center;color:var(--muted);font-size:13px;margin-bottom:14px">Pilih saluran untuk menghubungi kami:</p>
+                <a class="chat-option wa" href="https://wa.me/60138881300?text=Assalamualaikum%20Tijarah%20Mabrur" target="_blank" rel="noopener">
+                    <span class="chat-option-icon">💬</span>
+                    <span class="chat-option-text">
+                        <strong>WhatsApp</strong>
+                        <small>+6013 888 1300</small>
+                    </span>
+                </a>
+                <a class="chat-option email" href="mailto:tmsb@tijarahmabrur.com">
+                    <span class="chat-option-icon">📧</span>
+                    <span class="chat-option-text">
+                        <strong>Email</strong>
+                        <small>tmsb@tijarahmabrur.com</small>
+                    </span>
+                </a>
+                <a class="chat-option call" href="tel:+60341444035">
+                    <span class="chat-option-icon">📞</span>
+                    <span class="chat-option-text">
+                        <strong>Call Office</strong>
+                        <small>+603 4144 4035</small>
+                    </span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var toggle = document.getElementById('chatToggle');
+        var panel = document.getElementById('chatPanel');
+        var close = document.getElementById('chatClose');
+        toggle.addEventListener('click', function() {
+            panel.classList.toggle('open');
+        });
+        close.addEventListener('click', function() {
+            panel.classList.remove('open');
+        });
+    })();
+    </script>
+
+    <footer class="site-footer" id="contact">
+        <div class="container">
+            <div class="cols">
+                <div>
+                    <h4>Tijarah Mabrur (M) Sdn. Bhd.</h4>
+                    <p>SSM: 202201023780 (1469477-U)</p>
+                    <p><b>Headquarters</b><br>
+                    F-6-8, Setapak Commercial Centre (Starparc Point)<br>
+                    Jalan Taman Ibu Kota, Taman Danau Kota<br>
+                    53100 Setapak, Kuala Lumpur, Malaysia.</p>
+                    <p>+603 4144 4035<br>+6013 888 1300<br>
+                    <a href="mailto:tmsb@tijarahmabrur.com">tmsb@tijarahmabrur.com</a></p>
+                </div>
+                <div>
+                    <h4>Branches</h4>
+                    <p><b>North Branch</b><br>9-1, Persiaran Seksyen 4/6, Bandar Putra Bertam, 13200 Kepala Batas, Pulau Pinang.</p>
+                    <p><b>South Branch</b><br>No. 39, Jalan Dahlia 2, Taman Seri Penawar, 81930 Bandar Penawar, Johor.</p>
+                    <p><b>Fabrication Yard</b><br>Lot 2254, Batu 23 Jalan Sungai Lalang, 43500 Semenyih, Selangor.</p>
+                </div>
+                <div>
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="{{ url_for('home') }}#about">About Us</a></li>
+                        <li><a href="{{ url_for('home') }}#core">Our Core</a></li>
+                        <li><a href="{{ url_for('home') }}#expertise">Our Expertise</a></li>
+                        <li><a href="{{ url_for('home') }}#services">Our Services</a></li>
+                        <li><a href="{{ url_for('home') }}#products">Products</a></li>
+                        <li><a href="{{ url_for('dashboard') }}">Client Portal</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Working Hours</h4>
+                    <ul>
+                        <li>Monday – Friday: 8:30 am – 5:30 pm</li>
+                        <li>Saturday – Sunday: Closed</li>
+                        <li>Public Holiday: Closed</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="legal">All rights reserved © Tijarah Mabrur (M) Sdn. Bhd. 2026.</div>
+        </div>
+    </footer>
+</body>
+</html>

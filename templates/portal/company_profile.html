@@ -1,0 +1,43 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}My Company | Portal{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <h1>My Company</h1>
+</div>
+
+<div class="panel" style="max-width:720px">
+    <div class="panel-body">
+        <form method="post" enctype="multipart/form-data">
+            <div class="field">
+                <label>Company Name *</label>
+                <input type="text" name="name" required value="{{ c.name }}">
+            </div>
+            <div class="form-row">
+                <div class="field">
+                    <label>Registration No. (SSM)</label>
+                    <input type="text" name="reg_no" value="{{ c.reg_no }}">
+                </div>
+                <div class="field">
+                    <label>Phone</label>
+                    <input type="text" name="phone" value="{{ c.phone }}">
+                </div>
+            </div>
+            <div class="field">
+                <label>Address</label>
+                <textarea name="address" rows="3">{{ c.address }}</textarea>
+            </div>
+            <div class="field">
+                <label>Company Logo (PNG/JPG/WEBP/GIF)</label>
+                {% if c.logo_filename %}
+                    <div style="margin-bottom:8px">
+                        <img src="{{ url_for('serve_logo', filename=c.logo_filename) }}" alt="logo" style="height:56px;object-fit:contain;border:1px solid var(--line);border-radius:8px;padding:6px;background:#fff">
+                    </div>
+                {% endif %}
+                <input type="file" name="logo" accept=".png,.jpg,.jpeg,.webp,.gif">
+                <small style="color:var(--muted)">Upload your own logo — it appears in your portal sidebar.</small>
+            </div>
+            <button class="btn" type="submit">Save Changes</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

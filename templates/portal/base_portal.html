@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Portal | Tijarah Mabrur{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="portal">
+    <aside class="sidebar">
+        <a class="brand" href="{{ url_for('home') }}" style="text-decoration:none">
+            {% if tenant_company and tenant_company.logo_filename %}
+                <img src="{{ url_for('serve_logo', filename=tenant_company.logo_filename) }}" alt="logo" class="brand-logo" style="height:40px;max-width:150px;object-fit:contain;background:#fff;border-radius:8px;padding:4px">
+            {% else %}
+                <img src="{{ url_for('static', filename='img/main-logo.png') }}" alt="Tijarah Mabrur" class="brand-logo">
+            {% endif %}
+            <span>{{ tenant_company.name if tenant_company else 'TIJARAH MABRUR' }}<small>CLIENT PORTAL</small></span>
+        </a>
+        <nav>
+            <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}">📊 Dashboard</a>
+            <a href="{{ url_for('machinery_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('machinery') }}">⚙️ Machinery</a>
+            <a href="{{ url_for('reports_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('report') }}">📄 Reports</a>
+            <a href="{{ url_for('pdf_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('pdf') }}">📝 PDF Forms</a>
+            {% if user.role == 'admin' %}
+                <div class="group">Admin</div>
+                <a href="{{ url_for('companies_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('compan') }}">🏢 Companies</a>
+                <a href="{{ url_for('clients_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('client') }}">👥 Clients</a>
+                <a href="{{ url_for('db_viewer') }}" class="{{ 'active' if request.endpoint == 'db_viewer' }}">🗄️ Database</a>
+            {% elif user.company_id %}
+                <a href="{{ url_for('company_profile') }}" class="{{ 'active' if request.endpoint == 'company_profile' }}">🏢 My Company</a>
+            {% endif %}
+            <div class="group">Account</div>
+            <a href="{{ url_for('home') }}">🏠 Website</a>
+            <a href="{{ url_for('logout') }}">🚪 Logout</a>
+        </nav>
+    </aside>
+    <main class="portal-main">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for cat, msg in messages %}
+                <div class="flash {{ cat }}" style="margin:0 0 18px">{{ msg }}</div>
+            {% endfor %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+</div>
+</body>
+</html>

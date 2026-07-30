@@ -1,0 +1,39 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}Reports | Portal{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <h1>Reports</h1>
+    <a class="btn" href="{{ url_for('report_new') }}">+ New Report</a>
+</div>
+
+<div class="panel">
+    <div class="panel-body tbl-scroll">
+        {% if reports %}
+        <table class="tbl">
+            <thead>
+                <tr><th>Title</th><th>Machinery</th><th>Type</th><th>Status</th><th>By</th><th>Date</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for r in reports %}
+                <tr>
+                    <td><b>{{ r.title }}</b>{% if r.summary %}<br><small style="color:var(--muted)">{{ r.summary[:90] }}{% if r.summary|length > 90 %}…{% endif %}</small>{% endif %}</td>
+                    <td>{{ r.machinery_name }}</td>
+                    <td>{{ r.report_type }}</td>
+                    <td><span class="tag {{ r.status }}">{{ r.status }}</span></td>
+                    <td>{{ r.author }}</td>
+                    <td>{{ r.created_at[:10] }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('report_delete', rid=r.id) }}" onsubmit="return confirm('Delete this report?')">
+                            <button class="btn sm danger" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty">No reports yet. <a href="{{ url_for('report_new') }}">Create one</a>.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

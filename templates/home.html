@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% block title %}Home | Tijarah Mabrur{% endblock %}
+{% block content %}
+
+<!-- ===== HERO ===== -->
+<section class="hero-v2">
+    <div class="hero-bg" style="background-image:url('{{ url_for('static', filename='img/hero-bg.jpg') }}')"></div>
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+        <div class="hero-tag">JKKP / DOSH Registered &nbsp;•&nbsp; SSM 202201023780 (1469477-U)</div>
+        <h1>Your <em>Reliable</em> Partner<sup>®</sup></h1>
+        <p class="lead">
+            Our motto reflects our dedication to being a trusted and dependable companion
+            throughout your journey. We deliver consistent support and uphold the highest
+            standards of integrity — together, we build lasting relationships that drive
+            growth, value, and long-term success.
+        </p>
+        <div class="hero-actions">
+            <a class="btn" href="#about">About Us</a>
+            <a class="btn ghost light" href="{{ url_for('dashboard') }}">Enter Client Portal →</a>
+        </div>
+        <div class="badges">
+            <div class="badge">Registered with <b>DOSH / JKKP</b></div>
+            <div class="badge"><b>MySKUD</b> (PMT | PMA | PMD)</div>
+            <div class="badge"><b>MyKKP</b> (PMT | PMA | PMD)</div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== ABOUT STRIP ===== -->
+<section class="section" id="about">
+    <div class="container about-split">
+        <div>
+            <div class="kicker">About Us</div>
+            <h2>We Serve Your Industrial Need, <span class="accent">Because We Care.</span></h2>
+            <p style="color:var(--muted); margin-top:16px">
+                Tijarah Mabrur (M) Sdn. Bhd. is a Malaysian engineering and compliance services
+                company supporting heavy industry nationwide — from statutory DOSH inspections
+                to full EPCC project delivery.
+            </p>
+            <a class="btn" style="margin-top:22px" href="#contact">Contact Us</a>
+        </div>
+        <div class="about-stats">
+            <div class="stat"><div class="num">HQ</div><div class="lbl">Setapak, KL</div></div>
+            <div class="stat"><div class="num">2</div><div class="lbl">Regional Branches</div></div>
+            <div class="stat"><div class="num">1</div><div class="lbl">Fabrication Yard</div></div>
+            <div class="stat"><div class="num">1000+</div><div class="lbl">Machinery Handled</div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== OUR CORE ===== -->
+<section class="section alt" id="core">
+    <div class="container">
+        <div class="section-head">
+            <div class="kicker">Our Core</div>
+            <h2>DOSH Statutory &amp; Compliance</h2>
+        </div>
+        <div class="grid cols-3">
+            <div class="card img-card">
+                <div class="card-img" style="background-image:url('{{ url_for('static', filename='img/dosh-hq.jpg') }}')"></div>
+                <div class="card-body">
+                    <div class="sub">DOSH Headquarters</div>
+                    <h3>MySKUD (PMT | PMA | PMD)</h3>
+                    <ul>
+                        <li>Design Approval – Pressure Vessel</li>
+                        <li>Design Approval – Lifting Device</li>
+                        <li>Design Approval – Boiler</li>
+                        <li>Local &amp; Overseas Machinery</li>
+                        <li>New &amp; Used Machinery</li>
+                        <li>Reversed Engineering</li>
+                        <li>PSTT – Advanced NDT Inspection</li>
+                        <li>SSI – Special Scheme Inspection</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card img-card">
+                <div class="card-img" style="background-image:url('{{ url_for('static', filename='img/dosh-state.jpg') }}')"></div>
+                <div class="card-body">
+                    <div class="sub">DOSH State</div>
+                    <h3>MyKKP (PMT | PMA | PMD)</h3>
+                    <ul>
+                        <li>Workplace Notification</li>
+                        <li>New Registration &amp; Relocation</li>
+                        <li>Annual Machinery Renewal</li>
+                        <li>Machinery Notification</li>
+                        <li>Construction Site Notification</li>
+                        <li>Pre-inspection</li>
+                        <li>DOSH Inspection (New &amp; Renewal)</li>
+                        <li>3rd Party Inspection &amp; Verification</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card img-card">
+                <div class="card-img" style="background-image:url('{{ url_for('static', filename='img/osh.jpg') }}')"></div>
+                <div class="card-body">
+                    <div class="sub">OSH Documentation</div>
+                    <h3>OSH Assessment</h3>
+                    <ul>
+                        <li>HIRARC – Hazard Identification, Risk Assessment &amp; Risk Control</li>
+                        <li>CHRA – Chemical Hazard Risk Assessment</li>
+                        <li>NRA – Noise Risk Assessment</li>
+                        <li>ERA – Ergonomic Risk Assessment</li>
+                        <li>LEV – Local Exhaust Ventilation</li>
+                        <li>IAQ – Indoor Air Quality</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="section-head" style="margin-top:48px">
+            <p style="color:var(--muted)">Annual Service &nbsp;•&nbsp; On-Site Calibration &nbsp;•&nbsp; Service Contract &nbsp;•&nbsp; Machinery CF List</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== EXPERTISE ===== -->
+<section class="section" id="expertise">
+    <div class="container">
+        <div class="section-head">
+            <div class="kicker">Our Expertise</div>
+            <h2>EPCC &amp; Beyond</h2>
+            <p>Complete EPCC services — from design and engineering through procurement,
+               construction, and final commissioning.</p>
+        </div>
+        <div class="grid cols-3">
+            <div class="card feature-card">
+                <div class="feature-icon">⚙️</div>
+                <div class="sub">EPCC | AI</div>
+                <h3>Engineering, Procurement, Construction &amp; Commissioning</h3>
+                <p>Managing projects from design and engineering through procurement, construction,
+                   and final commissioning. Safe, high-quality, and timely delivery from a single
+                   reliable partner.</p>
+                <a class="link" href="#services">Read More →</a>
+            </div>
+            <div class="card feature-card">
+                <div class="feature-icon">🏭</div>
+                <div class="sub">Fabrication</div>
+                <h3>Fabrication Yard</h3>
+                <p>In-house fabrication capability at our Semenyih yard — pressure vessels,
+                   structures, and custom industrial equipment built to approved designs.</p>
+                <a class="link" href="#services">Read More →</a>
+            </div>
+            <div class="card feature-card">
+                <div class="feature-icon">🦺</div>
+                <div class="sub">Safety | AI &amp; Training</div>
+                <h3>Safety, Training &amp; Team Building</h3>
+                <p>Competency training, safety programmes and team building, alongside
+                   maintenance support for your plant and machinery.</p>
+                <a class="link" href="#services">Read More →</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CLEANING SERVICES ===== -->
+<section class="section alt" id="services">
+    <div class="container">
+        <div class="section-head">
+            <div class="kicker">Our Services</div>
+            <h2>Cleaning Services</h2>
+        </div>
+        <div class="grid cols-4">
+            <div class="card img-card tall">
+                <div class="card-img" style="background-image:url('{{ url_for('static', filename='img/manual.jpg') }}')">
+                    <span class="card-tag">MANUAL</span>
+                </div>
+                <div class="card-body">
+                    <h3>Manual Cleaning</h3>
+                    <p>Hands-on industrial cleaning by trained crews.</p>
+                </div>
+            </div>
+            <div class="card img-card tall">
+                <div class="card-img" style="background-image:url('{{ url_for('static', filename='img/hpwj.jpg') }}')">
+                    <span class="card-tag">HPWJ</span>
+                </div>
+                <div class="card-body">
+                    <h3>High Pressure Water Jet</h3>
+                    <p>Industrial high pressure cleaning up to 1000 bar for heavy industry.</p>
+                </div>
+            </div>
+            <div class="card img-card tall">
+                <div class="card-img" style="background-image:url('{{ url_for('static', filename='img/steam.jpg') }}')">
+                    <span class="card-tag">SUPERSTEAM</span>
+                </div>
+                <div class="card-body">
+                    <h3>SuperSteam (Vapor)</h3>
+                    <p>Vaporized high temperature cleaning for industries.</p>
+                </div>
+            </div>
+            <div class="card img-card tall">
+                <div class="card-img" style="background-image:url('{{ url_for('static', filename='img/dryice.jpg') }}')">
+                    <span class="card-tag">DRY ICED</span>
+                </div>
+                <div class="card-body">
+                    <h3>Dry Ice Cleaning</h3>
+                    <p>Extraordinary end cleaning with no waste left behind.</p>
+                </div>
+            </div>
+        </div>
+        <div class="grid cols-3" style="margin-top:22px">
+            <div class="card feature-card">
+                <div class="feature-icon">🔬</div>
+                <div class="sub">NDT | Integrity Test</div>
+                <h3>NDT &amp; Integrity Testing</h3>
+                <p>Advanced non-destructive testing and asset integrity verification.</p>
+            </div>
+            <div class="card feature-card">
+                <div class="feature-icon">✅</div>
+                <div class="sub">3rd Party</div>
+                <h3>3rd Party Inspection</h3>
+                <p>Independent third-party inspection and verification services.</p>
+            </div>
+            <div class="card feature-card">
+                <div class="feature-icon">👷</div>
+                <div class="sub">Competent Manpower</div>
+                <h3>Competent Manpower Supply</h3>
+                <p>Certified and competent personnel for your operations.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== PRODUCTS ===== -->
+<section class="section" id="products">
+    <div class="container">
+        <div class="section-head">
+            <div class="kicker">Products</div>
+            <h2>Our Products</h2>
+        </div>
+        <div class="grid cols-3">
+            <div class="card product-card"><div class="product-icon">🛢️</div><h3>Pressure Vessel</h3><p>Ex-stock &amp; custom fabrication. PMT included.</p></div>
+            <div class="card product-card"><div class="product-icon">🔩</div><h3>Pneumatic Accessories</h3><p>Quality pneumatic components and accessories.</p></div>
+            <div class="card product-card"><div class="product-icon">💨</div><h3>Puma Compressor</h3><p>Authorized supply of Puma air compressors.</p></div>
+            <div class="card product-card"><div class="product-icon">♨️</div><h3>Vapor</h3><p>SuperSteam vapor cleaning systems.</p></div>
+            <div class="card product-card"><div class="product-icon">🧪</div><h3>BioSolv</h3><p>Industrial bio-solvent cleaning solution.</p></div>
+            <div class="card product-card"><div class="product-icon">📋</div><h3>Machinery CF List</h3><p>Track and manage your machinery certification through our <a href="{{ url_for('dashboard') }}">client portal</a>.</p></div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CLIENTS ===== -->
+<section class="section alt">
+    <div class="container">
+        <div class="section-head">
+            <div class="kicker">Our Clients</div>
+            <h2>Trusted by Industry</h2>
+        </div>
+        <div class="clients-strip">
+            <div class="client-logo">OIL &amp; GAS</div>
+            <div class="client-logo">MANUFACTURING</div>
+            <div class="client-logo">CONSTRUCTION</div>
+            <div class="client-logo">MARINE</div>
+            <div class="client-logo">UTILITIES</div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CONTACT ===== -->
+<section class="section" id="contact">
+    <div class="container">
+        <div class="section-head">
+            <div class="kicker">Get In Touch</div>
+            <h2>Contact Us</h2>
+            <p>Reach out for statutory inspections, EPCC projects, or cleaning services.</p>
+        </div>
+        <div class="grid cols-3">
+            <div class="card feature-card">
+                <div class="feature-icon">📍</div>
+                <h3>Headquarters</h3>
+                <p>No. 6747, Jalan Langkawi, Taman Setapak,<br>53000 Kuala Lumpur</p>
+            </div>
+            <div class="card feature-card">
+                <div class="feature-icon">📞</div>
+                <h3>Call Us</h3>
+                <p>+603 4144 4035<br>+6013 888 1300</p>
+            </div>
+            <div class="card feature-card">
+                <div class="feature-icon">✉️</div>
+                <h3>Email</h3>
+                <p><a href="mailto:tmsb@tijarahmabrur.com">tmsb@tijarahmabrur.com</a></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CTA BAND ===== -->
+<section class="cta-band">
+    <div class="container">
+        <h2>We Serve Your Industrial Need,<br><span>Because We Care.</span></h2>
+        <a class="btn light" href="#contact">Contact Us</a>
+    </div>
+</section>
+
+{% endblock %}

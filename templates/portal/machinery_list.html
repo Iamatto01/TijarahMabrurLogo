@@ -1,0 +1,76 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}Machinery | Portal{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <h1>Machinery List</h1>
+    <a class="btn" href="{{ url_for('machinery_new') }}">+ Add Machinery</a>
+</div>
+
+<div class="toolbar">
+    <form method="get">
+        <input type="text" name="q" value="{{ search }}" placeholder="Search name, serial, cert no, location…">
+        <button class="btn ghost" type="submit">Search</button>
+    </form>
+</div>
+
+<div class="panel">
+    <div class="panel-body tbl-scroll">
+        {% if machinery %}
+        <table class="tbl">
+            <thead>
+                <tr>
+                    <th>Name</th><th>Category</th><th>Serial No.</th><th>Cert No. (PMA/PMT)</th>
+                    <th>Location</th>{% if user.role == 'admin' %}<th>Owner</th>{% endif %}
+                    <th>Status</th><th>Next Inspection</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in machinery %}
+                <tr>
+                    <td><b>{{ m.name }}</b>{% if m.notes %}<br><small style="color:var(--muted)">{{ m.notes }}</small>{% endif %}</td>
+                    <td>{{ m.category }}</td>
+                    <td>{{ m.serial_no or '—' }}</td>
+                    <td>{{ m.cert_no or '—' }}</td>
+                    <td>{{ m.location or '—' }}</td>
+                    {% if user.role == 'admin' %}<td>{{ m.owner_company or 'Company' }}</td>{% endif %}
+                    <td><span class="tag {{ m.status }}">{{ m.status }}</span></td>
+                    <td>{{ m.next_inspection or '—' }}</td>
+                    <td style="white-space:nowrap">
+                        <a class="btn sm ghost" href="{{ url_for('machinery_edit', mid=m.id) }}">Edit</a>
+                        <form method="post" action="{{ url_for('machinery_delete', mid=m.id) }}" style="display:inline" onsubmit="return confirm('Delete this machinery and its reports?')">
+                            <button class="btn sm danger" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty">No machinery found. <a href="{{ url_for('machinery_new') }}">Add your first unit</a>.</div>
+        {% endif %}
+    </div>
+</div>
+
+{% if pages > 1 %}
+<div class="toolbar" style="justify-content:space-between;align-items:center">
+    <span style="color:var(--muted);font-size:.9rem">{{ total }} unit(s) — page {{ page }} of {{ pages }}</span>
+    <span style="display:flex;gap:6px">
+        {% if page > 1 %}
+            <a class="btn sm ghost" href="{{ url_for('machinery_list', q=search, page=page-1) }}">← Prev</a>
+        {% endif %}
+        {% for p in range(1, pages + 1) %}
+            {% if p == page %}
+                <a class="btn sm" href="#">{{ p }}</a>
+            {% elif p == 1 or p == pages or (p >= page - 2 and p <= page + 2) %}
+                <a class="btn sm ghost" href="{{ url_for('machinery_list', q=search, page=p) }}">{{ p }}</a>
+            {% elif p == page - 3 or p == page + 3 %}
+                <span style="align-self:center;color:var(--muted)">…</span>
+            {% endif %}
+        {% endfor %}
+        {% if page < pages %}
+            <a class="btn sm ghost" href="{{ url_for('machinery_list', q=search, page=page+1) }}">Next →</a>
+        {% endif %}
+    </span>
+</div>
+{% endif %}
+{% endblock %}

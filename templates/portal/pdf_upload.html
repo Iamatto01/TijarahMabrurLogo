@@ -1,0 +1,32 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}Upload PDF Template | Portal{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <h1>Upload PDF Template</h1>
+    <a class="btn ghost" href="{{ url_for('pdf_list') }}">← Back</a>
+</div>
+
+<div class="panel" style="max-width:640px">
+    <div class="panel-body">
+        <form method="post" enctype="multipart/form-data">
+            <div class="field">
+                <label>PDF File * (DOSH form, inspection checklist, service report, etc.)</label>
+                <input type="file" name="pdf" accept="application/pdf" required>
+            </div>
+            <div class="field">
+                <label>Template Name</label>
+                <input type="text" name="name" placeholder="e.g. Pressure Vessel Inspection Report">
+            </div>
+            <div class="field">
+                <label>Description</label>
+                <textarea name="description" rows="2" placeholder="Optional notes about this form"></textarea>
+            </div>
+            <button class="btn" type="submit">Upload &amp; Detect Fields</button>
+        </form>
+        <p style="color:var(--muted);font-size:13px;margin-top:18px">
+            If the PDF has fillable AcroForm fields, they are detected automatically.
+            Otherwise you can define fields manually in the JSON editor after upload.
+        </p>
+    </div>
+</div>
+{% endblock %}

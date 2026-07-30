@@ -1,0 +1,55 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}Edit Fields | Portal{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <h1>Fields — {{ t.name }}</h1>
+    <a class="btn ghost" href="{{ url_for('pdf_list') }}">← Back</a>
+</div>
+
+<div class="grid cols-2">
+    <div class="panel">
+        <div class="panel-head"><h3>Fields JSON</h3></div>
+        <div class="panel-body">
+            <form method="post">
+                <div class="field">
+                    <label>Template Name</label>
+                    <input type="text" name="name" value="{{ t.name }}">
+                </div>
+                <div class="field">
+                    <label>Description</label>
+                    <input type="text" name="description" value="{{ t.description }}">
+                </div>
+                <div class="field">
+                    <label>Fields (JSON array)</label>
+                    <textarea name="fields_json" rows="18" style="font-family:Consolas,monospace;font-size:12.5px">{{ fields_json }}</textarea>
+                </div>
+                <button class="btn" type="submit">Save Fields</button>
+                <a class="btn ghost" href="{{ url_for('pdf_fill', tid=t.id) }}">Test Fill →</a>
+            </form>
+        </div>
+    </div>
+    <div class="panel">
+        <div class="panel-head"><h3>How it works</h3></div>
+        <div class="panel-body" style="color:var(--muted);font-size:13.5px">
+            <p>Each field writes text onto the PDF at position <b>(x, y)</b> on a given page.
+            Coordinates are in PDF points (1 point = 1/72 inch), origin at the <b>bottom-left</b> of the page.</p>
+            <p>Example field:</p>
+            <pre style="background:var(--bg-2);border:1px solid var(--line);border-radius:8px;padding:14px;font-size:12px;color:var(--text)">{
+  "name": "company_name",
+  "label": "Company Name",
+  "page": 1,
+  "x": 150,
+  "y": 660,
+  "size": 11
+}</pre>
+            <p><b>Tips</b></p>
+            <ul style="padding-left:18px">
+                <li>A4 page is about 595 × 842 points.</li>
+                <li><code>name</code> = form field key (no spaces), <code>label</code> = what the user sees.</li>
+                <li>Fill &amp; export once with test values, open the PDF, then nudge x/y until the text lands on the right lines.</li>
+                <li>Multi-line values work — text flows downward from y.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

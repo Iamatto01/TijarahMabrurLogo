@@ -1,0 +1,33 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}Submissions | Portal{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <h1>Submissions — {{ t.name }}</h1>
+    <a class="btn ghost" href="{{ url_for('pdf_list') }}">← Back</a>
+</div>
+
+<div class="panel">
+    <div class="panel-body tbl-scroll">
+        {% if subs %}
+        <table class="tbl">
+            <thead><tr><th>#</th><th>Machinery</th><th>Filled By</th><th>Date</th><th></th></tr></thead>
+            <tbody>
+                {% for s in subs %}
+                <tr>
+                    <td>{{ s.id }}</td>
+                    <td>{{ s.machinery_name or '—' }}</td>
+                    <td>{{ s.author }}</td>
+                    <td>{{ s.created_at[:16].replace('T', ' ') }}</td>
+                    <td>
+                        <a class="btn sm" href="{{ url_for('pdf_export_submission', sid=s.id) }}">Download PDF</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty">No submissions yet. <a href="{{ url_for('pdf_fill', tid=t.id) }}">Fill the form</a>.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

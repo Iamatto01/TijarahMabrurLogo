@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Log In | Tijarah Mabrur{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <div class="card">
+        <h1>Client Portal</h1>
+        <p style="color:var(--muted);font-size:14px;margin-top:-8px">Log in to manage your machinery &amp; reports.</p>
+        <form method="post">
+            <div class="field">
+                <label>Email</label>
+                <input type="email" name="email" required autofocus placeholder="you@company.com">
+            </div>
+            <div class="field">
+                <label>Password</label>
+                <input type="password" name="password" required placeholder="••••••••">
+            </div>
+            <button class="btn" type="submit" style="width:100%">Log In</button>
+        </form>
+        <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">
+            Don't have an account? <a href="{{ url_for('register') }}">Register here</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

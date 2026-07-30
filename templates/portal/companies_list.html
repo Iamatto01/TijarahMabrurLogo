@@ -1,0 +1,42 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}Companies | Portal{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <h1>Companies</h1>
+    <a class="btn" href="{{ url_for('company_new') }}">+ New Company</a>
+</div>
+
+<div class="panel">
+    <div class="panel-body tbl-scroll">
+        {% if companies %}
+        <table class="tbl">
+            <thead><tr><th>Logo</th><th>Name</th><th>Reg No.</th><th>Users</th><th>Machines</th><th>Created</th><th></th></tr></thead>
+            <tbody>
+                {% for c in companies %}
+                <tr>
+                    <td>
+                        {% if c.logo_filename %}
+                            <img src="{{ url_for('serve_logo', filename=c.logo_filename) }}" alt="" style="height:34px;max-width:90px;object-fit:contain;border-radius:6px;background:#fff;border:1px solid var(--line)">
+                        {% else %}—{% endif %}
+                    </td>
+                    <td><b>{{ c.name }}</b>{% if c.phone %}<br><small style="color:var(--muted)">{{ c.phone }}</small>{% endif %}</td>
+                    <td>{{ c.reg_no or '—' }}</td>
+                    <td>{{ c.user_count }}</td>
+                    <td>{{ c.machine_count }}</td>
+                    <td>{{ c.created_at[:10] }}</td>
+                    <td style="white-space:nowrap">
+                        <a class="btn sm ghost" href="{{ url_for('company_edit', cid=c.id) }}">Edit</a>
+                        <form method="post" action="{{ url_for('company_delete', cid=c.id) }}" style="display:inline" onsubmit="return confirm('Delete this company? Linked users & machines will be kept but unlinked.')">
+                            <button class="btn sm danger" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty">No companies yet. <a href="{{ url_for('company_new') }}">Create one</a>.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
