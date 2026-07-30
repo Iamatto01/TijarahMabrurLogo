@@ -17,7 +17,7 @@ from database import execute, get_db, init_db, q
 from pdf_utils import extract_acroform_fields, fill_pdf, validate_fields_json
 
 app = Flask(__name__)
-app.secret_key = "change-me-in-production-tijarah-2026"
+app.secret_key = os.getenv("SECRET_KEY", "change-me-in-production-tijarah-2026")
 
 UPLOAD_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), "uploads")
 LOGO_DIR = os.path.join(UPLOAD_DIR, "logos")
