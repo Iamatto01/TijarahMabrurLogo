@@ -31,6 +31,13 @@ os.makedirs(REPORT_PDF_DIR, exist_ok=True)
 ALLOWED_LOGO_EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024  # 8 MB uploads
 
+# SMTP config for email reminders (set via env vars)
+SMTP_HOST = os.getenv("SMTP_HOST", "")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER", "")
+SMTP_PASS = os.getenv("SMTP_PASS", "")
+SMTP_FROM = os.getenv("SMTP_FROM", "noreply@tijarahmabrur.com")
+
 
 @app.template_filter("fromjson")
 def fromjson_filter(s):
@@ -486,6 +493,19 @@ def serve_machinery_image(filename):
     return send_file(os.path.join(MACHINERY_IMG_DIR, filename))
 
 
+# ---------------- employee portal (Google Sheets embed) ----------------
+EMPLOYEE_SHEET_URL = os.getenv("EMPLOYEE_SHEET_URL", "")
+
+@app.route("/portal/employee")
+@login_required
+def employee_portal():
+    u = current_user()
+    if not EMPLOYEE_SHEET_URL:
+        flash("Employee portal not configured (set EMPLOYEE_SHEET_URL env var).", "warn")
+        return redirect(url_for("dashboard"))
+    return render_template("portal/employee_portal.html", sheet_url=EMPLOYEE_SHEET_URL)
+
+
 # ---------------- logos & company profile ----------------
 @app.route("/uploads/logos/<path:filename>")
 @login_required
@@ -843,6 +863,90 @@ def not_found(e):
     return render_template("error.html", code=404, message="Page not found."), 404
 
 
-if __name__ == "__main__":
+# ---------------- email + expiry reminder scheduler ----------------
+def send_email(to, subject, body):
+    """Send an email via SMTP. Returns True on success. Gracefully skips if not configured."""
+    if not SMTP_HOST:
+        app.logger.warning("SMTP not configured — skipping email to %s", to)
+        return False
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    msg = MIMEMultipart()
+    msg["From"] = SMTP_FROM
+    msg["To"] = to
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain", "utf-8"))
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as s:
+            s.ehlo()
+            s.starttls()
+            s.ehlo()
+            s.login(SMTP_USER, SMTP_PASS)
+            s.send_message(msg)
+        app.logger.info("Email sent to %s — %s", to, subject)
+        return True
+    except Exception as e:
+        app.logger.error("Email failed to %s: %s", to, e)
+        return False
+
+
+def check_and_send_reminders():
+    """Scheduled job: find unsent reminders where we're within the notification window, send email, mark sent."""
+    from datetime import date, timedelta
+    today = date.today().isoformat()
+    rows = q("""
+        SELECT r.*, m.name AS machine_name, m.next_inspection
+        FROM expiry_reminders r
+        JOIN machinery m ON m.id = r.machinery_id
+        WHERE r.sent = 0
+          AND r.reminder_date <= ?
+    """, (today,))
+    sent_count = 0
+    for r in rows:
+        subject = f"[Tijarah Mabrur] Inspection Reminder — {r['machine_name']}"
+        body = (
+            f"Dear Client,\n\n"
+            f"This is an automated reminder from Tijarah Mabrur (M) Sdn. Bhd.\n\n"
+            f"Machine: {r['machine_name']}\n"
+            f"Inspection due: {r['next_inspection'] or r['reminder_date']}\n"
+            f"Reminder set for: {r['reminder_date']} ({r['days_before']} days before)\n\n"
+            f"Please contact us to schedule the inspection if not already arranged.\n\n"
+            f"— Tijarah Mabrur (M) Sdn. Bhd."
+        )
+        if send_email(r["email"], subject, body):
+            execute("UPDATE expiry_reminders SET sent = 1 WHERE id = ?", (r["id"],))
+            sent_count += 1
+    if sent_count:
+        app.logger.info("Expiry reminders: sent %d email(s)", sent_count)
+
+
+def _setup_scheduler():
+    """Start APScheduler background scheduler for expiry reminders."""
+    from apscheduler.schedulers.background import BackgroundScheduler
+    from apscheduler.triggers.interval import IntervalTrigger
+    sched = BackgroundScheduler(daemon=True)
+    sched.add_job(
+        check_and_send_reminders,
+        trigger=IntervalTrigger(hours=6),
+        id="expiry_reminder_job",
+        name="Expiry reminder checker",
+        replace_existing=True,
+    )
+    sched.start()
+    app.logger.info("Scheduler started — checking expiry reminders every 6 hours")
+
+# Run DB init + scheduler at module level (works for both `python app.py` and `gunicorn`)
+_init_done = False
+def _bootstrap():
+    global _init_done
+    if _init_done:
+        return
+    _init_done = True
     init_db()
+    _setup_scheduler()
+
+_bootstrap()
+
+if __name__ == "__main__":
     app.run(debug=True, port=5000)

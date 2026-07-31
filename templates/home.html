@@ -7,19 +7,19 @@
     <div class="hero-bg" style="background-image:url('{{ url_for('static', filename='img/hero-bg.jpg') }}')"></div>
     <div class="hero-overlay"></div>
     <div class="container hero-content">
-        <div class="hero-tag">JKKP / DOSH Registered &nbsp;•&nbsp; SSM 202201023780 (1469477-U)</div>
-        <h1>Your <em>Reliable</em> Partner<sup>®</sup></h1>
-        <p class="lead">
+        <div class="hero-tag reveal fade-in">JKKP / DOSH Registered &nbsp;•&nbsp; SSM 202201023780 (1469477-U)</div>
+        <h1 class="reveal fade-up">Your <em>Reliable</em> Partner<sup>®</sup></h1>
+        <p class="lead reveal fade-up delay-1">
             Our motto reflects our dedication to being a trusted and dependable companion
             throughout your journey. We deliver consistent support and uphold the highest
             standards of integrity — together, we build lasting relationships that drive
             growth, value, and long-term success.
         </p>
-        <div class="hero-actions">
+        <div class="hero-actions reveal fade-up delay-2">
             <a class="btn" href="#about">About Us</a>
             <a class="btn ghost light" href="{{ url_for('dashboard') }}">Enter Client Portal →</a>
         </div>
-        <div class="badges">
+        <div class="badges reveal fade-in delay-3">
             <div class="badge">Registered with <b>DOSH / JKKP</b></div>
             <div class="badge"><b>MySKUD</b> (PMT | PMA | PMD)</div>
             <div class="badge"><b>MyKKP</b> (PMT | PMA | PMD)</div>
@@ -30,7 +30,7 @@
 <!-- ===== ABOUT STRIP ===== -->
 <section class="section" id="about">
     <div class="container about-split">
-        <div>
+        <div class="reveal fade-left">
             <div class="kicker">About Us</div>
             <h2>We Serve Your Industrial Need, <span class="accent">Because We Care.</span></h2>
             <p style="color:var(--muted); margin-top:16px">
@@ -40,7 +40,7 @@
             </p>
             <a class="btn" style="margin-top:22px" href="#contact">Contact Us</a>
         </div>
-        <div class="about-stats">
+        <div class="about-stats reveal fade-right">
             <div class="stat"><div class="num">HQ</div><div class="lbl">Setapak, KL</div></div>
             <div class="stat"><div class="num">2</div><div class="lbl">Regional Branches</div></div>
             <div class="stat"><div class="num">1</div><div class="lbl">Fabrication Yard</div></div>
@@ -52,12 +52,12 @@
 <!-- ===== OUR CORE ===== -->
 <section class="section alt" id="core">
     <div class="container">
-        <div class="section-head">
+        <div class="section-head reveal fade-up">
             <div class="kicker">Our Core</div>
             <h2>DOSH Statutory &amp; Compliance</h2>
         </div>
         <div class="grid cols-3">
-            <div class="card img-card">
+            <div class="card img-card reveal scale-in delay-1">
                 <div class="card-img" style="background-image:url('{{ url_for('static', filename='img/dosh-hq.jpg') }}')"></div>
                 <div class="card-body">
                     <div class="sub">DOSH Headquarters</div>
@@ -74,7 +74,7 @@
                     </ul>
                 </div>
             </div>
-            <div class="card img-card">
+            <div class="card img-card reveal scale-in delay-2">
                 <div class="card-img" style="background-image:url('{{ url_for('static', filename='img/dosh-state.jpg') }}')"></div>
                 <div class="card-body">
                     <div class="sub">DOSH State</div>
@@ -91,7 +91,7 @@
                     </ul>
                 </div>
             </div>
-            <div class="card img-card">
+            <div class="card img-card reveal scale-in delay-3">
                 <div class="card-img" style="background-image:url('{{ url_for('static', filename='img/osh.jpg') }}')"></div>
                 <div class="card-body">
                     <div class="sub">OSH Documentation</div>
@@ -116,14 +116,14 @@
 <!-- ===== EXPERTISE ===== -->
 <section class="section" id="expertise">
     <div class="container">
-        <div class="section-head">
+        <div class="section-head reveal fade-up">
             <div class="kicker">Our Expertise</div>
             <h2>EPCC &amp; Beyond</h2>
             <p>Complete EPCC services — from design and engineering through procurement,
                construction, and final commissioning.</p>
         </div>
         <div class="grid cols-3">
-            <div class="card feature-card">
+            <div class="card feature-card reveal fade-left delay-1">
                 <div class="feature-icon">⚙️</div>
                 <div class="sub">EPCC | AI</div>
                 <h3>Engineering, Procurement, Construction &amp; Commissioning</h3>
@@ -132,7 +132,7 @@
                    reliable partner.</p>
                 <a class="link" href="#services">Read More →</a>
             </div>
-            <div class="card feature-card">
+            <div class="card feature-card reveal scale-in delay-2">
                 <div class="feature-icon">🏭</div>
                 <div class="sub">Fabrication</div>
                 <h3>Fabrication Yard</h3>
@@ -140,7 +140,7 @@
                    structures, and custom industrial equipment built to approved designs.</p>
                 <a class="link" href="#services">Read More →</a>
             </div>
-            <div class="card feature-card">
+            <div class="card feature-card reveal fade-right delay-3">
                 <div class="feature-icon">🦺</div>
                 <div class="sub">Safety | AI &amp; Training</div>
                 <h3>Safety, Training &amp; Team Building</h3>
@@ -155,7 +155,7 @@
 <!-- ===== CLEANING SERVICES ===== -->
 <section class="section alt" id="services">
     <div class="container">
-        <div class="section-head">
+        <div class="section-head reveal fade-up">
             <div class="kicker">Our Services</div>
             <h2>Cleaning Services</h2>
         </div>
@@ -223,7 +223,7 @@
 <!-- ===== PRODUCTS ===== -->
 <section class="section" id="products">
     <div class="container">
-        <div class="section-head">
+        <div class="section-head reveal fade-up">
             <div class="kicker">Products</div>
             <h2>Our Products</h2>
         </div>
@@ -258,7 +258,7 @@
 <!-- ===== CONTACT ===== -->
 <section class="section" id="contact">
     <div class="container">
-        <div class="section-head">
+        <div class="section-head reveal fade-up">
             <div class="kicker">Get In Touch</div>
             <h2>Contact Us</h2>
             <p>Reach out for statutory inspections, EPCC projects, or cleaning services.</p>
@@ -286,8 +286,8 @@
 <!-- ===== CTA BAND ===== -->
 <section class="cta-band">
     <div class="container">
-        <h2>We Serve Your Industrial Need,<br><span>Because We Care.</span></h2>
-        <a class="btn light" href="#contact">Contact Us</a>
+        <h2 class="reveal fade-up">We Serve Your Industrial Need,<br><span>Because We Care.</span></h2>
+        <a class="btn light reveal scale-in delay-2" href="#contact">Contact Us</a>
     </div>
 </section>
 

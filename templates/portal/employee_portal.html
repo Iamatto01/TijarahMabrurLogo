@@ -1,0 +1,11 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}Employee Portal | Tijarah Mabrur{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <h1>👥 Employee Portal</h1>
+    <div class="who">Internal operations dashboard</div>
+</div>
+<div class="employee-portal-wrap">
+    <iframe src="{{ sheet_url }}" frameborder="0" allowfullscreen></iframe>
+</div>
+{% endblock %}

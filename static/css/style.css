@@ -381,3 +381,58 @@ table.tbl tr:hover td { background: rgba(1, 160, 255, .04); }
 /* portal-reports */
 .portal-report-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .portal-report-row:last-child { border-bottom: none; }
+
+/* ---------- scroll animations ---------- */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(36px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInLeft {
+    from { opacity: 0; transform: translateX(-30px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeInRight {
+    from { opacity: 0; transform: translateX(30px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+}
+.reveal {
+    opacity: 0;
+}
+.reveal.visible.fade-up   { animation: fadeInUp    .7s ease forwards; }
+.reveal.visible.fade-left { animation: fadeInLeft  .7s ease forwards; }
+.reveal.visible.fade-right{ animation: fadeInRight .7s ease forwards; }
+.reveal.visible.fade-in   { animation: fadeIn      .8s ease forwards; }
+.reveal.visible.scale-in  { animation: scaleIn     .6s ease forwards; }
+.reveal.delay-1 { animation-delay: .1s; }
+.reveal.delay-2 { animation-delay: .2s; }
+.reveal.delay-3 { animation-delay: .3s; }
+.reveal.delay-4 { animation-delay: .4s; }
+.reveal.delay-5 { animation-delay: .5s; }
+
+/* hero floating animation */
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+}
+.hero-v2 .badge {
+    animation: float 4s ease-in-out infinite;
+}
+.hero-v2 .badge:nth-child(2) { animation-delay: .6s; }
+.hero-v2 .badge:nth-child(3) { animation-delay: 1.2s; }
+
+/* ---------- employee portal iframe ---------- */
+.employee-portal-wrap {
+    display: flex; flex-direction: column; height: calc(100vh - 140px);
+}
+.employee-portal-wrap iframe {
+    flex: 1; border: 1px solid var(--line); border-radius: var(--radius);
+    min-height: 600px; width: 100%;
+}

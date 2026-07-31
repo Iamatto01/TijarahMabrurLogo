@@ -261,18 +261,18 @@ def init_db():
         conn.commit()
 
     admin_email = "muhammadsaifudinmj@gmail.com"
-    row = q("SELECT id FROM users WHERE email = %s", (admin_email,), one=True)
+    row = q("SELECT id FROM users WHERE email = ?", (admin_email,), one=True)
     if row is None:
         execute(
-            "INSERT INTO users (name, email, password_hash, role, company, created_at) VALUES (%s,%s,%s,%s,%s,%s)",
+            "INSERT INTO users (name, email, password_hash, role, company, created_at) VALUES (?,?,?,?,?,?)",
             ("Muhammad Saifudin", admin_email, generate_password_hash("admin"),
              "admin", "Tijarah Mabrur (M) Sdn. Bhd.", datetime.utcnow().isoformat()),
         )
 
-    row = q("SELECT id FROM companies WHERE name = %s", ("Demo Industries Sdn. Bhd.",), one=True)
+    row = q("SELECT id FROM companies WHERE name = ?", ("Demo Industries Sdn. Bhd.",), one=True)
     if row is None:
         cid = execute(
-            "INSERT INTO companies (name, reg_no, address, phone, email, logo_filename, created_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+            "INSERT INTO companies (name, reg_no, address, phone, email, logo_filename, created_at) VALUES (?,?,?,?,?,?,?)",
             ("Demo Industries Sdn. Bhd.", "202001000000 (0000000-X)",
              "No. 1, Jalan Industri, 40000 Shah Alam, Selangor.", "+603 5000 0000",
              "demo@demo.com", "", datetime.utcnow().isoformat()),
@@ -282,10 +282,10 @@ def init_db():
         demo_company_id = row["id"] if _ENGINE == "pg" else row[0]
 
     client_email = "client@demo.com"
-    row = q("SELECT id FROM users WHERE email = %s", (client_email,), one=True)
+    row = q("SELECT id FROM users WHERE email = ?", (client_email,), one=True)
     if row is None:
         cid2 = execute(
-            "INSERT INTO users (name, email, password_hash, role, company, company_id, created_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+            "INSERT INTO users (name, email, password_hash, role, company, company_id, created_at) VALUES (?,?,?,?,?,?,?)",
             ("Demo Client", client_email, generate_password_hash("client"),
              "client", "Demo Industries Sdn. Bhd.", demo_company_id,
              datetime.utcnow().isoformat()),
@@ -299,17 +299,17 @@ def init_db():
             ("Puma Compressor PU-550", "Compressor", "SN-PU-5550", "-", "HQ Setapak", "Active", "2027-01-15", None, None, "Company demo unit", now),
         ]:
             execute(
-                "INSERT INTO machinery (name, category, serial_no, cert_no, location, status, next_inspection, owner_id, company_id, notes, created_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                "INSERT INTO machinery (name, category, serial_no, cert_no, location, status, next_inspection, owner_id, company_id, notes, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                 m_data,
             )
-        admin = q("SELECT id FROM users WHERE email = %s", (admin_email,), one=True)
+        admin = q("SELECT id FROM users WHERE email = ?", (admin_email,), one=True)
         admin_id = admin["id"] if _ENGINE == "pg" else admin[0]
         for r_data in [
             (1, "Annual Statutory Inspection - A-101", "Inspection", "Vessel inspected per OSHA 1994. No defects found.", "Approved", admin_id, now),
             (3, "Boiler Burner Maintenance", "Maintenance", "Burner nozzle replaced, combustion test passed.", "Submitted", admin_id, now),
         ]:
             execute(
-                "INSERT INTO reports (machinery_id, title, report_type, summary, status, created_by, created_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                "INSERT INTO reports (machinery_id, title, report_type, summary, status, created_by, created_at) VALUES (?,?,?,?,?,?,?)",
                 r_data,
             )
 

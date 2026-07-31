@@ -27,6 +27,7 @@
                 <a href="{{ url_for('companies_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('compan') }}">🏢 Companies</a>
                 <a href="{{ url_for('clients_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('client') }}">👥 Clients</a>
                 <a href="{{ url_for('db_viewer') }}" class="{{ 'active' if request.endpoint == 'db_viewer' }}">🗄️ Database</a>
+                <a href="{{ url_for('employee_portal') }}" class="{{ 'active' if request.endpoint == 'employee_portal' }}">👥 Employee Portal</a>
             {% elif user.company_id %}
                 <a href="{{ url_for('company_profile') }}" class="{{ 'active' if request.endpoint == 'company_profile' }}">🏢 My Company</a>
             {% endif %}
