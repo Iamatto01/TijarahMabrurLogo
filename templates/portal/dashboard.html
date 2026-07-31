@@ -6,6 +6,17 @@
     <div class="who">Logged in as <b>{{ user.name }}</b> · <span class="tag {{ user.role }}">{{ user.role }}</span></div>
 </div>
 
+<div class="quick-links">
+    <a href="{{ url_for('machinery_new') }}">+ Add Machinery</a>
+    <a href="{{ url_for('machinery_list') }}">📋 All Machinery</a>
+    <a href="{{ url_for('report_new') }}">+ New Report</a>
+    <a href="{{ url_for('reports_list') }}">📄 All Reports</a>
+    {% if user.role == 'admin' %}
+    <a href="{{ url_for('clients_list') }}">👥 Clients</a>
+    <a href="{{ url_for('companies_list') }}">🏢 Companies</a>
+    {% endif %}
+</div>
+
 <div class="stat-cards">
     <div class="card"><div class="num">{{ stats.machinery }}</div><div class="lbl">MACHINERY UNITS</div></div>
     {% if user.role == 'admin' %}
@@ -27,7 +38,7 @@
             <tbody>
                 {% for m in upcoming %}
                 <tr>
-                    <td><b>{{ m.name }}</b></td>
+                    <td><a href="{{ url_for('machinery_detail', mid=m.id) }}" style="font-weight:700;color:var(--text)">{{ m.name }}</a></td>
                     <td>{{ m.category }}</td>
                     <td>{{ m.cert_no or '—' }}</td>
                     {% if user.role == 'admin' %}<td>{{ m.owner_company or 'Company' }}</td>{% endif %}
@@ -53,7 +64,7 @@
                 <thead><tr><th>Name</th><th>Serial</th><th>Status</th></tr></thead>
                 <tbody>
                     {% for m in recent_machinery %}
-                    <tr><td>{{ m.name }}</td><td>{{ m.serial_no or '—' }}</td><td><span class="tag {{ m.status }}">{{ m.status }}</span></td></tr>
+                    <tr><td><a href="{{ url_for('machinery_detail', mid=m.id) }}" style="color:var(--text)">{{ m.name }}</a></td><td>{{ m.serial_no or '—' }}</td><td><span class="tag {{ m.status }}">{{ m.status }}</span></td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -71,7 +82,7 @@
                 <thead><tr><th>Title</th><th>Machine</th><th>Status</th></tr></thead>
                 <tbody>
                     {% for r in recent_reports %}
-                    <tr><td>{{ r.title }}</td><td>{{ r.machinery_name }}</td><td><span class="tag {{ r.status }}">{{ r.status }}</span></td></tr>
+                    <tr><td>{{ r.title }}</td><td><a href="{{ url_for('machinery_detail', mid=r.machinery_id) }}" style="color:var(--text)">{{ r.machinery_name }}</a></td><td><span class="tag {{ r.status }}">{{ r.status }}</span></td></tr>
                     {% endfor %}
                 </tbody>
             </table>

@@ -21,8 +21,12 @@ app.secret_key = os.getenv("SECRET_KEY", "change-me-in-production-tijarah-2026")
 
 UPLOAD_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), "uploads")
 LOGO_DIR = os.path.join(UPLOAD_DIR, "logos")
+MACHINERY_IMG_DIR = os.path.join(UPLOAD_DIR, "machinery")
+REPORT_PDF_DIR = os.path.join(UPLOAD_DIR, "reports")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(LOGO_DIR, exist_ok=True)
+os.makedirs(MACHINERY_IMG_DIR, exist_ok=True)
+os.makedirs(REPORT_PDF_DIR, exist_ok=True)
 
 ALLOWED_LOGO_EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024  # 8 MB uploads
@@ -303,70 +307,183 @@ def machinery_delete(mid):
     m = q("SELECT * FROM machinery WHERE id = ?", (mid,), one=True)
     if not m or (u["role"] != "admin" and m["owner_id"] != u["id"]):
         abort(404)
+    for img in q("SELECT * FROM machinery_images WHERE machinery_id = ?", (mid,)):
+        try:
+            os.remove(os.path.join(MACHINERY_IMG_DIR, img["filename"]))
+        except OSError:
+            pass
+    execute("DELETE FROM machinery_images WHERE machinery_id = ?", (mid,))
     execute("DELETE FROM reports WHERE machinery_id = ?", (mid,))
+    execute("DELETE FROM expiry_reminders WHERE machinery_id = ?", (mid,))
     execute("DELETE FROM machinery WHERE id = ?", (mid,))
     flash("Machinery deleted.", "ok")
     return redirect(url_for("machinery_list"))
 
 
-# ---------------- portal: reports ----------------
-@app.route("/portal/reports")
+# ---------------- machinery detail page ----------------
+@app.route("/portal/machinery/<int:mid>")
 @login_required
-def reports_list():
+def machinery_detail(mid):
     u = current_user()
-    if u["role"] == "admin":
-        rows = q("""SELECT r.*, m.name AS machinery_name, usr.name AS author FROM reports r
-                    JOIN machinery m ON m.id = r.machinery_id
-                    JOIN users usr ON usr.id = r.created_by
-                    ORDER BY r.created_at DESC LIMIT 200""")
-    else:
-        scope, params = scope_clause(u)
-        rows = q(f"""SELECT r.*, m.name AS machinery_name, usr.name AS author FROM reports r
-                    JOIN machinery m ON m.id = r.machinery_id
-                    JOIN users usr ON usr.id = r.created_by
-                    WHERE {scope} ORDER BY r.created_at DESC LIMIT 200""", params)
-    return render_template("portal/reports_list.html", reports=rows)
+    m = q("SELECT * FROM machinery WHERE id = ?", (mid,), one=True)
+    if not m or (u["role"] != "admin" and m["owner_id"] != u["id"] and m["company_id"] != u["company_id"]):
+        abort(404)
+    owner = q("SELECT name, company, email FROM users WHERE id = ?", (m["owner_id"],), one=True) if m["owner_id"] else None
+    company = q("SELECT * FROM companies WHERE id = ?", (m["company_id"],), one=True) if m["company_id"] else None
+    images = q("SELECT * FROM machinery_images WHERE machinery_id = ? ORDER BY sort_order", (mid,))
+    reports = q("""SELECT r.*, usr.name AS author FROM reports r
+                   JOIN users usr ON usr.id = r.created_by
+                   WHERE r.machinery_id = ? ORDER BY r.created_at DESC""", (mid,))
+    reminders = q("SELECT * FROM expiry_reminders WHERE machinery_id = ? ORDER BY reminder_date", (mid,))
+    from datetime import date, timedelta
+    return render_template("portal/machinery_detail.html", m=m, owner=owner, company=company,
+                           images=images, reports=reports, reminders=reminders,
+                           report_types=REPORT_TYPES, report_statuses=REPORT_STATUSES,
+                           today=date.today().isoformat(),
+                           today_plus_60=(date.today() + timedelta(days=60)).isoformat())
 
-
-@app.route("/portal/reports/new", methods=["GET", "POST"])
+@app.route("/portal/machinery/<int:mid>/upload-image", methods=["POST"])
 @login_required
-def report_new():
+def machinery_upload_image(mid):
     u = current_user()
-    if u["role"] == "admin":
-        machines = q("SELECT id, name FROM machinery ORDER BY name")
-    else:
-        scope, params = scope_clause(u)
-        machines = q(f"SELECT id, name FROM machinery m WHERE {scope} ORDER BY name", params)
-    if request.method == "POST":
-        f = request.form
-        mid = int(f.get("machinery_id"))
-        m = q("SELECT * FROM machinery WHERE id = ?", (mid,), one=True)
-        if not m or (u["role"] != "admin" and m["owner_id"] != u["id"]
-                     and m["company_id"] != u["company_id"]):
-            abort(403)
+    m = q("SELECT * FROM machinery WHERE id = ?", (mid,), one=True)
+    if not m or (u["role"] != "admin" and m["owner_id"] != u["id"]):
+        abort(404)
+    f = request.files.get("image")
+    if f and f.filename:
+        ext = os.path.splitext(f.filename)[1].lower()
+        if ext not in (".png", ".jpg", ".jpeg", ".webp", ".gif"):
+            flash("Invalid image format.", "err")
+            return redirect(url_for("machinery_detail", mid=mid))
+        stored = f"m{mid}_{uuid.uuid4().hex}{ext}"
+        f.save(os.path.join(MACHINERY_IMG_DIR, stored))
+        sort = request.form.get("sort_order", 0, type=int)
+        caption = request.form.get("caption", "").strip()
         execute(
-            """INSERT INTO reports (machinery_id, title, report_type, summary, status, created_by, created_at)
-               VALUES (?,?,?,?,?,?,?)""",
-            (mid, f.get("title", "").strip(), f.get("report_type", "Inspection"),
-             f.get("summary", "").strip(), f.get("status", "Draft"), u["id"],
-             datetime.utcnow().isoformat()),
+            "INSERT INTO machinery_images (machinery_id, filename, caption, sort_order, created_at) VALUES (?,?,?,?,?)",
+            (mid, stored, caption, sort, datetime.utcnow().isoformat()),
         )
-        flash("Report created.", "ok")
-        return redirect(url_for("reports_list"))
-    return render_template("portal/report_form.html", machines=machines,
-                           report_types=REPORT_TYPES, report_statuses=REPORT_STATUSES)
+        if not m.get("image_filename"):
+            execute("UPDATE machinery SET image_filename = ? WHERE id = ?", (stored, mid))
+        flash("Image uploaded.", "ok")
+    return redirect(url_for("machinery_detail", mid=mid))
 
+@app.route("/portal/machinery/<int:mid>/delete-image/<int:iid>", methods=["POST"])
+@login_required
+def machinery_delete_image(mid, iid):
+    u = current_user()
+    m = q("SELECT * FROM machinery WHERE id = ?", (mid,), one=True)
+    if not m or (u["role"] != "admin" and m["owner_id"] != u["id"]):
+        abort(404)
+    img = q("SELECT * FROM machinery_images WHERE id = ? AND machinery_id = ?", (iid, mid), one=True)
+    if img:
+        try:
+            os.remove(os.path.join(MACHINERY_IMG_DIR, img["filename"]))
+        except OSError:
+            pass
+        if m.get("image_filename") == img["filename"]:
+            execute("UPDATE machinery SET image_filename = '' WHERE id = ?", (mid,))
+        execute("DELETE FROM machinery_images WHERE id = ?", (iid,))
+        flash("Image removed.", "ok")
+    return redirect(url_for("machinery_detail", mid=mid))
+
+
+# ---------------- machinery report upload (PDF) ----------------
+@app.route("/portal/machinery/<int:mid>/report/new", methods=["POST"])
+@login_required
+def machinery_report_new(mid):
+    u = current_user()
+    m = q("SELECT * FROM machinery WHERE id = ?", (mid,), one=True)
+    if not m or (u["role"] != "admin" and m["owner_id"] != u["id"] and m["company_id"] != u["company_id"]):
+        abort(404)
+    title = request.form.get("title", "").strip()
+    report_type = request.form.get("report_type", "Inspection")
+    summary = request.form.get("summary", "").strip()
+    status = request.form.get("status", "Draft")
+    pdf_file = request.files.get("pdf_file")
+    pdf_filename = ""
+    if pdf_file and pdf_file.filename and pdf_file.filename.lower().endswith(".pdf"):
+        pdf_filename = f"r_{mid}_{uuid.uuid4().hex}.pdf"
+        pdf_file.save(os.path.join(REPORT_PDF_DIR, pdf_filename))
+    if not title:
+        flash("Report title is required.", "err")
+        return redirect(url_for("machinery_detail", mid=mid))
+    execute(
+        """INSERT INTO reports (machinery_id, title, report_type, summary, pdf_filename, status, created_by, created_at)
+           VALUES (?,?,?,?,?,?,?,?)""",
+        (mid, title, report_type, summary, pdf_filename, status, u["id"], datetime.utcnow().isoformat()),
+    )
+    flash("Report added.", "ok")
+    return redirect(url_for("machinery_detail", mid=mid))
+
+@app.route("/portal/reports/<int:rid>/download-pdf")
+@login_required
+def report_download_pdf(rid):
+    u = current_user()
+    r = q("SELECT r.*, m.owner_id, m.company_id FROM reports r JOIN machinery m ON m.id = r.machinery_id WHERE r.id = ?", (rid,), one=True)
+    if not r or (u["role"] != "admin" and r["owner_id"] != u["id"] and r["company_id"] != u["company_id"]):
+        abort(404)
+    if not r.get("pdf_filename"):
+        abort(404)
+    path = os.path.join(REPORT_PDF_DIR, r["pdf_filename"])
+    if not os.path.exists(path):
+        abort(404)
+    return send_file(path, mimetype="application/pdf", as_attachment=True,
+                     download_name=f"report_{rid}.pdf")
 
 @app.route("/portal/reports/<int:rid>/delete", methods=["POST"])
 @login_required
 def report_delete(rid):
     u = current_user()
-    r = q("SELECT r.*, m.owner_id FROM reports r JOIN machinery m ON m.id=r.machinery_id WHERE r.id = ?", (rid,), one=True)
-    if not r or (u["role"] != "admin" and r["owner_id"] != u["id"]):
+    r = q("SELECT r.*, m.owner_id, m.company_id FROM reports r JOIN machinery m ON m.id = r.machinery_id WHERE r.id = ?", (rid,), one=True)
+    if not r or (u["role"] != "admin" and r["owner_id"] != u["id"] and r["company_id"] != u["company_id"]):
         abort(404)
+    if r.get("pdf_filename"):
+        path = os.path.join(REPORT_PDF_DIR, r["pdf_filename"])
+        if os.path.exists(path): os.remove(path)
     execute("DELETE FROM reports WHERE id = ?", (rid,))
     flash("Report deleted.", "ok")
-    return redirect(url_for("reports_list"))
+    return redirect(url_for("machinery_detail", mid=r["machinery_id"]))
+
+# ---------------- expiry reminders ----------------
+
+
+# ---------------- expiry reminders ----------------
+@app.route("/portal/machinery/<int:mid>/reminder/new", methods=["POST"])
+@login_required
+def expiry_reminder_new(mid):
+    u = current_user()
+    m = q("SELECT * FROM machinery WHERE id = ?", (mid,), one=True)
+    if not m or (u["role"] != "admin" and m["owner_id"] != u["id"]):
+        abort(404)
+    email = request.form.get("email", "").strip().lower()
+    reminder_date = request.form.get("reminder_date", "").strip()
+    days_before = request.form.get("days_before", 30, type=int)
+    if not email or not reminder_date:
+        flash("Email and reminder date are required.", "err")
+        return redirect(url_for("machinery_detail", mid=mid))
+    execute(
+        "INSERT INTO expiry_reminders (machinery_id, user_id, email, reminder_date, days_before, sent, created_at) VALUES (?,?,?,?,?,0,?)",
+        (mid, u["id"], email, reminder_date, days_before, datetime.utcnow().isoformat()),
+    )
+    flash("Reminder set. Email will be sent when due.", "ok")
+    return redirect(url_for("machinery_detail", mid=mid))
+
+@app.route("/portal/machinery/<int:mid>/reminder/<int:rid>/delete", methods=["POST"])
+@login_required
+def expiry_reminder_delete(mid, rid):
+    u = current_user()
+    r = q("SELECT * FROM expiry_reminders WHERE id = ? AND machinery_id = ?", (rid, mid), one=True)
+    if not r or (u["role"] != "admin" and r["user_id"] != u["id"]):
+        abort(404)
+    execute("DELETE FROM expiry_reminders WHERE id = ?", (rid,))
+    flash("Reminder removed.", "ok")
+    return redirect(url_for("machinery_detail", mid=mid))
+
+@app.route("/uploads/machinery/<path:filename>")
+@login_required
+def serve_machinery_image(filename):
+    return send_file(os.path.join(MACHINERY_IMG_DIR, filename))
 
 
 # ---------------- logos & company profile ----------------

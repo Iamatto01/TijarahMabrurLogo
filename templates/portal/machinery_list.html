@@ -27,7 +27,17 @@
             <tbody>
                 {% for m in machinery %}
                 <tr>
-                    <td><b>{{ m.name }}</b>{% if m.notes %}<br><small style="color:var(--muted)">{{ m.notes }}</small>{% endif %}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            {% if m.image_filename %}
+                            <img src="{{ url_for('serve_machinery_image', filename=m.image_filename) }}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid var(--line)" loading="lazy">
+                            {% endif %}
+                            <div>
+                                <a href="{{ url_for('machinery_detail', mid=m.id) }}" style="font-weight:700;color:var(--text)">{{ m.name }}</a>
+                                {% if m.notes %}<br><small style="color:var(--muted)">{{ m.notes[:60] }}{% if m.notes|length>60 %}…{% endif %}</small>{% endif %}
+                            </div>
+                        </div>
+                    </td>
                     <td>{{ m.category }}</td>
                     <td>{{ m.serial_no or '—' }}</td>
                     <td>{{ m.cert_no or '—' }}</td>

@@ -1,0 +1,176 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}{{ m.name }} | Machinery{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <div>
+        <a href="{{ url_for('machinery_list') }}" style="color:var(--muted);font-size:13px">← Back to Machinery</a>
+        <h1>{{ m.name }}</h1>
+    </div>
+    <div style="display:flex;gap:10px">
+        <a class="btn sm ghost" href="{{ url_for('machinery_edit', mid=m.id) }}">Edit</a>
+        <form method="post" action="{{ url_for('machinery_delete', mid=m.id) }}" onsubmit="return confirm('Delete this machinery and all its data?')">
+            <button class="btn sm danger" type="submit">Delete</button>
+        </form>
+    </div>
+</div>
+
+<div class="grid cols-2" style="margin-bottom:26px">
+    <!-- Info Card -->
+    <div class="panel">
+        <div class="panel-head"><h3>Machine Details</h3></div>
+        <div class="panel-body">
+            <table class="tbl detail-tbl">
+                <tr><td class="lbl">Category</td><td><span class="tag {{ m.status }}">{{ m.category }}</span></td></tr>
+                <tr><td class="lbl">Serial Number</td><td><b>{{ m.serial_no or '—' }}</b></td></tr>
+                <tr><td class="lbl">Cert No. (PMA/PMT)</td><td><b>{{ m.cert_no or '—' }}</b></td></tr>
+                <tr><td class="lbl">Location</td><td>{{ m.location or '—' }}</td></tr>
+                <tr><td class="lbl">Status</td><td><span class="tag {{ m.status }}">{{ m.status }}</span></td></tr>
+                <tr><td class="lbl">Next Inspection</td><td>
+                    {% if m.next_inspection %}
+                        <b class="{% if m.next_inspection <= today %}expired{% elif m.next_inspection <= today_plus_60 %}warn-date{% endif %}">{{ m.next_inspection }}</b>
+                    {% else %}—{% endif %}
+                </td></tr>
+                <tr><td class="lbl">Notes</td><td>{{ m.notes or '—' }}</td></tr>
+                {% if owner %}
+                <tr><td class="lbl">Owner</td><td>{{ owner.name }} ({{ owner.company }})</td></tr>
+                {% endif %}
+                {% if company %}
+                <tr><td class="lbl">Company</td><td>{{ company.name }}</td></tr>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+
+    <!-- Image Gallery -->
+    <div class="panel">
+        <div class="panel-head">
+            <h3>Images</h3>
+            <span style="font-size:12px;color:var(--muted)">{{ images|length }} image(s)</span>
+        </div>
+        <div class="panel-body">
+            {% if images %}
+            <div class="img-gallery">
+                {% for img in images %}
+                <div class="img-card">
+                    <a href="{{ url_for('serve_machinery_image', filename=img.filename) }}" target="_blank">
+                        <img src="{{ url_for('serve_machinery_image', filename=img.filename) }}" alt="{{ img.caption or 'Image' }}" loading="lazy">
+                    </a>
+                    {% if img.caption %}<span class="img-caption">{{ img.caption }}</span>{% endif %}
+                    <form method="post" action="{{ url_for('machinery_delete_image', mid=m.id, iid=img.id) }}" onsubmit="return confirm('Remove this image?')" style="position:absolute;top:6px;right:6px">
+                        <button class="btn sm danger" style="padding:2px 8px;font-size:11px" type="submit">✕</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty">No images uploaded yet.</div>
+            {% endif %}
+            <form method="post" action="{{ url_for('machinery_upload_image', mid=m.id) }}" enctype="multipart/form-data" style="margin-top:14px;display:flex;gap:8px;align-items:end;flex-wrap:wrap">
+                <div class="field" style="margin:0;flex:1;min-width:140px">
+                    <label>Upload Image</label>
+                    <input type="file" name="image" accept=".png,.jpg,.jpeg,.webp,.gif" required>
+                </div>
+                <div class="field" style="margin:0;flex:1;min-width:100px">
+                    <label>Caption</label>
+                    <input type="text" name="caption" placeholder="Optional">
+                </div>
+                <button class="btn sm" type="submit">Upload</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reports Section -->
+<div class="panel">
+    <div class="panel-head">
+        <h3>Reports ({{ reports|length }})</h3>
+        <button class="btn sm" onclick="document.getElementById('report-form').style.display='block'">+ Add Report</button>
+    </div>
+    <div class="panel-body">
+        <div id="report-form" style="display:none;margin-bottom:20px;padding:18px;background:var(--bg-2);border-radius:8px;border:1px solid var(--line)">
+            <h4 style="margin:0 0 14px">New Report</h4>
+            <form method="post" action="{{ url_for('machinery_report_new', mid=m.id) }}" enctype="multipart/form-data">
+                <div class="form-row">
+                    <div class="field"><label>Title *</label><input type="text" name="title" required></div>
+                    <div class="field"><label>Type</label><select name="report_type">{% for t in report_types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}</select></div>
+                </div>
+                <div class="field"><label>Summary</label><textarea name="summary" rows="2"></textarea></div>
+                <div class="form-row">
+                    <div class="field"><label>Status</label><select name="status">{% for s in report_statuses %}<option value="{{ s }}">{{ s }}</option>{% endfor %}</select></div>
+                    <div class="field"><label>Attach PDF</label><input type="file" name="pdf_file" accept=".pdf"></div>
+                </div>
+                <button class="btn" type="submit">Save Report</button>
+                <button class="btn ghost sm" type="button" onclick="this.closest('#report-form').style.display='none'">Cancel</button>
+            </form>
+        </div>
+        {% if reports %}
+        <div class="tbl-scroll">
+            <table class="tbl">
+                <thead><tr><th>Title</th><th>Type</th><th>Status</th><th>Author</th><th>Date</th><th>PDF</th><th></th></tr></thead>
+                <tbody>
+                    {% for r in reports %}
+                    <tr>
+                        <td><b>{{ r.title }}</b>{% if r.summary %}<br><small style="color:var(--muted)">{{ r.summary[:100] }}{% if r.summary|length > 100 %}…{% endif %}</small>{% endif %}</td>
+                        <td>{{ r.report_type }}</td>
+                        <td><span class="tag {{ r.status }}">{{ r.status }}</span></td>
+                        <td>{{ r.author }}</td>
+                        <td>{{ r.created_at[:10] }}</td>
+                        <td>{% if r.pdf_filename %}<a class="btn sm ghost" href="{{ url_for('report_download_pdf', rid=r.id) }}">📥 PDF</a>{% else %}—{% endif %}</td>
+                        <td>
+                            <form method="post" action="{{ url_for('report_delete', rid=r.id) }}" onsubmit="return confirm('Delete this report?')" style="display:inline">
+                                <button class="btn sm danger" type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}<div class="empty">No reports yet.</div>{% endif %}
+    </div>
+</div>
+
+<!-- Expiry Reminders -->
+<div class="panel">
+    <div class="panel-head">
+        <h3>Expiry Reminders</h3>
+        <button class="btn sm" onclick="document.getElementById('reminder-form').style.display='block'">+ Set Reminder</button>
+    </div>
+    <div class="panel-body">
+        <div id="reminder-form" style="display:none;margin-bottom:20px;padding:18px;background:var(--bg-2);border-radius:8px;border:1px solid var(--line)">
+            <h4 style="margin:0 0 14px">New Reminder</h4>
+            <form method="post" action="{{ url_for('expiry_reminder_new', mid=m.id) }}">
+                <div class="form-row">
+                    <div class="field"><label>Email *</label><input type="email" name="email" value="{{ owner.email if owner else '' }}" required></div>
+                    <div class="field"><label>Reminder Date *</label><input type="date" name="reminder_date" value="{{ m.next_inspection or '' }}" required></div>
+                </div>
+                <div class="field"><label>Days Before (for email)</label><input type="number" name="days_before" value="30" min="1" max="365"></div>
+                <button class="btn" type="submit">Set Reminder</button>
+                <button class="btn ghost sm" type="button" onclick="this.closest('#reminder-form').style.display='none'">Cancel</button>
+            </form>
+        </div>
+        {% if reminders %}
+        <div class="tbl-scroll">
+            <table class="tbl">
+                <thead><tr><th>Email</th><th>Reminder Date</th><th>Days Before</th><th>Sent</th><th></th></tr></thead>
+                <tbody>
+                    {% for r in reminders %}
+                    <tr>
+                        <td>{{ r.email }}</td>
+                        <td><b>{{ r.reminder_date }}</b></td>
+                        <td>{{ r.days_before }} days</td>
+                        <td>{% if r.sent %}✅ Sent{% else %}⏳ Pending{% endif %}</td>
+                        <td>
+                            <form method="post" action="{{ url_for('expiry_reminder_delete', mid=m.id, rid=r.id) }}" onsubmit="return confirm('Delete this reminder?')" style="display:inline">
+                                <button class="btn sm danger" type="submit">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}<div class="empty">No reminders set. Set one to get email notifications before inspection expiry.</div>{% endif %}
+    </div>
+</div>
+{% endblock %}
