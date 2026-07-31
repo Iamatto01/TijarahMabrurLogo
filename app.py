@@ -185,13 +185,14 @@ def logout():
 @login_required
 def dashboard():
     u = current_user()
+    from datetime import date, timedelta
+    cutoff = (date.today() + timedelta(days=60)).isoformat()
     if u["role"] == "admin":
         stats = {
             "machinery": q("SELECT COUNT(*) c FROM machinery", one=True)["c"],
             "clients": q("SELECT COUNT(*) c FROM users WHERE role='client'", one=True)["c"],
             "reports": q("SELECT COUNT(*) c FROM reports", one=True)["c"],
-            "expiring": q("""SELECT COUNT(*) c FROM machinery
-                            WHERE next_inspection != '' AND next_inspection <= date('now','+60 day')""", one=True)["c"],
+            "expiring": q("SELECT COUNT(*) c FROM machinery WHERE next_inspection != '' AND next_inspection <= ?", (cutoff,), one=True)["c"],
         }
         recent_machinery = q("""SELECT m.*, u.company AS owner_company FROM machinery m
                                 LEFT JOIN users u ON u.id = m.owner_id
@@ -209,7 +210,7 @@ def dashboard():
             "reports": q(f"""SELECT COUNT(*) c FROM reports r JOIN machinery m ON m.id=r.machinery_id
                             WHERE {scope}""", params, one=True)["c"],
             "expiring": q(f"""SELECT COUNT(*) c FROM machinery m WHERE {scope}
-                            AND m.next_inspection != '' AND m.next_inspection <= date('now','+60 day')""", params, one=True)["c"],
+                            AND m.next_inspection != '' AND m.next_inspection <= ?""", (*params, cutoff), one=True)["c"],
         }
         recent_machinery = q(f"""SELECT m.*, '' AS owner_company FROM machinery m
                                 WHERE {scope} ORDER BY m.created_at DESC LIMIT 5""", params)
@@ -451,6 +452,46 @@ def report_delete(rid):
     execute("DELETE FROM reports WHERE id = ?", (rid,))
     flash("Report deleted.", "ok")
     return redirect(url_for("machinery_detail", mid=r["machinery_id"]))
+
+
+# ---------------- portal: reports list & new ----------------
+@app.route("/portal/reports")
+@login_required
+def reports_list():
+    u = current_user()
+    scope, params = scope_clause(u)
+    rows = q(f"""SELECT r.*, m.name AS machinery_name FROM reports r
+                 JOIN machinery m ON m.id = r.machinery_id
+                 WHERE {scope} ORDER BY r.created_at DESC""", params)
+    return render_template("portal/reports_list.html", reports=rows)
+
+
+@app.route("/portal/reports/new", methods=["GET", "POST"])
+@login_required
+def report_new():
+    u = current_user()
+    if request.method == "POST":
+        f = request.form
+        title = f.get("title", "").strip()
+        report_type = f.get("report_type", "Inspection")
+        summary = f.get("summary", "").strip()
+        status = f.get("status", "Draft")
+        machinery_id = f.get("machinery_id", type=int)
+        if not title or not machinery_id:
+            flash("Title and machine are required.", "err")
+            return redirect(url_for("report_new"))
+        now = datetime.utcnow().isoformat()
+        execute(
+            "INSERT INTO reports (machinery_id, title, report_type, summary, status, created_by, created_at) VALUES (?,?,?,?,?,?,?)",
+            (machinery_id, title, report_type, summary, status, u["id"], now),
+        )
+        flash("Report created.", "ok")
+        return redirect(url_for("reports_list"))
+    scope, params = scope_clause(u)
+    machines = q(f"SELECT id, name FROM machinery m WHERE {scope} ORDER BY m.name", params)
+    return render_template("portal/report_form.html", machines=machines,
+                           report_types=REPORT_TYPES, report_statuses=REPORT_STATUSES)
+
 
 # ---------------- expiry reminders ----------------
 
