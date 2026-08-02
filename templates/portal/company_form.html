@@ -37,7 +37,26 @@
                 <input type="file" name="logo" accept=".png,.jpg,.jpeg,.webp,.gif">
                 <small style="color:var(--muted)">Logo will appear in the client portal sidebar.</small>
             </div>
-            <button class="btn" type="submit">{{ 'Save Changes' if c else 'Create Company' }}</button>
+
+            {% if not c %}
+            <!-- Initial Client Credentials -->
+            <div style="background:#f4f8fc;border:1px solid var(--line);border-radius:8px;padding:14px;margin:16px 0">
+                <h4 style="margin:0 0 10px;font-size:14px;color:var(--accent-2)">🔑 Initial Client Login Credentials</h4>
+                <div class="form-row">
+                    <div class="field">
+                        <label>Client Login Email</label>
+                        <input type="email" name="client_email" placeholder="e.g. client@company.com">
+                        <small style="color:var(--muted)">Auto-generated if left blank.</small>
+                    </div>
+                    <div class="field">
+                        <label>Client Login Password</label>
+                        <input type="text" name="client_password" value="client123" placeholder="client123">
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <button class="btn" type="submit">{{ 'Save Changes' if c else 'Create Company & Client Account' }}</button>
         </form>
     </div>
 </div>

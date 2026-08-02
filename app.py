@@ -37,6 +37,30 @@ def serve_rfq_img(filename):
     from flask import send_from_directory
     return send_from_directory(RFQ_IMG_DIR, filename)
 
+@app.route("/uploads/logos/<filename>")
+@app.route("/portal/serve_logo/<filename>")
+def serve_logo(filename):
+    from flask import send_from_directory
+    return send_from_directory(LOGO_DIR, filename)
+
+@app.route("/uploads/machinery/<filename>")
+@app.route("/portal/serve_machinery_image/<filename>")
+def serve_machinery_image(filename):
+    from flask import send_from_directory
+    return send_from_directory(MACHINERY_IMG_DIR, filename)
+
+@app.route("/uploads/machinery_docs/<filename>")
+@app.route("/portal/serve_machinery_doc/<filename>")
+def serve_machinery_doc(filename):
+    from flask import send_from_directory
+    return send_from_directory(MACHINERY_DOC_DIR, filename)
+
+@app.route("/uploads/reports/<filename>")
+@app.route("/portal/serve_report_pdf/<filename>")
+def serve_report_pdf(filename):
+    from flask import send_from_directory
+    return send_from_directory(REPORT_PDF_DIR, filename)
+
 @app.route("/favicon.ico")
 def favicon():
     from flask import send_from_directory
@@ -296,6 +320,7 @@ def machinery_list():
             WHERE {where} ORDER BY m.created_at DESC LIMIT ? OFFSET ?""",
         tuple(args) + (PER_PAGE, (page - 1) * PER_PAGE),
     )
+    rows = [dict(r) for r in rows]
     return render_template("portal/machinery_list.html", machinery=rows, search=search,
                            cert_type=cert_type, page=page, pages=pages, total=total)
 
@@ -638,40 +663,14 @@ def expiry_reminder_delete(mid, rid):
     flash("Reminder removed.", "ok")
     return redirect(url_for("machinery_detail", mid=mid))
 
-@app.route("/uploads/machinery/<path:filename>")
-@login_required
-def serve_machinery_image(filename):
-    return send_file(os.path.join(MACHINERY_IMG_DIR, filename))
-
-@app.route("/uploads/machinery_docs/<path:filename>")
-@login_required
-def serve_machinery_doc(filename):
-    return send_file(os.path.join(MACHINERY_DOC_DIR, filename))
 
 
 
-# ---------------- employee portal (Google Sheets embed) ----------------
+# ---------------- employee portal (redirected) ----------------
 @app.route("/portal/employee")
 @login_required
 def employee_portal():
-    raw_url = os.getenv("EMPLOYEE_SHEET_URL", "").strip()
-    sheet_url = raw_url
-    if raw_url and "<iframe" in raw_url and "src=" in raw_url:
-        match = re.search(r'src=["\']([^"\']+)["\']', raw_url)
-        if match:
-            sheet_url = match.group(1).replace("&amp;", "&")
-
-    edit_url = sheet_url
-    if sheet_url and "docs.google.com/spreadsheets" in sheet_url:
-        sp_id_match = re.search(r'/d/([a-zA-Z0-9-_]+)', sheet_url)
-        if sp_id_match:
-            sp_id = sp_id_match.group(1)
-            # Google blocks /edit inside iframe. Use /pubhtml or /preview for iframe and /edit for button.
-            if "/edit" in sheet_url:
-                sheet_url = f"https://docs.google.com/spreadsheets/d/{sp_id}/pubhtml?widget=true&headers=false"
-            edit_url = f"https://docs.google.com/spreadsheets/d/{sp_id}/edit"
-
-    return render_template("portal/employee_portal.html", sheet_url=sheet_url, edit_url=edit_url, raw_url=raw_url)
+    return redirect(url_for("rfq_dashboard"))
 
 
 # ---------------- user management (admin) ----------------
@@ -703,10 +702,7 @@ def user_delete(uid):
 
 
 # ---------------- logos & company profile ----------------
-@app.route("/uploads/logos/<path:filename>")
-@login_required
-def serve_logo(filename):
-    return send_file(os.path.join(LOGO_DIR, filename))
+
 
 
 def _save_logo(file_storage, company_id):
@@ -794,7 +790,8 @@ def client_new():
 def companies_list():
     rows = q("""SELECT c.*,
                     (SELECT COUNT(*) FROM users u WHERE u.company_id = c.id) AS user_count,
-                    (SELECT COUNT(*) FROM machinery m WHERE m.company_id = c.id) AS machine_count
+                    (SELECT COUNT(*) FROM machinery m WHERE m.company_id = c.id) AS machine_count,
+                    (SELECT email FROM users u WHERE u.company_id = c.id ORDER BY id ASC LIMIT 1) AS client_email
                 FROM companies c ORDER BY c.created_at DESC""")
     return render_template("portal/companies_list.html", companies=rows)
 
@@ -810,10 +807,11 @@ def company_new():
         elif q("SELECT id FROM companies WHERE name = ?", (name,), one=True):
             flash("A company with that name already exists.", "err")
         else:
+            now = datetime.utcnow().isoformat()
             cid = execute(
                 "INSERT INTO companies (name, reg_no, address, phone, logo_filename, created_at) VALUES (?,?,?,?,?,?)",
                 (name, f.get("reg_no", "").strip(), f.get("address", "").strip(),
-                 f.get("phone", "").strip(), "", datetime.utcnow().isoformat()),
+                 f.get("phone", "").strip(), "", now),
             )
             lf = request.files.get("logo")
             if lf and lf.filename:
@@ -822,7 +820,23 @@ def company_new():
                     execute("UPDATE companies SET logo_filename=? WHERE id=?", (stored, cid))
                 else:
                     flash("Logo must be PNG/JPG/WEBP/GIF — company saved without logo.", "warn")
-            flash("Company created.", "ok")
+
+            # Create Initial Client Account for this company so they can log in
+            cemail = f.get("client_email", "").strip().lower()
+            cpass = f.get("client_password", "").strip() or "client123"
+            if not cemail:
+                slug = re.sub(r'[^a-zA-Z0-9]', '', name.lower())[:12] or "company"
+                cemail = f"client@{slug}.com"
+            
+            if not q("SELECT id FROM users WHERE email = ?", (cemail,), one=True):
+                execute(
+                    "INSERT INTO users (name, email, password_hash, role, company, company_id, created_at) VALUES (?,?,?,?,?,?,?)",
+                    (f"{name} Client", cemail, generate_password_hash(cpass), "client", name, cid, now)
+                )
+                flash(f"Company created! Client Login: {cemail} / Password: {cpass}", "ok")
+            else:
+                flash(f"Company created! (Client email {cemail} already exists).", "ok")
+
             return redirect(url_for("companies_list"))
     return render_template("portal/company_form.html", c=None)
 

@@ -432,67 +432,84 @@ def init_db():
         conn.executescript(INDEXES)
         conn.commit()
 
-    admin_email = "muhammadsaifudinmj@gmail.com"
+    admin_email = "tmsb@tijarahmabrur.com"
+    # Update existing admin account email if present
+    execute("UPDATE users SET email = ? WHERE role = 'admin' OR email = 'muhammadsaifudinmj@gmail.com'", (admin_email,))
+    
     row = q("SELECT id FROM users WHERE email = ?", (admin_email,), one=True)
     if row is None:
         execute(
             "INSERT INTO users (name, email, password_hash, role, company, created_at) VALUES (?,?,?,?,?,?)",
-            ("Muhammad Saifudin", admin_email, generate_password_hash("admin"),
+            ("TMSB Admin", admin_email, generate_password_hash("admin"),
              "admin", "Tijarah Mabrur (M) Sdn. Bhd.", datetime.utcnow().isoformat()),
         )
 
-    row = q("SELECT id FROM companies WHERE name = ?", ("Demo Industries Sdn. Bhd.",), one=True)
-    if row is None:
-        cid = execute(
-            "INSERT INTO companies (name, reg_no, address, phone, email, logo_filename, created_at) VALUES (?,?,?,?,?,?,?)",
-            ("Demo Industries Sdn. Bhd.", "202001000000 (0000000-X)",
-             "No. 1, Jalan Industri, 40000 Shah Alam, Selangor.", "+603 5000 0000",
-             "demo@demo.com", "", datetime.utcnow().isoformat()),
-        )
-        demo_company_id = cid
-    else:
-        demo_company_id = row["id"] if _ENGINE == "pg" else row[0]
+    # ── Seed Dozens of Companies & Clients for Demo ──
+    companies_seed = [
+        ("Petronas Chemicals Group Berhad", "199801003700", "Complex Kerteh, 24300 Kerteh, Terengganu", "+609-826 8000", "petronas@tijarahmabrur.com"),
+        ("Top Glove Corporation Bhd", "199901004000", "Lot 4969, Jalan Tepi Sungai, 41100 Klang, Selangor", "+603-3392 1992", "topglove@tijarahmabrur.com"),
+        ("Nestlé Products Sdn. Bhd.", "197901005000", "Batu Tiga Industrial Estate, 40000 Shah Alam, Selangor", "+603-5510 6888", "nestle@tijarahmabrur.com"),
+        ("Shell Malaysia Trading Sdn. Bhd.", "196501001000", "Refinery Complex, 71000 Port Dickson, N.Sembilan", "+606-647 1311", "shell@tijarahmabrur.com"),
+        ("Sime Darby Industrial Sdn. Bhd.", "198201002000", "1, Jalan Puchong, 47100 Puchong, Selangor", "+603-8060 8000", "simedarby@tijarahmabrur.com"),
+        ("Tenaga Nasional Berhad (TNB)", "199001009000", "129, Jalan Bangsar, 59200 Kuala Lumpur", "+603-2296 5566", "tnb@tijarahmabrur.com"),
+        ("Dialog Group Berhad", "198901008000", "Pengerang Deepwater Terminal, 81600 Pengerang, Johor", "+607-817 1000", "dialog@tijarahmabrur.com"),
+        ("Sapura Energy Berhad", "201101007000", "Mines Resort City, 43300 Seri Kembangan, Selangor", "+603-8659 8888", "sapura@tijarahmabrur.com"),
+        ("Gas Malaysia Berhad", "199201006000", "Seksyen 13, 40100 Shah Alam, Selangor", "+603-5518 0100", "gas@tijarahmabrur.com"),
+        ("MISC Berhad", "196801000500", "Menara Dayabumi, 50050 Kuala Lumpur", "+603-2273 8088", "misc@tijarahmabrur.com"),
+        ("Lotte Chemical Titan (M) Sdn. Bhd.", "199101003000", "PLO 312, 81700 Pasir Gudang, Johor", "+607-251 2111", "lotte@tijarahmabrur.com"),
+        ("Boustead Heavy Industries Corp", "197101000800", "Pengkalan TLDM, 32100 Lumut, Perak", "+605-683 2111", "boustead@tijarahmabrur.com"),
+        ("Westports Malaysia Sdn. Bhd.", "199301002200", "Pulau Indah, 42009 Port Klang, Selangor", "+603-3169 4000", "westports@tijarahmabrur.com"),
+        ("MMC Corporation Berhad", "197601001100", "Jalan Sultan Ismail, 50250 Kuala Lumpur", "+603-2171 6000", "mmc@tijarahmabrur.com"),
+        ("Lestro KL Sdn Bhd", "202101009900", "Kuchai Entrepreneurs Park, 58200 Kuala Lumpur", "+603-7980 1122", "lestro@tijarahmabrur.com"),
+    ]
 
-    client_email = "client@demo.com"
-    row = q("SELECT id FROM users WHERE email = ?", (client_email,), one=True)
-    if row is None:
-        cid2 = execute(
-            "INSERT INTO users (name, email, password_hash, role, company, company_id, created_at) VALUES (?,?,?,?,?,?,?)",
-            ("Demo Client", client_email, generate_password_hash("client"),
-             "client", "Demo Industries Sdn. Bhd.", demo_company_id,
-             datetime.utcnow().isoformat()),
-        )
-        client_id = cid2
-        
-        # Default Employee user
-        execute(
-            "INSERT INTO users (name, email, password_hash, role, company, company_id, created_at) VALUES (?,?,?,?,?,?,?)",
-            ("Demo Employee", "employee@demo.com", generate_password_hash("employee"),
-             "employee", "Demo Industries Sdn. Bhd.", demo_company_id,
-             datetime.utcnow().isoformat()),
-        )
+    now = datetime.utcnow().isoformat()
+    machinery_templates = [
+        ("Air Receiver Tank", "Pressure Vessel", "PMT"),
+        ("Overhead Traveling Crane", "Lifting Device", "PMA"),
+        ("Water Tube Steam Boiler", "Boiler", "PMD"),
+        ("Screw Air Compressor", "Compressor", "PMT"),
+        ("Heat Exchanger Vessel", "Pressure Vessel", "PMT"),
+        ("Hydraulic Goods Hoist", "Lifting Device", "PMA"),
+        ("Thermal Oil Heater", "Boiler", "PMD"),
+        ("High Pressure Storage Tank", "Pressure Vessel", "PMT"),
+    ]
 
-        now = datetime.utcnow().isoformat()
-        for m_data in [
-            ("Air Receiver Tank A-101", "Pressure Vessel", "SN-AR-1001", "PMA-SEL-2024-0001", "Semenyih Yard", "Active", "2026-11-20", client_id, demo_company_id, "Annual DOSH inspection due", now),
-            ("Overhead Crane OH-02", "Lifting Device", "SN-OC-2200", "PMA-SEL-2024-0142", "Semenyih Yard", "Active", "2026-09-05", client_id, demo_company_id, "", now),
-            ("Steam Boiler B-7", "Boiler", "SN-BL-7770", "PMA-JHR-2023-0910", "Bandar Penawar", "Under Maintenance", "2026-08-01", client_id, demo_company_id, "Burner service in progress", now),
-            ("Puma Compressor PU-550", "Compressor", "SN-PU-5550", "-", "HQ Setapak", "Active", "2027-01-15", None, None, "Company demo unit", now),
-        ]:
-            execute(
-                "INSERT INTO machinery (name, category, serial_no, cert_no, location, status, next_inspection, owner_id, company_id, notes, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                m_data,
+    for i, (cname, reg, addr, phone, cemail) in enumerate(companies_seed):
+        crow = q("SELECT id FROM companies WHERE name = ?", (cname,), one=True)
+        if crow is None:
+            cid = execute(
+                "INSERT INTO companies (name, reg_no, address, phone, email, logo_filename, created_at) VALUES (?,?,?,?,?,?,?)",
+                (cname, reg, addr, phone, cemail, "", now),
             )
-        admin = q("SELECT id FROM users WHERE email = ?", (admin_email,), one=True)
-        admin_id = admin["id"] if _ENGINE == "pg" else admin[0]
-        for r_data in [
-            (1, "Annual Statutory Inspection - A-101", "Inspection", "Vessel inspected per OSHA 1994. No defects found.", "Approved", admin_id, now),
-            (3, "Boiler Burner Maintenance", "Maintenance", "Burner nozzle replaced, combustion test passed.", "Submitted", admin_id, now),
-        ]:
-            execute(
-                "INSERT INTO reports (machinery_id, title, report_type, summary, status, created_by, created_at) VALUES (?,?,?,?,?,?,?)",
-                r_data,
+        else:
+            cid = crow["id"] if _ENGINE == "pg" else crow[0]
+
+        # Seed Client Account for this Company if not existing
+        urow = q("SELECT id FROM users WHERE email = ?", (cemail,), one=True)
+        if urow is None:
+            uid = execute(
+                "INSERT INTO users (name, email, password_hash, role, company, company_id, created_at) VALUES (?,?,?,?,?,?,?)",
+                (f"{cname} (PIC)", cemail, generate_password_hash("client123"), "client", cname, cid, now),
             )
+        else:
+            uid = urow["id"] if _ENGINE == "pg" else urow[0]
+
+        # Seed Machinery items for this Company (2-3 machines per company)
+        m_count = q("SELECT COUNT(*) c FROM machinery WHERE company_id = ?", (cid,), one=True)["c"]
+        if m_count == 0:
+            for j in range(2 + (i % 2)):
+                m_name, m_cat, m_type = machinery_templates[(i + j) % len(machinery_templates)]
+                sn = f"SN-{m_type}-{1000 + i*10 + j}"
+                cert = f"{m_type}-DOSH-2024-{2000 + i*10 + j}"
+                loc = addr.split(",")[-1].strip() if "," in addr else "Site Yard"
+                status = "Active" if j == 0 else ("Under Maintenance" if j == 1 and i % 3 == 0 else "Active")
+                next_insp = f"2026-{(10 + j) % 12 + 1:02d}-15"
+                execute(
+                    """INSERT INTO machinery (name, category, cert_type, serial_no, cert_no, location, status, next_inspection, owner_id, company_id, notes, created_at)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    (f"{m_name} #{j+1}", m_cat, m_type, sn, cert, loc, status, next_insp, uid, cid, "Statutory inspection verified per OSHA 1994", now)
+                )
 
     # ── RFQ seed data ──
     rfq_check = q("SELECT id FROM rfq_entries LIMIT 1", one=True)
