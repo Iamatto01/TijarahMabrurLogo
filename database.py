@@ -515,44 +515,128 @@ def init_db():
     rfq_check = q("SELECT id FROM rfq_entries LIMIT 1", one=True)
     if rfq_check is None:
         now = datetime.utcnow().isoformat()
-        # Seed dropdown lists
+        # Seed dropdown lists matching Master DB
         list_seeds = [
-            ("job_code", ["DOSH", "DOD1", "GSHC", "GSMC"]),
+            ("job_code", ["DOSH", "DOD1", "EPCC", "Asset (PKNS)", "Assessment", "Training", "OSHC", "PPEai", "GSHC", "GSMC"]),
             ("job_status", ["NEW TASK", "Site Visit", "Assessment", "QUOTE", "Required more details", "PPCC", "Waiting info from client", "Ready to discuss", "Quotation sent", "Quotation received", "Quotation waiting for approval", "PO in progress", "PO ESTIMATI", "WORK PROGRESS", "Waiting for deposit", "INVOICE", "PAYMENT", "LOST"]),
-            ("introducer", ["Mr. Mish", "Rico", "Shamsul JC", "A. Hafiz", "Faizt Bakhtiar"]),
-            ("source", ["TMSR", "INSASR", "SPECTRO", "ADV", "SUPHIN", "3rd party"]),
-            ("open_by", ["Shalhin", "Leena", "Salihah", "Shahrul", "Aiman"]),
-            ("job_title", ["New Register", "Renew PMT/PMA", "Service Call", "GLOBAL INSPECTION", "Calibrate SV PG", "Design Approval"]),
+            ("introducer", ["Doc", "Syukri", "A. Hafiz", "Zed", "Sharifah", "Captain", "Mr. Mish", "Rico", "Shamsul JC", "Faizt Bakhtiar"]),
+            ("source", ["TMSB", "TMSR", "SPECTRO", "ADV", "INSASR", "SAFEAIR", "SUPHIN", "3rd party"]),
+            ("open_by", ["Shalhin", "Leena", "Salihah", "Shahrul", "Aiman", "Rico", "Mish"]),
+            ("job_title", ["New Register", "Renew PMT/PMA", "Service Call", "GLOBAL INSPECTION", "Calibrate SV PG", "Design Approval", "Hydrostatic Test", "UTTM Report"]),
             ("level", ["Low", "Medium", "High"]),
         ]
         for lt, vals in list_seeds:
             for i, v in enumerate(vals):
                 execute("INSERT INTO rfq_lists (list_type, value, sort_order) VALUES (?,?,?)", (lt, v, i))
 
-        # Seed customers
+        # Seed Customers matching Master DB
         cust_seeds = [
-            ("Rosul", "012-8788955", "", "Lestro KL Sdn Bhd", "Kuchai", "Johor"),
-            ("S Sanesswaran", "102432727", "sannes512@gmail.com", "Vantage MC Auto Sdn Bhd", "Telok Panglime Garang", "Selangor"),
-            ("Angel", "012-670 2992", "", "Starkouch Ilo", "Klang", "Selangor"),
+            ("Petronas PIC", "012-8268000", "petronas@tijarahmabrur.com", "Petronas Chemicals Group Berhad", "Kerteh", "Terengganu"),
+            ("Top Glove PIC", "013-3921992", "topglove@tijarahmabrur.com", "Top Glove Corporation Bhd", "Klang", "Selangor"),
+            ("Nestlé PIC", "012-5510688", "nestle@tijarahmabrur.com", "Nestlé Products Sdn. Bhd.", "Shah Alam", "Selangor"),
+            ("Shell PIC", "016-6471311", "shell@tijarahmabrur.com", "Shell Malaysia Trading Sdn. Bhd.", "Port Dickson", "N. Sembilan"),
+            ("Sime Darby PIC", "013-8060800", "simedarby@tijarahmabrur.com", "Sime Darby Industrial Sdn. Bhd.", "Puchong", "Selangor"),
+            ("TNB PIC", "012-2296556", "tnb@tijarahmabrur.com", "Tenaga Nasional Berhad (TNB)", "Jalan Bangsar", "Kuala Lumpur"),
+            ("Dialog PIC", "017-8171000", "dialog@tijarahmabrur.com", "Dialog Group Berhad", "Pengerang", "Johor"),
+            ("Sapura PIC", "013-8659888", "sapura@tijarahmabrur.com", "Sapura Energy Berhad", "Seri Kembangan", "Selangor"),
+            ("Gas Malaysia PIC", "012-5518010", "gas@tijarahmabrur.com", "Gas Malaysia Berhad", "Shah Alam", "Selangor"),
+            ("MISC PIC", "012-2273808", "misc@tijarahmabrur.com", "MISC Berhad", "Kuala Lumpur", "Kuala Lumpur"),
+            ("Rosul", "012-8788955", "rosul@lestro.com", "Lestro KL Sdn Bhd", "Kuchai", "Kuala Lumpur"),
+            ("S Sanesswaran", "010-2432727", "sannes512@gmail.com", "Vantage MC Auto Sdn Bhd", "Telok Panglime Garang", "Selangor"),
+            ("Angel", "012-6702992", "angel@starkouch.com", "Starkouch Ilo", "Klang", "Selangor"),
             ("Mr Yun", "013-8755338", "oylan-isca@emaling.com.my", "Bom Ying Glass", "Kepong", "Selangor"),
         ]
         for cs in cust_seeds:
             execute("INSERT INTO rfq_customers (name, mobile, email, company_name, location, state, created_at) VALUES (?,?,?,?,?,?,?)",
                     (*cs, now))
 
-        # Seed sample RFQ entries
-        rfq_seeds = [
-            ("RFQ-26001", "Lestro KL Sdn Bhd", "DOSH", "New Register", 3000, "Rawang", "Selangor", "2026-06-01", "Site Visit", "Medium", "TMSR", "Shalhin", "RFQ"),
-            ("RFQ-26002", "ABC Eng", "DOSH", "Renew PMT/PMA", 0, "Tg. Pelepas", "Johor", "2026-06-15", "NEW TASK", "High", "TMSR", "Shalhin", "RFQ"),
-            ("RFQ-26003", "Vantage MC Auto Sdn Bhd", "DOD1", "Service Call", 15000, "Shah Alam", "Selangor", "2026-05-20", "Quotation sent", "Low", "ADV", "Leena", "QUO"),
-            ("RFQ-26004", "IQDC Eng", "DOSH", "GLOBAL INSPECTION", 8500, "Kulim", "Kedah", "2026-04-10", "PO in progress", "", "INSASR", "Leena", "PO"),
-            ("RFQ-26005", "Bom Ying Glass", "GSHC", "Calibrate SV PG", 2500, "Kepong", "Selangor", "2026-03-01", "INVOICE", "", "SPECTRO", "Shalhin", "INV"),
-            ("RFQ-26006", "Top Glove Sdn Bhd", "DOD1", "New Register", 12000, "Klang", "Selangor", "2026-01-15", "PAYMENT", "", "TMSR", "Leena", "PYMT"),
+        # Seed 30+ RFQ Entries across all 7 stages matching Google Sheet amounts & categories
+        rfq_data_list = [
+            # Stage: RFQ
+            ("RFQ-26001", "Petronas Chemicals Group Berhad", "EPCC", "New Register", 45000, "Kerteh", "Terengganu", "2026-06-01", "Site Visit", "High", "Doc", "TMSB", "Shalhin", "RFQ", 22000, 23000, 18500, 10, 5, 1150, 3, 690),
+            ("RFQ-26002", "Top Glove Corporation Bhd", "DOSH", "Renew PMT/PMA", 18500, "Klang", "Selangor", "2026-06-05", "NEW TASK", "Medium", "Syukri", "TMSR", "Shalhin", "RFQ", 8000, 10500, 8500, 20, 5, 525, 2, 210),
+            ("RFQ-26003", "Lestro KL Sdn Bhd", "DOSH", "New Register", 12000, "Kuchai", "Kuala Lumpur", "2026-06-08", "Assessment", "Low", "A. Hafiz", "SPECTRO", "Leena", "RFQ", 5000, 7000, 5800, 10, 5, 350, 2, 140),
+            ("RFQ-26004", "Westports Malaysia Sdn. Bhd.", "DOD1", "GLOBAL INSPECTION", 28000, "Port Klang", "Selangor", "2026-06-12", "Required more details", "High", "Zed", "ADV", "Salihah", "RFQ", 12000, 16000, 13000, 15, 5, 800, 3, 480),
+            ("RFQ-26005", "MMC Corporation Berhad", "Assessment", "Service Call", 15000, "Kuala Lumpur", "Kuala Lumpur", "2026-06-14", "Site Visit", "Medium", "Doc", "TMSB", "Shahrul", "RFQ", 6500, 8500, 7000, 10, 5, 425, 2, 170),
+            
+            # Stage: QUO
+            ("RFQ-26006", "Nestlé Products Sdn. Bhd.", "DOSH", "Renew PMT/PMA", 125000, "Shah Alam", "Selangor", "2026-05-10", "Quotation sent", "High", "Doc", "TMSB", "Shalhin", "QUO", 60000, 65000, 52000, 30, 5, 3250, 3, 1950),
+            ("RFQ-26007", "Shell Malaysia Trading Sdn. Bhd.", "EPCC", "Design Approval", 480000, "Port Dickson", "N. Sembilan", "2026-05-15", "Quotation waiting for approval", "High", "Syukri", "TMSB", "Leena", "QUO", 260000, 220000, 180000, 50, 5, 11000, 3, 6600),
+            ("RFQ-26008", "Dialog Group Berhad", "DOSH", "GLOBAL INSPECTION", 95000, "Pengerang", "Johor", "2026-05-18", "Quotation received", "Medium", "A. Hafiz", "SPECTRO", "Salihah", "QUO", 45000, 50000, 41000, 20, 5, 2500, 2, 1000),
+            ("RFQ-26009", "Tenaga Nasional Berhad (TNB)", "Training", "Service Call", 65000, "Kuala Lumpur", "Kuala Lumpur", "2026-05-22", "Ready to discuss", "Low", "Sharifah", "ADV", "Shahrul", "QUO", 28000, 37000, 31000, 10, 5, 1850, 2, 740),
+            ("RFQ-26010", "Lotte Chemical Titan (M) Sdn. Bhd.", "DOSH", "Calibrate SV PG", 42000, "Pasir Gudang", "Johor", "2026-05-25", "Quotation sent", "Medium", "Doc", "TMSR", "Aiman", "QUO", 18000, 24000, 19500, 10, 5, 1200, 3, 720),
+
+            # Stage: PO
+            ("RFQ-26011", "Sime Darby Industrial Sdn. Bhd.", "DOD1", "Renew PMT/PMA", 45000, "Puchong", "Selangor", "2026-04-05", "PO in progress", "High", "Doc", "TMSB", "Shalhin", "PO", 20000, 25000, 20000, 20, 5, 1250, 3, 750),
+            ("RFQ-26012", "Sapura Energy Berhad", "EPCC", "GLOBAL INSPECTION", 95000, "Seri Kembangan", "Selangor", "2026-04-12", "WORK PROGRESS", "High", "Syukri", "TMSB", "Leena", "PO", 48000, 47000, 38000, 30, 5, 2350, 3, 1410),
+            ("RFQ-26013", "Gas Malaysia Berhad", "GSHC", "Calibrate SV PG", 18500, "Shah Alam", "Selangor", "2026-04-18", "PO ESTIMATI", "Medium", "Captain", "ADV", "Salihah", "PO", 8500, 10000, 8000, 10, 5, 500, 2, 200),
+            ("RFQ-26014", "Boustead Heavy Industries Corp", "DOSH", "New Register", 35000, "Lumut", "Perak", "2026-04-22", "WORK PROGRESS", "Medium", "Doc", "INSASR", "Aiman", "PO", 16000, 19000, 15500, 20, 5, 950, 2, 380),
+
+            # Stage: INV
+            ("RFQ-26015", "Vantage MC Auto Sdn Bhd", "DOD1", "Service Call", 38000, "Shah Alam", "Selangor", "2026-03-05", "INVOICE", "Medium", "Doc", "TMSB", "Shalhin", "INV", 16000, 22000, 18000, 50, 5, 1100, 3, 660),
+            ("RFQ-26016", "Starkouch Ilo", "Asset (PKNS)", "Renew PMT/PMA", 24000, "Klang", "Selangor", "2026-03-12", "Waiting for deposit", "Low", "A. Hafiz", "SPECTRO", "Leena", "INV", 10000, 14000, 11500, 50, 5, 700, 2, 280),
+            ("RFQ-26017", "Bom Ying Glass", "GSMC", "Calibrate SV PG", 16500, "Kepong", "Selangor", "2026-03-18", "INVOICE", "Low", "Zed", "SAFEAIR", "Salihah", "INV", 7000, 9500, 7800, 30, 5, 475, 2, 190),
+            ("RFQ-26018", "MISC Berhad", "OSHC", "GLOBAL INSPECTION", 42000, "Kuala Lumpur", "Kuala Lumpur", "2026-03-25", "INVOICE", "High", "Doc", "TMSB", "Shahrul", "INV", 18000, 24000, 19800, 50, 5, 1200, 2, 480),
+
+            # Stage: PYMT
+            ("RFQ-26019", "Petronas Chemicals Group Berhad", "DOSH", "New Register", 250000, "Kerteh", "Terengganu", "2026-01-10", "PAYMENT", "High", "Doc", "TMSB", "Shalhin", "PYMT", 120000, 130000, 105000, 100, 5, 6500, 3, 3900),
+            ("RFQ-26020", "Top Glove Corporation Bhd", "DOD1", "Renew PMT/PMA", 180000, "Klang", "Selangor", "2026-01-18", "PAYMENT", "High", "Syukri", "TMSB", "Leena", "PYMT", 85000, 95000, 78000, 100, 5, 4750, 3, 2850),
+            ("RFQ-26021", "Nestlé Products Sdn. Bhd.", "EPCC", "Design Approval", 165000, "Shah Alam", "Selangor", "2026-01-25", "PAYMENT", "High", "Doc", "TMSB", "Salihah", "PYMT", 75000, 90000, 73000, 100, 5, 4500, 3, 2700),
+            ("RFQ-26022", "Shell Malaysia Trading Sdn. Bhd.", "DOSH", "Renew PMT/PMA", 92000, "Port Dickson", "N. Sembilan", "2026-02-05", "PAYMENT", "Medium", "A. Hafiz", "TMSR", "Aiman", "PYMT", 42000, 50000, 41000, 100, 5, 2500, 2, 1000),
+
+            # Stage: KIV
+            ("RFQ-26023", "Westports Malaysia Sdn. Bhd.", "PPEai", "GLOBAL INSPECTION", 85000, "Port Klang", "Selangor", "2026-02-15", "Waiting info from client", "Low", "Doc", "TMSB", "Shalhin", "KIV", 40000, 45000, 37000, 0, 5, 2250, 2, 900),
+            ("RFQ-26024", "MMC Corporation Berhad", "Asset (PKNS)", "New Register", 62000, "Kuala Lumpur", "Kuala Lumpur", "2026-02-20", "PPCC", "Low", "Syukri", "TMSR", "Leena", "KIV", 28000, 34000, 28000, 0, 5, 1700, 2, 680),
+            ("RFQ-26025", "Lestro KL Sdn Bhd", "DOSH", "Renew PMT/PMA", 38000, "Kuchai", "Kuala Lumpur", "2026-02-24", "Required more details", "Low", "Zed", "SPECTRO", "Shahrul", "KIV", 17000, 21000, 17000, 0, 5, 1050, 2, 420),
+
+            # Stage: LOST
+            ("RFQ-26026", "ABC Eng", "DOSH", "New Register", 18500, "Tg. Pelepas", "Johor", "2026-02-28", "LOST", "High", "Sharifah", "3rd party", "Aiman", "LOST", 10000, 8500, 0, 0, 0, 0, 0, 0),
         ]
-        for rs in rfq_seeds:
-            execute("""INSERT INTO rfq_entries (rfq_id, client_name, job_code, job_title, amount, location, state, date,
-                        job_status, level, introducer, open_by, stage, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                    (*rs, now))
+
+        for (rfq_id, client_name, job_code, job_title, amount, location, state, date, job_status, level, introducer, source, open_by, stage, total_cost, gross_profit, net_profit, dep_pct, intro_pct, intro_amt, mgr_pct, mgr_amt) in rfq_data_list:
+            total_comm = intro_amt + mgr_amt
+            entry_id = execute("""INSERT INTO rfq_entries (rfq_id, client_name, job_code, job_title, amount, location, state, date,
+                        job_status, level, introducer, source, open_by, stage, commission, total_cost, net_profit,
+                        deposit_pct, introducer_comm_pct, introducer_comm_amt, manager_comm_pct, manager_comm_amt, gross_profit,
+                        notes, created_at, updated_at)
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    (rfq_id, client_name, job_code, job_title, amount, location, state, date,
+                     job_status, level, introducer, source, open_by, stage, total_comm, total_cost, net_profit,
+                     dep_pct, intro_pct, intro_amt, mgr_pct, mgr_amt, gross_profit,
+                     f"Statutory compliance project for {client_name}", now, now))
+
+            # Add 2 Quote items per RFQ entry
+            execute("INSERT INTO rfq_items (rfq_entry_id, item_no, description, qty, unit_price, days, amount) VALUES (?,?,?,?,?,?,?)",
+                    (entry_id, 1, f"Engineering Assessment & {job_title} for {client_name}", 1, amount * 0.7, 1, amount * 0.7))
+            execute("INSERT INTO rfq_items (rfq_entry_id, item_no, description, qty, unit_price, days, amount) VALUES (?,?,?,?,?,?,?)",
+                    (entry_id, 2, f"DOSH Documentation, Endorsement & Hydrostatic Test", 1, amount * 0.3, 1, amount * 0.3))
+
+    # ── Seed Reports for Demo ──
+    rep_check = q("SELECT id FROM reports LIMIT 1", one=True)
+    if rep_check is None:
+        now = datetime.utcnow().isoformat()
+        admin = q("SELECT id FROM users WHERE role = 'admin' LIMIT 1", one=True)
+        admin_id = admin["id"] if admin else 1
+        machines = q("SELECT id, name, cert_no FROM machinery LIMIT 15")
+        
+        report_seeds = [
+            ("Annual Statutory DOSH Inspection", "Inspection", "Approved", "Vessel inspected thoroughly per OSHA 1994 & Factory Machinery Act. Safety valve set pressure verified at 10.5 Bar. No structural defects found."),
+            ("UTTM Thickness Testing Report", "Inspection", "Approved", "Ultrasonic Thickness Testing conducted on shell plates. Minimum wall thickness measured at 8.2mm (above minimum required 6.0mm)."),
+            ("Hydrostatic Pressure Test Verification", "Inspection", "Approved", "Hydrostatic test applied at 1.5x MAWP (15.75 Bar) for 30 minutes. Zero pressure drop recorded."),
+            ("Safety Valve & Pressure Gauge Calibration", "Calibration", "Approved", "Safety Valve POP test verified. Pressure Gauge calibrated against master digital gauge. Deviation within +/- 0.5%."),
+            ("Boiler Burner & Combustion Maintenance", "Maintenance", "Submitted", "Burner nozzle replaced, fuel pump strainers cleaned, flue gas analyzer test completed. Efficiency improved to 88.5%."),
+            ("Overhead Crane Proof Load Test", "Inspection", "Approved", "Proof load test applied at 125% rated capacity (12.5 Ton). Brake holding test and limit switches verified fully functional."),
+            ("NDT Magnetic Particle Inspection", "NDT", "Approved", "MPI examination conducted on longitudinal and circumferential welds. Zero surface cracks or linear indications detected."),
+            ("Service Call & System Diagnostics", "Maintenance", "Draft", "Compressor air filter & oil separator element replaced. Running pressure stable at 7.5 Bar."),
+        ]
+
+        for idx, m in enumerate(machines):
+            title_tpl, rtype, rstat, rsum = report_seeds[idx % len(report_seeds)]
+            full_title = f"{title_tpl} — {m['name']}"
+            execute(
+                "INSERT INTO reports (machinery_id, title, report_type, summary, pdf_filename, status, created_by, created_at) VALUES (?,?,?,?,?,?,?,?)",
+                (m["id"], full_title, rtype, rsum, "", rstat, admin_id, now)
+            )
 
     if _ENGINE == "pg":
         conn.close()
