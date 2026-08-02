@@ -1,0 +1,170 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}{{ e.rfq_id }} | RFQ Detail{% endblock %}
+{% block content %}
+<style>
+.rfq-tpl { background: #fff; border-radius: 14px; border: 1px solid var(--line); max-width: 1100px; overflow: hidden; }
+.rfq-tpl-header { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-bottom: 2px solid #0d5c8f; }
+.rfq-tpl-left, .rfq-tpl-right { padding: 18px 22px; }
+.rfq-tpl-right { border-left: 2px solid #0d5c8f; }
+.rfq-tpl-row { display: flex; margin-bottom: 4px; font-size: 13px; }
+.rfq-tpl-label { min-width: 140px; font-weight: 700; color: #fff; background: #0d5c8f; padding: 3px 10px; border-radius: 4px; margin-right: 8px; font-size: 12px; }
+.rfq-tpl-val { color: var(--text); font-weight: 500; }
+.rfq-tpl-title { text-align: center; padding: 14px; font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #0d5c8f, #01a0ff); color: #fff; }
+.rfq-quote-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.rfq-quote-tbl th { background: #0d5c8f; color: #fff; padding: 8px 12px; text-align: left; font-size: 12px; }
+.rfq-quote-tbl td { padding: 7px 12px; border-bottom: 1px solid #e8edf2; }
+.rfq-quote-tbl tr:nth-child(even) td { background: #f5f8fa; }
+.rfq-sum { width: 100%; border-collapse: collapse; font-size: 13px; }
+.rfq-sum td { padding: 6px 14px; }
+.rfq-sum .label-td { font-weight: 600; color: var(--muted); }
+.rfq-sum .val-td { text-align: right; font-weight: 700; color: #0d5c8f; }
+.rfq-sum .highlight { background: #01a0ff; color: #fff; font-weight: 800; }
+.rfq-sum .warn { background: #fde8e8; }
+.rfq-sum .section-head td { background: #0d5c8f; color: #fff; font-weight: 700; font-size: 12px; letter-spacing: .5px; text-transform: uppercase; padding: 6px 14px; }
+.rfq-sum .total-row td { border-top: 2px solid #0d5c8f; font-weight: 800; }
+.tc-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 0; }
+.tc-table td { padding: 5px 14px; border-bottom: 1px solid #eee; }
+.tc-table td:last-child { text-align: right; font-weight: 600; color: #7b1fa2; }
+@media print { .portal .sidebar, .portal-topbar, .toolbar, .no-print { display: none !important; } .portal-main { margin: 0; padding: 0; } .rfq-tpl { border: none; } }
+</style>
+
+<div class="portal-topbar no-print">
+    <div>
+        <h1>📑 {{ e.rfq_id }} — {{ e.client_name }}</h1>
+        <div class="who">Stage: <b style="color:var(--accent-2)">{{ e.stage }}</b></div>
+    </div>
+    <div style="display:flex;gap:8px">
+        <a class="btn ghost sm" href="{{ url_for('rfq_edit', eid=e.id) }}">✏️ Edit</a>
+        <button class="btn sm" onclick="window.print()">🖨️ Print</button>
+        <a class="btn ghost sm" href="{{ url_for('rfq_stage_list', stage=e.stage) }}">← Back</a>
+    </div>
+</div>
+
+<div class="rfq-tpl">
+    <div class="rfq-tpl-title">RFQ <span style="font-weight:400;font-size:14px;opacity:.8">(Request For Quotation)</span></div>
+    <div class="rfq-tpl-header">
+        <div class="rfq-tpl-left">
+            <div class="rfq-tpl-row"><span class="rfq-tpl-label">Client Name</span><span class="rfq-tpl-val">{{ e.client_name }}</span></div>
+            <div class="rfq-tpl-row"><span class="rfq-tpl-label">Job Code</span><span class="rfq-tpl-val">{{ e.job_code }}</span></div>
+            <div class="rfq-tpl-row"><span class="rfq-tpl-label">Location</span><span class="rfq-tpl-val">{{ e.location }}</span></div>
+            <div class="rfq-tpl-row"><span class="rfq-tpl-label">Person In Charge</span><span class="rfq-tpl-val">{{ e.person_in_charge }}</span></div>
+            <div class="rfq-tpl-row"><span class="rfq-tpl-label">Contact Number</span><span class="rfq-tpl-val">{{ e.contact_number }}</span></div>
+            <div class="rfq-tpl-row"><span class="rfq-tpl-label">Email</span><span class="rfq-tpl-val">{{ e.email }}</span></div>
+            <div class="rfq-tpl-row"><span class="rfq-tpl-label">Job Status</span><span class="rfq-tpl-val">{{ e.job_status }}</span></div>
+            <div class="rfq-tpl-row"><span class="rfq-tpl-label">Level / Priority</span><span class="rfq-tpl-val">{{ e.level }}</span></div>
+        </div>
+        <div class="rfq-tpl-right">
+            <div class="rfq-tpl-row"><span class="rfq-tpl-label">Job Title</span><span class="rfq-tpl-val">{{ e.job_title }}</span></div>
+            <div class="rfq-tpl-row"><span class="rfq-tpl-label">State</span><span class="rfq-tpl-val">{{ e.state }}</span></div>
+            <div class="rfq-tpl-row"><span class="rfq-tpl-label">Introducer</span><span class="rfq-tpl-val">{{ e.introducer }}</span></div>
+            <div class="rfq-tpl-row"><span class="rfq-tpl-label">Source</span><span class="rfq-tpl-val">{{ e.source }}</span></div>
+            <div class="rfq-tpl-row"><span class="rfq-tpl-label">Date</span><span class="rfq-tpl-val">{{ e.date }}</span></div>
+            <div class="rfq-tpl-row"><span class="rfq-tpl-label">Open By</span><span class="rfq-tpl-val">{{ e.open_by }}</span></div>
+            {% if e.map_link %}
+            <div class="rfq-tpl-row"><span class="rfq-tpl-label">Map</span><span class="rfq-tpl-val"><a href="{{ e.map_link }}" target="_blank">📍 View Location</a></span></div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if e.notes %}
+    <div style="padding:16px 22px;border-bottom:1px solid #e8edf2">
+        <b style="font-size:13px;color:#0d5c8f">Notes:</b>
+        <p style="font-size:13px;margin:4px 0 0;color:var(--muted)">{{ e.notes }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Quote Table -->
+    <div style="padding:18px 22px">
+        <h3 style="color:#0d5c8f;margin-bottom:10px;font-size:15px">QUOTE</h3>
+        <table class="rfq-quote-tbl">
+            <thead>
+                <tr><th>NO</th><th>ITEM</th><th>QTY</th><th>PRICE (RM)</th><th>DAY</th><th style="text-align:right">AMOUNT (RM)</th></tr>
+            </thead>
+            <tbody>
+                {% for it in items %}
+                <tr>
+                    <td>{{ it.item_no }}</td>
+                    <td>{{ it.description }}</td>
+                    <td>{{ it.qty }}</td>
+                    <td>{{ '{:,.2f}'.format(it.unit_price or 0) }}</td>
+                    <td>{{ it.days }}</td>
+                    <td style="text-align:right;font-weight:600">{{ '{:,.2f}'.format(it.amount or 0) }}</td>
+                </tr>
+                {% endfor %}
+                {% if not items %}
+                <tr><td colspan="6" style="text-align:center;color:var(--muted)">No items added</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ═══ QUOTE & COST SUMMARY ═══ -->
+    <div style="padding:18px 22px;border-top:2px solid #0d5c8f">
+        <h3 style="color:#0d5c8f;margin-bottom:12px;font-size:15px">QUOTE & COST SUMMARY</h3>
+        <table class="rfq-sum">
+            <!-- Summary Header -->
+            <tr class="section-head"><td colspan="2">SUMMARY</td></tr>
+            <tr><td class="label-td">Total Quote</td><td class="val-td">RM {{ '{:,.2f}'.format(total_quote) }}</td></tr>
+            <tr><td class="label-td">Total Cost</td><td class="val-td">RM {{ '{:,.2f}'.format(e.total_cost or 0) }}</td></tr>
+            {% set gross = (e.amount or 0) - (e.total_cost or 0) %}
+            <tr class="highlight"><td style="padding:8px 14px">GROSS MARGIN (%)</td><td style="text-align:right;padding:8px 14px">{% if e.amount %}{{ '{:.1f}'.format(gross / e.amount * 100) }}%{% else %}0%{% endif %}</td></tr>
+
+            <!-- Introducer Commission -->
+            <tr class="section-head"><td colspan="2">COMMISSION</td></tr>
+            <tr><td class="label-td">🤝 Introducer Commission — {{ e.introducer }}<span style="margin-left:8px;opacity:.6">({{ e.introducer_comm_pct or 0 }}%)</span></td>
+                <td class="val-td">RM {{ '{:,.2f}'.format(e.introducer_comm_amt or 0) }}</td></tr>
+
+            <!-- Manager/Sales Commission -->
+            <tr><td class="label-td">👔 Manager / Sales Commission <span style="opacity:.6">({{ e.manager_comm_pct or 0 }}%)</span></td>
+                <td class="val-td">RM {{ '{:,.2f}'.format(e.manager_comm_amt or 0) }}</td></tr>
+
+            {% set total_comm = (e.introducer_comm_amt or 0) + (e.manager_comm_amt or 0) + total_team_comm %}
+            <tr style="border-top:1px solid #ddd"><td class="label-td" style="font-weight:800">TOTAL COMMISSION</td><td class="val-td" style="font-weight:800">RM {{ '{:,.2f}'.format(total_comm) }}</td></tr>
+
+            <!-- Company Gross Profit -->
+            <tr class="highlight"><td style="padding:8px 14px">COMPANY GROSS PROFIT</td><td style="text-align:right;padding:8px 14px;font-weight:800">RM {{ '{:,.2f}'.format(gross - total_comm) }}</td></tr>
+        </table>
+
+        <!-- Teamwork Commission -->
+        {% if team_comms %}
+        <div style="margin-top:18px;background:#fdf8ff;border-radius:10px;padding:14px;border-left:4px solid #9c27b0">
+            <h4 style="margin:0 0 8px;font-size:14px;color:#7b1fa2">👥 Teamwork Commission Cross Check</h4>
+            <table class="tc-table">
+                {% for tc in team_comms %}
+                <tr>
+                    <td>{{ tc.person_name }}</td>
+                    <td style="text-align:center;width:80px;color:var(--muted)">{{ tc.percentage }}%</td>
+                    <td>RM {{ '{:,.2f}'.format(tc.amount or 0) }}</td>
+                </tr>
+                {% endfor %}
+                <tr style="border-top:2px solid #9c27b0">
+                    <td style="font-weight:800">Total Teamwork Commission</td>
+                    <td></td>
+                    <td style="font-weight:800;color:#7b1fa2">RM {{ '{:,.2f}'.format(total_team_comm) }}</td>
+                </tr>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- NET PROFIT -->
+        <div style="margin-top:18px;background:linear-gradient(135deg,#0d5c8f,#01a0ff);border-radius:10px;padding:16px 22px;display:flex;justify-content:space-between;align-items:center">
+            <span style="color:#fff;font-weight:800;font-size:16px">COMPANY NET PROFIT</span>
+            <span style="color:#fff;font-weight:900;font-size:22px">RM {{ '{:,.2f}'.format(e.net_profit or 0) }}</span>
+        </div>
+    </div>
+
+    <!-- Payment Info -->
+    <div style="padding:18px 22px;border-top:1px solid #e8edf2">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+            <div>
+                <h4 style="color:#0d5c8f;font-size:14px;margin-bottom:6px">PAYMENT</h4>
+                <table class="rfq-sum" style="font-size:13px">
+                    <tr><td class="label-td">Amount</td><td class="val-td">RM {{ '{:,.2f}'.format(e.amount or 0) }}</td></tr>
+                    <tr><td class="label-td">Deposit ({{ e.deposit_pct or 0 }}%)</td><td class="val-td">RM {{ '{:,.2f}'.format((e.amount or 0) * (e.deposit_pct or 0) / 100) }}</td></tr>
+                    <tr><td class="label-td">Date</td><td class="val-td">{{ e.date }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

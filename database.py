@@ -155,6 +155,81 @@ CREATE TABLE IF NOT EXISTS expiry_reminders (
     sent INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS rfq_entries (
+    id {_serial()},
+    rfq_id TEXT NOT NULL,
+    client_name TEXT DEFAULT '',
+    job_code TEXT DEFAULT '',
+    job_title TEXT DEFAULT '',
+    amount REAL DEFAULT 0,
+    location TEXT DEFAULT '',
+    state TEXT DEFAULT '',
+    date TEXT DEFAULT '',
+    job_status TEXT DEFAULT 'NEW TASK',
+    level TEXT DEFAULT '',
+    introducer TEXT DEFAULT '',
+    source TEXT DEFAULT '',
+    open_by TEXT DEFAULT '',
+    stage TEXT DEFAULT 'RFQ',
+    commission REAL DEFAULT 0,
+    total_cost REAL DEFAULT 0,
+    net_profit REAL DEFAULT 0,
+    deposit_pct REAL DEFAULT 0,
+    introducer_comm_pct REAL DEFAULT 0,
+    introducer_comm_amt REAL DEFAULT 0,
+    manager_comm_pct REAL DEFAULT 0,
+    manager_comm_amt REAL DEFAULT 0,
+    gross_profit REAL DEFAULT 0,
+    contact_number TEXT DEFAULT '',
+    email TEXT DEFAULT '',
+    person_in_charge TEXT DEFAULT '',
+    map_link TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
+    owner_id INTEGER,
+    company_id INTEGER,
+    created_at TEXT NOT NULL,
+    updated_at TEXT DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS rfq_items (
+    id {_serial()},
+    rfq_entry_id INTEGER NOT NULL,
+    item_no INTEGER DEFAULT 1,
+    description TEXT DEFAULT '',
+    qty INTEGER DEFAULT 1,
+    unit_price REAL DEFAULT 0,
+    days INTEGER DEFAULT 1,
+    amount REAL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS rfq_team_commissions (
+    id {_serial()},
+    rfq_entry_id INTEGER NOT NULL,
+    person_name TEXT NOT NULL,
+    percentage REAL DEFAULT 0,
+    amount REAL DEFAULT 0,
+    payment_status TEXT DEFAULT '',
+    payment_date TEXT DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS rfq_lists (
+    id {_serial()},
+    list_type TEXT NOT NULL,
+    value TEXT NOT NULL,
+    sort_order INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS rfq_customers (
+    id {_serial()},
+    name TEXT DEFAULT '',
+    mobile TEXT DEFAULT '',
+    email TEXT DEFAULT '',
+    company_name TEXT DEFAULT '',
+    location TEXT DEFAULT '',
+    state TEXT DEFAULT '',
+    created_at TEXT NOT NULL
+);
 """
 
 INDEXES = """
@@ -166,6 +241,11 @@ CREATE INDEX IF NOT EXISTS idx_users_company ON users(company_id);
 CREATE INDEX IF NOT EXISTS idx_machinery_images_mid ON machinery_images(machinery_id);
 CREATE INDEX IF NOT EXISTS idx_expiry_reminders_mid ON expiry_reminders(machinery_id);
 CREATE INDEX IF NOT EXISTS idx_expiry_reminders_sent ON expiry_reminders(sent);
+CREATE INDEX IF NOT EXISTS idx_rfq_entries_stage ON rfq_entries(stage);
+CREATE INDEX IF NOT EXISTS idx_rfq_entries_owner ON rfq_entries(owner_id);
+CREATE INDEX IF NOT EXISTS idx_rfq_items_entry ON rfq_items(rfq_entry_id);
+CREATE INDEX IF NOT EXISTS idx_rfq_lists_type ON rfq_lists(list_type);
+CREATE INDEX IF NOT EXISTS idx_rfq_team_comm ON rfq_team_commissions(rfq_entry_id);
 """
 
 
@@ -377,6 +457,49 @@ def init_db():
                 "INSERT INTO reports (machinery_id, title, report_type, summary, status, created_by, created_at) VALUES (?,?,?,?,?,?,?)",
                 r_data,
             )
+
+    # ── RFQ seed data ──
+    rfq_check = q("SELECT id FROM rfq_entries LIMIT 1", one=True)
+    if rfq_check is None:
+        now = datetime.utcnow().isoformat()
+        # Seed dropdown lists
+        list_seeds = [
+            ("job_code", ["DOSH", "DOD1", "GSHC", "GSMC"]),
+            ("job_status", ["NEW TASK", "Site Visit", "Assessment", "QUOTE", "Required more details", "PPCC", "Waiting info from client", "Ready to discuss", "Quotation sent", "Quotation received", "Quotation waiting for approval", "PO in progress", "PO ESTIMATI", "WORK PROGRESS", "Waiting for deposit", "INVOICE", "PAYMENT", "LOST"]),
+            ("introducer", ["Mr. Mish", "Rico", "Shamsul JC", "A. Hafiz", "Faizt Bakhtiar"]),
+            ("source", ["TMSR", "INSASR", "SPECTRO", "ADV", "SUPHIN", "3rd party"]),
+            ("open_by", ["Shalhin", "Leena", "Salihah", "Shahrul", "Aiman"]),
+            ("job_title", ["New Register", "Renew PMT/PMA", "Service Call", "GLOBAL INSPECTION", "Calibrate SV PG", "Design Approval"]),
+            ("level", ["Low", "Medium", "High"]),
+        ]
+        for lt, vals in list_seeds:
+            for i, v in enumerate(vals):
+                execute("INSERT INTO rfq_lists (list_type, value, sort_order) VALUES (?,?,?)", (lt, v, i))
+
+        # Seed customers
+        cust_seeds = [
+            ("Rosul", "012-8788955", "", "Lestro KL Sdn Bhd", "Kuchai", "Johor"),
+            ("S Sanesswaran", "102432727", "sannes512@gmail.com", "Vantage MC Auto Sdn Bhd", "Telok Panglime Garang", "Selangor"),
+            ("Angel", "012-670 2992", "", "Starkouch Ilo", "Klang", "Selangor"),
+            ("Mr Yun", "013-8755338", "oylan-isca@emaling.com.my", "Bom Ying Glass", "Kepong", "Selangor"),
+        ]
+        for cs in cust_seeds:
+            execute("INSERT INTO rfq_customers (name, mobile, email, company_name, location, state, created_at) VALUES (?,?,?,?,?,?,?)",
+                    (*cs, now))
+
+        # Seed sample RFQ entries
+        rfq_seeds = [
+            ("RFQ-26001", "Lestro KL Sdn Bhd", "DOSH", "New Register", 3000, "Rawang", "Selangor", "2026-06-01", "Site Visit", "Medium", "TMSR", "Shalhin", "RFQ"),
+            ("RFQ-26002", "ABC Eng", "DOSH", "Renew PMT/PMA", 0, "Tg. Pelepas", "Johor", "2026-06-15", "NEW TASK", "High", "TMSR", "Shalhin", "RFQ"),
+            ("RFQ-26003", "Vantage MC Auto Sdn Bhd", "DOD1", "Service Call", 15000, "Shah Alam", "Selangor", "2026-05-20", "Quotation sent", "Low", "ADV", "Leena", "QUO"),
+            ("RFQ-26004", "IQDC Eng", "DOSH", "GLOBAL INSPECTION", 8500, "Kulim", "Kedah", "2026-04-10", "PO in progress", "", "INSASR", "Leena", "PO"),
+            ("RFQ-26005", "Bom Ying Glass", "GSHC", "Calibrate SV PG", 2500, "Kepong", "Selangor", "2026-03-01", "INVOICE", "", "SPECTRO", "Shalhin", "INV"),
+            ("RFQ-26006", "Top Glove Sdn Bhd", "DOD1", "New Register", 12000, "Klang", "Selangor", "2026-01-15", "PAYMENT", "", "TMSR", "Leena", "PYMT"),
+        ]
+        for rs in rfq_seeds:
+            execute("""INSERT INTO rfq_entries (rfq_id, client_name, job_code, job_title, amount, location, state, date,
+                        job_status, level, introducer, open_by, stage, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    (*rs, now))
 
     if _ENGINE == "pg":
         conn.close()

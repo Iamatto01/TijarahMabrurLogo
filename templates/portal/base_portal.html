@@ -31,6 +31,11 @@
                     <a href="{{ url_for('clients_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('client') }}">👥 Clients</a>
                     <a href="{{ url_for('db_viewer') }}" class="{{ 'active' if request.endpoint == 'db_viewer' }}">🗄️ Database</a>
                     <a href="{{ url_for('employee_portal') }}" class="{{ 'active' if request.endpoint == 'employee_portal' }}">👥 Employee Portal</a>
+                    <div class="group">RFQ Management</div>
+                    <a href="{{ url_for('rfq_dashboard') }}" class="{{ 'active' if request.endpoint == 'rfq_dashboard' }}">📋 RFQ Dashboard</a>
+                    <a href="{{ url_for('rfq_stage_list', stage='RFQ') }}" class="{{ 'active' if request.endpoint == 'rfq_stage_list' }}">📑 RFQ Stages</a>
+                    <a href="{{ url_for('rfq_customers_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('rfq_customer') }}">👤 Customers</a>
+                    <a href="{{ url_for('rfq_lists_manage') }}" class="{{ 'active' if request.endpoint == 'rfq_lists_manage' }}">📝 Lists</a>
                 {% elif user.company_id %}
                     <a href="{{ url_for('company_profile') }}" class="{{ 'active' if request.endpoint == 'company_profile' }}">🏢 My Company</a>
                 {% endif %}

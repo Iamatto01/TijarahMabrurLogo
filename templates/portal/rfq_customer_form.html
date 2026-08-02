@@ -1,0 +1,47 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}{{ 'Edit' if c else 'New' }} Customer | RFQ{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <h1>{{ '✏️ Edit Customer' if c else '+ New Customer' }}</h1>
+    <a class="btn ghost" href="{{ url_for('rfq_customers_list') }}">← Back</a>
+</div>
+
+<form method="post" style="max-width:700px">
+    <div class="panel">
+        <div class="panel-head"><h3>Customer Information</h3></div>
+        <div class="panel-body">
+            <div class="form-row">
+                <div class="field">
+                    <label>Name *</label>
+                    <input type="text" name="name" required value="{{ c.name if c else '' }}" placeholder="Customer name">
+                </div>
+                <div class="field">
+                    <label>Mobile / Phone</label>
+                    <input type="text" name="mobile" value="{{ c.mobile if c else '' }}" placeholder="012-3456789">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="field">
+                    <label>Email</label>
+                    <input type="email" name="email" value="{{ c.email if c else '' }}" placeholder="customer@company.com">
+                </div>
+                <div class="field">
+                    <label>Company Name</label>
+                    <input type="text" name="company_name" value="{{ c.company_name if c else '' }}" placeholder="Company Sdn Bhd">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="field">
+                    <label>Location</label>
+                    <input type="text" name="location" value="{{ c.location if c else '' }}" placeholder="Shah Alam">
+                </div>
+                <div class="field">
+                    <label>State</label>
+                    <input type="text" name="state" value="{{ c.state if c else '' }}" placeholder="Selangor">
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="btn" type="submit">{{ '💾 Update' if c else '✅ Save Customer' }}</button>
+</form>
+{% endblock %}

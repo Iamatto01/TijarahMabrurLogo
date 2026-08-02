@@ -1,0 +1,314 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}{{ 'Edit' if e else 'New' }} RFQ | Portal{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <h1>{{ 'Edit RFQ — ' ~ e.rfq_id if e else '+ New RFQ' }}</h1>
+    <a class="btn ghost" href="{{ url_for('rfq_stage_list', stage=e.stage if e else 'RFQ') }}">← Back</a>
+</div>
+
+<form method="post" style="max-width:1100px">
+    <!-- 1. General Info -->
+    <div class="panel">
+        <div class="panel-head"><h3>1. General Information</h3></div>
+        <div class="panel-body">
+            <div class="form-row">
+                <div class="field">
+                    <label>Client Name *</label>
+                    <input type="text" name="client_name" required value="{{ e.client_name if e else '' }}" list="cust_list" placeholder="Type or select customer">
+                    <datalist id="cust_list">
+                        {% for c in customers %}<option value="{{ c.company_name or c.name }}">{% endfor %}
+                    </datalist>
+                </div>
+                <div class="field">
+                    <label>Job Code</label>
+                    <select name="job_code">
+                        <option value="">—</option>
+                        {% for v in lists.job_code %}<option value="{{ v }}" {{ 'selected' if e and e.job_code == v }}>{{ v }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Job Title</label>
+                    <select name="job_title">
+                        <option value="">—</option>
+                        {% for v in lists.job_title %}<option value="{{ v }}" {{ 'selected' if e and e.job_title == v }}>{{ v }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="field">
+                    <label>Location</label>
+                    <input type="text" name="location" value="{{ e.location if e else '' }}" placeholder="e.g. Shah Alam">
+                </div>
+                <div class="field">
+                    <label>State</label>
+                    <input type="text" name="state" value="{{ e.state if e else '' }}" placeholder="e.g. Selangor">
+                </div>
+                <div class="field">
+                    <label>Date</label>
+                    <input type="date" name="date" value="{{ e.date if e else '' }}">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="field">
+                    <label>Person In Charge</label>
+                    <input type="text" name="person_in_charge" value="{{ e.person_in_charge if e else '' }}">
+                </div>
+                <div class="field">
+                    <label>Contact Number</label>
+                    <input type="text" name="contact_number" value="{{ e.contact_number if e else '' }}">
+                </div>
+                <div class="field">
+                    <label>Email</label>
+                    <input type="email" name="email" value="{{ e.email if e else '' }}">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="field">
+                    <label>Job Status</label>
+                    <select name="job_status">
+                        {% for v in lists.job_status %}<option value="{{ v }}" {{ 'selected' if e and e.job_status == v }}>{{ v }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Level / Priority</label>
+                    <select name="level">
+                        <option value="">—</option>
+                        {% for v in lists.level %}<option value="{{ v }}" {{ 'selected' if e and e.level == v }}>{{ v }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Open By</label>
+                    <select name="open_by">
+                        <option value="">—</option>
+                        {% for v in lists.open_by %}<option value="{{ v }}" {{ 'selected' if e and e.open_by == v }}>{{ v }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="field">
+                    <label>Introducer</label>
+                    <select name="introducer">
+                        <option value="">—</option>
+                        {% for v in lists.introducer %}<option value="{{ v }}" {{ 'selected' if e and e.introducer == v }}>{{ v }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Source / Maincon</label>
+                    <select name="source">
+                        <option value="">—</option>
+                        {% for v in lists.source %}<option value="{{ v }}" {{ 'selected' if e and e.source == v }}>{{ v }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Map / Location Link</label>
+                    <input type="url" name="map_link" value="{{ e.map_link if e else '' }}" placeholder="https://maps.google.com/...">
+                </div>
+            </div>
+            <div class="field">
+                <label>Notes</label>
+                <textarea name="notes" rows="3" style="width:100%">{{ e.notes if e else '' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Quote Items -->
+    <div class="panel">
+        <div class="panel-head"><h3>2. Quote Items</h3></div>
+        <div class="panel-body">
+            <table class="tbl" id="quoteTable">
+                <thead>
+                    <tr><th style="width:40px">NO</th><th>ITEM DESCRIPTION</th><th style="width:80px">QTY</th><th style="width:120px">PRICE (RM)</th><th style="width:80px">DAY</th><th style="width:130px">AMOUNT (RM)</th><th style="width:50px"></th></tr>
+                </thead>
+                <tbody id="quoteBody">
+                    {% if e and items %}
+                    {% for it in items %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><input type="text" name="item_desc[]" value="{{ it.description }}" style="width:100%"></td>
+                        <td><input type="number" name="item_qty[]" value="{{ it.qty }}" min="1" style="width:100%" onchange="calcRow(this)"></td>
+                        <td><input type="number" name="item_price[]" value="{{ it.unit_price }}" step="0.01" style="width:100%" onchange="calcRow(this)"></td>
+                        <td><input type="number" name="item_days[]" value="{{ it.days }}" min="1" style="width:100%" onchange="calcRow(this)"></td>
+                        <td class="row-amount" style="text-align:right;font-weight:600">{{ '{:,.2f}'.format(it.amount or 0) }}</td>
+                        <td><button type="button" class="btn sm danger" onclick="this.closest('tr').remove();renum()">✕</button></td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td>1</td>
+                        <td><input type="text" name="item_desc[]" style="width:100%" placeholder="Description"></td>
+                        <td><input type="number" name="item_qty[]" value="1" min="1" style="width:100%" onchange="calcRow(this)"></td>
+                        <td><input type="number" name="item_price[]" value="0" step="0.01" style="width:100%" onchange="calcRow(this)"></td>
+                        <td><input type="number" name="item_days[]" value="1" min="1" style="width:100%" onchange="calcRow(this)"></td>
+                        <td class="row-amount" style="text-align:right;font-weight:600">0.00</td>
+                        <td><button type="button" class="btn sm danger" onclick="this.closest('tr').remove();renum()">✕</button></td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+            <button type="button" class="btn ghost sm" onclick="addRow()" style="margin-top:10px">+ Add Item</button>
+        </div>
+    </div>
+
+    <!-- 3. QUOTE & COST SUMMARY -->
+    <div class="panel">
+        <div class="panel-head"><h3>3. Quote & Cost Summary</h3></div>
+        <div class="panel-body">
+            <div class="form-row">
+                <div class="field">
+                    <label>Total Amount / Quote (RM)</label>
+                    <input type="number" name="amount" id="fld_amount" step="0.01" value="{{ e.amount if e else 0 }}">
+                </div>
+                <div class="field">
+                    <label>Total Cost (RM)</label>
+                    <input type="number" name="total_cost" id="fld_cost" step="0.01" value="{{ e.total_cost if e else 0 }}" onchange="recalcSummary()">
+                </div>
+                <div class="field">
+                    <label>Deposit %</label>
+                    <input type="number" name="deposit_pct" id="fld_deposit" step="0.01" value="{{ e.deposit_pct if e else 0 }}" onchange="recalcSummary()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. COMMISSION BREAKDOWN -->
+    <div class="panel">
+        <div class="panel-head"><h3>4. Commission Breakdown</h3></div>
+        <div class="panel-body">
+            <!-- Introducer Commission -->
+            <div style="background:#f8fbff;border-radius:8px;padding:14px;margin-bottom:14px;border-left:4px solid #01a0ff">
+                <h4 style="margin:0 0 8px;font-size:14px;color:#0077c8">🤝 Introducer Commission</h4>
+                <div class="form-row">
+                    <div class="field">
+                        <label>Introducer</label>
+                        <input type="text" value="{{ e.introducer if e else '' }}" disabled style="background:#eee">
+                    </div>
+                    <div class="field">
+                        <label>Commission %</label>
+                        <input type="number" name="introducer_comm_pct" id="fld_intro_pct" step="0.01" value="{{ e.introducer_comm_pct if e else 0 }}" onchange="recalcSummary()">
+                    </div>
+                    <div class="field">
+                        <label>Commission Amount (RM)</label>
+                        <input type="number" name="introducer_comm_amt" id="fld_intro_amt" step="0.01" value="{{ e.introducer_comm_amt if e else 0 }}">
+                    </div>
+                </div>
+            </div>
+            <!-- Manager / Sales Commission -->
+            <div style="background:#f8fff8;border-radius:8px;padding:14px;margin-bottom:14px;border-left:4px solid #4caf50">
+                <h4 style="margin:0 0 8px;font-size:14px;color:#2e7d32">👔 Manager / Sales Commission</h4>
+                <div class="form-row">
+                    <div class="field">
+                        <label>Commission %</label>
+                        <input type="number" name="manager_comm_pct" id="fld_mgr_pct" step="0.01" value="{{ e.manager_comm_pct if e else 0 }}" onchange="recalcSummary()">
+                    </div>
+                    <div class="field">
+                        <label>Commission Amount (RM)</label>
+                        <input type="number" name="manager_comm_amt" id="fld_mgr_amt" step="0.01" value="{{ e.manager_comm_amt if e else 0 }}">
+                    </div>
+                </div>
+            </div>
+            <!-- Teamwork Commission -->
+            <div style="background:#fdf8ff;border-radius:8px;padding:14px;border-left:4px solid #9c27b0">
+                <h4 style="margin:0 0 8px;font-size:14px;color:#7b1fa2">👥 Teamwork Commission</h4>
+                <table class="tbl" style="font-size:13px" id="tcTable">
+                    <thead><tr><th>Person Name</th><th style="width:100px">%</th><th style="width:140px">Amount (RM)</th><th style="width:50px"></th></tr></thead>
+                    <tbody id="tcBody">
+                        {% if team_comms %}
+                        {% for tc in team_comms %}
+                        <tr>
+                            <td>
+                                <select name="tc_name[]" style="width:100%">
+                                    <option value="">— Select —</option>
+                                    {% for p in open_by_people %}<option value="{{ p }}" {{ 'selected' if tc.person_name == p }}>{{ p }}</option>{% endfor %}
+                                </select>
+                            </td>
+                            <td><input type="number" name="tc_pct[]" step="0.01" value="{{ tc.percentage }}" style="width:100%" onchange="calcTcRow(this)"></td>
+                            <td><input type="number" name="tc_amt[]" step="0.01" value="{{ tc.amount }}" style="width:100%"></td>
+                            <td><button type="button" class="btn sm danger" onclick="this.closest('tr').remove()">✕</button></td>
+                        </tr>
+                        {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+                <button type="button" class="btn ghost sm" onclick="addTcRow()" style="margin-top:10px">+ Add Person</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Profit Summary -->
+    <div class="panel">
+        <div class="panel-head"><h3>5. Profit Summary</h3></div>
+        <div class="panel-body">
+            <div class="form-row">
+                <div class="field">
+                    <label>Gross Profit (RM)</label>
+                    <input type="number" name="gross_profit" id="fld_gross" step="0.01" value="{{ e.gross_profit if e else 0 }}">
+                </div>
+                <div class="field">
+                    <label>Total Commission (RM)</label>
+                    <input type="number" name="commission" id="fld_total_comm" step="0.01" value="{{ e.commission if e else 0 }}">
+                </div>
+                <div class="field">
+                    <label>Company Net Profit (RM)</label>
+                    <input type="number" name="net_profit" id="fld_net" step="0.01" value="{{ e.net_profit if e else 0 }}" style="font-weight:700;color:#0077c8;font-size:16px">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn" type="submit" style="margin-bottom:40px">{{ '💾 Update RFQ' if e else '✅ Create RFQ' }}</button>
+</form>
+
+<script>
+// People options for teamwork dropdown
+var tcPeople = {{ open_by_people|tojson }};
+function addRow() {
+    var tbody = document.getElementById('quoteBody');
+    var n = tbody.rows.length + 1;
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>'+n+'</td><td><input type="text" name="item_desc[]" style="width:100%"></td><td><input type="number" name="item_qty[]" value="1" min="1" style="width:100%" onchange="calcRow(this)"></td><td><input type="number" name="item_price[]" value="0" step="0.01" style="width:100%" onchange="calcRow(this)"></td><td><input type="number" name="item_days[]" value="1" min="1" style="width:100%" onchange="calcRow(this)"></td><td class="row-amount" style="text-align:right;font-weight:600">0.00</td><td><button type="button" class="btn sm danger" onclick="this.closest(\'tr\').remove();renum()">✕</button></td>';
+    tbody.appendChild(tr);
+}
+function renum() {
+    var rows = document.getElementById('quoteBody').rows;
+    for (var i = 0; i < rows.length; i++) rows[i].cells[0].innerText = i + 1;
+}
+function calcRow(el) {
+    var tr = el.closest('tr');
+    var qty = parseFloat(tr.querySelector('[name="item_qty[]"]').value) || 0;
+    var price = parseFloat(tr.querySelector('[name="item_price[]"]').value) || 0;
+    var days = parseFloat(tr.querySelector('[name="item_days[]"]').value) || 1;
+    tr.querySelector('.row-amount').innerText = (qty * price * days).toFixed(2);
+}
+function addTcRow() {
+    var tbody = document.getElementById('tcBody');
+    var tr = document.createElement('tr');
+    var opts = '<option value="">— Select —</option>';
+    tcPeople.forEach(function(p) { opts += '<option value="'+p+'">'+p+'</option>'; });
+    tr.innerHTML = '<td><select name="tc_name[]" style="width:100%">'+opts+'</select></td><td><input type="number" name="tc_pct[]" step="0.01" value="0" style="width:100%" onchange="calcTcRow(this)"></td><td><input type="number" name="tc_amt[]" step="0.01" value="0" style="width:100%"></td><td><button type="button" class="btn sm danger" onclick="this.closest(\'tr\').remove()">✕</button></td>';
+    tbody.appendChild(tr);
+}
+function calcTcRow(el) {
+    var tr = el.closest('tr');
+    var pct = parseFloat(tr.querySelector('[name="tc_pct[]"]').value) || 0;
+    var grossProfit = parseFloat(document.getElementById('fld_gross').value) || 0;
+    tr.querySelector('[name="tc_amt[]"]').value = (grossProfit * pct / 100).toFixed(2);
+}
+function recalcSummary() {
+    var amount = parseFloat(document.getElementById('fld_amount').value) || 0;
+    var cost = parseFloat(document.getElementById('fld_cost').value) || 0;
+    var gross = amount - cost;
+    document.getElementById('fld_gross').value = gross.toFixed(2);
+    var introPct = parseFloat(document.getElementById('fld_intro_pct').value) || 0;
+    document.getElementById('fld_intro_amt').value = (gross * introPct / 100).toFixed(2);
+    var mgrPct = parseFloat(document.getElementById('fld_mgr_pct').value) || 0;
+    document.getElementById('fld_mgr_amt').value = (gross * mgrPct / 100).toFixed(2);
+    // Sum all commissions
+    var introAmt = parseFloat(document.getElementById('fld_intro_amt').value) || 0;
+    var mgrAmt = parseFloat(document.getElementById('fld_mgr_amt').value) || 0;
+    var tcTotal = 0;
+    document.querySelectorAll('[name="tc_amt[]"]').forEach(function(inp) { tcTotal += parseFloat(inp.value) || 0; });
+    document.getElementById('fld_total_comm').value = (introAmt + mgrAmt + tcTotal).toFixed(2);
+    document.getElementById('fld_net').value = (gross - introAmt - mgrAmt - tcTotal).toFixed(2);
+}
+</script>
+{% endblock %}

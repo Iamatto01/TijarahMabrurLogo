@@ -1,0 +1,121 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}{{ stage }} List | RFQ{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <h1>📑 {{ stage }} <span style="color:var(--muted);font-weight:400">(Request for Quotation)</span></h1>
+    <a class="btn" href="{{ url_for('rfq_new') }}">+ New RFQ</a>
+</div>
+
+<!-- Stage Tabs -->
+<div class="toolbar" style="gap:6px;flex-wrap:wrap">
+    {% for s in stages %}
+    <a class="btn sm {{ '' if stage == s else 'ghost' }}" href="{{ url_for('rfq_stage_list', stage=s) }}"
+       style="{{ 'font-weight:800' if stage == s else '' }}">
+        {{ s }} <span style="font-size:11px;opacity:.7;margin-left:4px">({{ stage_counts[s] }})</span>
+    </a>
+    {% endfor %}
+    <a class="btn sm ghost" href="{{ url_for('rfq_dashboard') }}" style="margin-left:auto">📊 Dashboard</a>
+</div>
+
+<div class="panel">
+    <div class="panel-body tbl-scroll">
+        {% if rows %}
+        <table class="tbl rfq-tbl">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>RFQ ID</th>
+                    <th>CLIENT NAME</th>
+                    <th>JOB CODE</th>
+                    <th>JOB TITLE</th>
+                    <th style="text-align:right">AMOUNT</th>
+                    <th>LOCATION</th>
+                    <th>STATE</th>
+                    <th>DATE</th>
+                    <th>JOB STATUS</th>
+                    <th>LEVEL</th>
+                    <th>INTRODUCER</th>
+                    <th>SOURCE</th>
+                    <th>OPEN BY</th>
+                    <th style="text-align:right">COMMISSION</th>
+                    <th style="text-align:right">COST</th>
+                    <th style="text-align:right">PROFIT</th>
+                    <th style="text-align:center">MOVE</th>
+                    <th style="text-align:center">ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in rows %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td><a href="{{ url_for('rfq_detail', eid=r.id) }}" style="font-weight:700;color:var(--accent-2)">{{ r.rfq_id }}</a></td>
+                    <td><a href="{{ url_for('rfq_detail', eid=r.id) }}" style="font-weight:600;color:var(--text)">{{ r.client_name }}</a></td>
+                    <td>{{ r.job_code }}</td>
+                    <td>{{ r.job_title }}</td>
+                    <td style="text-align:right;white-space:nowrap">RM {{ '{:,.2f}'.format(r.amount or 0) }}</td>
+                    <td>{{ r.location }}</td>
+                    <td>{{ r.state }}</td>
+                    <td>{{ r.date }}</td>
+                    <td>
+                        {% set sc = r.job_status %}
+                        <span class="tag {% if 'NEW' in sc %}Active{% elif 'LOST' in sc %}Expired{% elif 'Waiting' in sc %}Under_Maintenance{% else %}Approved{% endif %}">{{ sc }}</span>
+                    </td>
+                    <td>
+                        {% if r.level == 'High' %}<span style="color:#f44336;font-weight:700">🔴 High</span>
+                        {% elif r.level == 'Medium' %}<span style="color:#ff9800;font-weight:600">🟡 Medium</span>
+                        {% elif r.level == 'Low' %}<span style="color:#4caf50">🟢 Low</span>
+                        {% else %}{{ r.level }}{% endif %}
+                    </td>
+                    <td>{{ r.introducer }}</td>
+                    <td>{{ r.source }}</td>
+                    <td>{{ r.open_by }}</td>
+                    <td style="text-align:right">RM {{ '{:,.2f}'.format(r.commission or 0) }}</td>
+                    <td style="text-align:right">RM {{ '{:,.2f}'.format(r.total_cost or 0) }}</td>
+                    <td style="text-align:right">RM {{ '{:,.2f}'.format(r.net_profit or 0) }}</td>
+                    <td style="text-align:center;white-space:nowrap">
+                        <form method="post" action="{{ url_for('rfq_move', eid=r.id) }}" style="display:inline">
+                            <select name="new_stage" onchange="this.form.submit()" style="font-size:12px;padding:3px 6px;border-radius:6px;border:1px solid var(--line);cursor:pointer">
+                                <option value="">Move…</option>
+                                {% for s in stages %}
+                                {% if s != stage %}
+                                <option value="{{ s }}">→ {{ s }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </td>
+                    <td style="text-align:center;white-space:nowrap">
+                        <a class="btn sm ghost" href="{{ url_for('rfq_edit', eid=r.id) }}">✏️</a>
+                        <button class="btn sm danger" onclick="confirmDel({{ r.id }}, '{{ r.rfq_id }}', '{{ r.client_name }}')">🗑️</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty">No entries in {{ stage }}. <a href="{{ url_for('rfq_new') }}">Create a new RFQ</a>.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delModal" class="img2-modal-overlay">
+    <div class="img2-modal" style="max-width:440px;background:#fff;padding:28px;border-radius:14px;text-align:center">
+        <h3 style="margin-top:0;color:#f44336">⚠️ Confirm Delete</h3>
+        <p style="color:var(--muted)">Are you sure you want to delete this RFQ?</p>
+        <p><b id="delInfo" style="color:var(--text)"></b></p>
+        <p style="font-size:12px;color:#f44336">This action cannot be undone!</p>
+        <form id="delForm" method="post" action="" style="display:flex;gap:10px;justify-content:center;margin-top:20px">
+            <button type="button" class="btn ghost sm" onclick="document.getElementById('delModal').style.display='none'">Cancel</button>
+            <button type="submit" class="btn sm danger">🗑️ Delete</button>
+        </form>
+    </div>
+</div>
+<script>
+function confirmDel(id, rfqId, client) {
+    document.getElementById('delInfo').innerText = rfqId + ' — ' + client;
+    document.getElementById('delForm').action = '/portal/rfq/' + id + '/delete';
+    document.getElementById('delModal').style.display = 'flex';
+}
+</script>
+{% endblock %}

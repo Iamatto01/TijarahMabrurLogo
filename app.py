@@ -1094,6 +1094,292 @@ def check_and_send_reminders():
         app.logger.info("Expiry reminders: sent %d email(s)", sent_count)
 
 
+
+
+
+# RFQ MANAGEMENT SYSTEM
+# ================================================================
+RFQ_STAGES = ["RFQ", "QUO", "PO", "INV", "PYMT", "KIV", "LOST"]
+RFQ_STAGE_COLORS = {"RFQ": "#01a0ff", "QUO": "#f5a623", "PO": "#4caf50", "INV": "#9c27b0", "PYMT": "#e91e63", "KIV": "#ff9800", "LOST": "#f44336"}
+
+def _next_rfq_id():
+    """Generate next RFQ-YYXXX id."""
+    yr = datetime.utcnow().strftime("%y")
+    last = q("SELECT rfq_id FROM rfq_entries WHERE rfq_id LIKE ? ORDER BY id DESC LIMIT 1", (f"RFQ-{yr}%",), one=True)
+    if last:
+        try:
+            num = int(last["rfq_id"].split("-")[1][2:]) + 1
+        except (IndexError, ValueError):
+            num = 1
+    else:
+        num = 1
+    return f"RFQ-{yr}{num:03d}"
+
+
+def _rfq_dropdown(list_type):
+    return [r["value"] for r in q("SELECT value FROM rfq_lists WHERE list_type = ? ORDER BY sort_order, id", (list_type,))]
+
+
+# ---- RFQ Dashboard ----
+@app.route("/portal/rfq-dashboard")
+@admin_required
+def rfq_dashboard():
+    stages_data = []
+    for stage in RFQ_STAGES:
+        row = q("SELECT COUNT(*) c, COALESCE(SUM(amount),0) total FROM rfq_entries WHERE stage = ?", (stage,), one=True)
+        stages_data.append({"stage": stage, "count": row["c"], "total": row["total"], "color": RFQ_STAGE_COLORS.get(stage, "#888")})
+    total_all = q("SELECT COUNT(*) c FROM rfq_entries", one=True)["c"]
+    total_amount = q("SELECT COALESCE(SUM(amount),0) s FROM rfq_entries", one=True)["s"]
+
+    # Open By breakdown
+    open_by_rows = q("SELECT open_by, COUNT(*) c FROM rfq_entries WHERE open_by != '' GROUP BY open_by ORDER BY c DESC")
+
+    # Pie data
+    source_rows = q("SELECT source, COUNT(*) c FROM rfq_entries WHERE source != '' GROUP BY source ORDER BY c DESC")
+    introducer_rows = q("SELECT introducer, COUNT(*) c FROM rfq_entries WHERE introducer != '' GROUP BY introducer ORDER BY c DESC")
+    state_rows = q("SELECT state, COUNT(*) c FROM rfq_entries WHERE state != '' GROUP BY state ORDER BY c DESC")
+    job_code_rows = q("SELECT job_code, COUNT(*) c FROM rfq_entries WHERE job_code != '' GROUP BY job_code ORDER BY c DESC")
+
+    return render_template("portal/rfq_dashboard.html",
+                           stages_data=stages_data, total_all=total_all, total_amount=total_amount,
+                           open_by_rows=open_by_rows, source_rows=source_rows,
+                           introducer_rows=introducer_rows, state_rows=state_rows, job_code_rows=job_code_rows)
+
+
+# ---- RFQ Stage List ----
+@app.route("/portal/rfq/stage/<stage>")
+@admin_required
+def rfq_stage_list(stage):
+    stage = stage.upper()
+    if stage not in RFQ_STAGES:
+        stage = "RFQ"
+    rows = q("SELECT * FROM rfq_entries WHERE stage = ? ORDER BY id DESC", (stage,))
+    stage_counts = {}
+    for s in RFQ_STAGES:
+        stage_counts[s] = q("SELECT COUNT(*) c FROM rfq_entries WHERE stage = ?", (s,), one=True)["c"]
+    return render_template("portal/rfq_stage_list.html", stage=stage, rows=rows, stages=RFQ_STAGES, stage_counts=stage_counts)
+
+
+# ---- RFQ New ----
+@app.route("/portal/rfq/new", methods=["GET", "POST"])
+@admin_required
+def rfq_new():
+    if request.method == "POST":
+        f = request.form
+        rfq_id = _next_rfq_id()
+        now = datetime.utcnow().isoformat()
+        entry_id = execute("""INSERT INTO rfq_entries (rfq_id, client_name, job_code, job_title, amount, location, state, date,
+                    job_status, level, introducer, source, open_by, stage, commission, total_cost, net_profit,
+                    deposit_pct, introducer_comm_pct, introducer_comm_amt, manager_comm_pct, manager_comm_amt, gross_profit,
+                    contact_number, email, person_in_charge, map_link, notes, created_at, updated_at)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (rfq_id, f.get("client_name","").strip(), f.get("job_code",""), f.get("job_title",""), float(f.get("amount",0) or 0),
+                 f.get("location","").strip(), f.get("state","").strip(), f.get("date",""),
+                 f.get("job_status","NEW TASK"), f.get("level",""), f.get("introducer",""), f.get("source",""), f.get("open_by",""),
+                 "RFQ", float(f.get("commission",0) or 0), float(f.get("total_cost",0) or 0), float(f.get("net_profit",0) or 0),
+                 float(f.get("deposit_pct",0) or 0), float(f.get("introducer_comm_pct",0) or 0), float(f.get("introducer_comm_amt",0) or 0),
+                 float(f.get("manager_comm_pct",0) or 0), float(f.get("manager_comm_amt",0) or 0), float(f.get("gross_profit",0) or 0),
+                 f.get("contact_number","").strip(), f.get("email","").strip(), f.get("person_in_charge","").strip(),
+                 f.get("map_link","").strip(), f.get("notes","").strip(), now, now))
+        # Save quote items
+        items_desc = request.form.getlist("item_desc[]")
+        items_qty = request.form.getlist("item_qty[]")
+        items_price = request.form.getlist("item_price[]")
+        items_days = request.form.getlist("item_days[]")
+        for i, desc in enumerate(items_desc):
+            if desc.strip():
+                qty = int(items_qty[i]) if i < len(items_qty) and items_qty[i] else 1
+                price = float(items_price[i]) if i < len(items_price) and items_price[i] else 0
+                days = int(items_days[i]) if i < len(items_days) and items_days[i] else 1
+                execute("INSERT INTO rfq_items (rfq_entry_id, item_no, description, qty, unit_price, days, amount) VALUES (?,?,?,?,?,?,?)",
+                        (entry_id, i+1, desc.strip(), qty, price, days, qty * price * days))
+        # Save teamwork commissions
+        tc_names = request.form.getlist("tc_name[]")
+        tc_pcts = request.form.getlist("tc_pct[]")
+        tc_amts = request.form.getlist("tc_amt[]")
+        for i, name in enumerate(tc_names):
+            if name.strip():
+                pct = float(tc_pcts[i]) if i < len(tc_pcts) and tc_pcts[i] else 0
+                amt = float(tc_amts[i]) if i < len(tc_amts) and tc_amts[i] else 0
+                execute("INSERT INTO rfq_team_commissions (rfq_entry_id, person_name, percentage, amount) VALUES (?,?,?,?)",
+                        (entry_id, name.strip(), pct, amt))
+        flash(f"RFQ {rfq_id} created.", "ok")
+        return redirect(url_for("rfq_stage_list", stage="RFQ"))
+
+    lists = {lt: _rfq_dropdown(lt) for lt in ["job_code","job_status","introducer","source","open_by","job_title","level"]}
+    open_by_people = _rfq_dropdown("open_by")
+    customers = q("SELECT * FROM rfq_customers ORDER BY name")
+    return render_template("portal/rfq_form.html", e=None, lists=lists, customers=customers, team_comms=[], open_by_people=open_by_people)
+
+
+# ---- RFQ Edit ----
+@app.route("/portal/rfq/<int:eid>/edit", methods=["GET", "POST"])
+@admin_required
+def rfq_edit(eid):
+    e = q("SELECT * FROM rfq_entries WHERE id = ?", (eid,), one=True)
+    if not e:
+        abort(404)
+    if request.method == "POST":
+        f = request.form
+        now = datetime.utcnow().isoformat()
+        execute("""UPDATE rfq_entries SET client_name=?, job_code=?, job_title=?, amount=?, location=?, state=?, date=?,
+                    job_status=?, level=?, introducer=?, source=?, open_by=?, commission=?, total_cost=?, net_profit=?,
+                    deposit_pct=?, introducer_comm_pct=?, introducer_comm_amt=?, manager_comm_pct=?, manager_comm_amt=?, gross_profit=?,
+                    contact_number=?, email=?, person_in_charge=?, map_link=?, notes=?, updated_at=? WHERE id=?""",
+                (f.get("client_name","").strip(), f.get("job_code",""), f.get("job_title",""), float(f.get("amount",0) or 0),
+                 f.get("location","").strip(), f.get("state","").strip(), f.get("date",""),
+                 f.get("job_status",""), f.get("level",""), f.get("introducer",""), f.get("source",""), f.get("open_by",""),
+                 float(f.get("commission",0) or 0), float(f.get("total_cost",0) or 0), float(f.get("net_profit",0) or 0),
+                 float(f.get("deposit_pct",0) or 0), float(f.get("introducer_comm_pct",0) or 0), float(f.get("introducer_comm_amt",0) or 0),
+                 float(f.get("manager_comm_pct",0) or 0), float(f.get("manager_comm_amt",0) or 0), float(f.get("gross_profit",0) or 0),
+                 f.get("contact_number","").strip(), f.get("email","").strip(), f.get("person_in_charge","").strip(),
+                 f.get("map_link","").strip(), f.get("notes","").strip(), now, eid))
+        # Update quote items
+        execute("DELETE FROM rfq_items WHERE rfq_entry_id = ?", (eid,))
+        items_desc = request.form.getlist("item_desc[]")
+        items_qty = request.form.getlist("item_qty[]")
+        items_price = request.form.getlist("item_price[]")
+        items_days = request.form.getlist("item_days[]")
+        for i, desc in enumerate(items_desc):
+            if desc.strip():
+                qty = int(items_qty[i]) if i < len(items_qty) and items_qty[i] else 1
+                price = float(items_price[i]) if i < len(items_price) and items_price[i] else 0
+                days = int(items_days[i]) if i < len(items_days) and items_days[i] else 1
+                execute("INSERT INTO rfq_items (rfq_entry_id, item_no, description, qty, unit_price, days, amount) VALUES (?,?,?,?,?,?,?)",
+                        (eid, i+1, desc.strip(), qty, price, days, qty * price * days))
+        # Update teamwork commissions
+        execute("DELETE FROM rfq_team_commissions WHERE rfq_entry_id = ?", (eid,))
+        tc_names = request.form.getlist("tc_name[]")
+        tc_pcts = request.form.getlist("tc_pct[]")
+        tc_amts = request.form.getlist("tc_amt[]")
+        for i, name in enumerate(tc_names):
+            if name.strip():
+                pct = float(tc_pcts[i]) if i < len(tc_pcts) and tc_pcts[i] else 0
+                amt = float(tc_amts[i]) if i < len(tc_amts) and tc_amts[i] else 0
+                execute("INSERT INTO rfq_team_commissions (rfq_entry_id, person_name, percentage, amount) VALUES (?,?,?,?)",
+                        (eid, name.strip(), pct, amt))
+        flash(f"RFQ {e['rfq_id']} updated.", "ok")
+        return redirect(url_for("rfq_stage_list", stage=e["stage"]))
+
+    lists = {lt: _rfq_dropdown(lt) for lt in ["job_code","job_status","introducer","source","open_by","job_title","level"]}
+    items = q("SELECT * FROM rfq_items WHERE rfq_entry_id = ? ORDER BY item_no", (eid,))
+    team_comms = q("SELECT * FROM rfq_team_commissions WHERE rfq_entry_id = ? ORDER BY id", (eid,))
+    open_by_people = _rfq_dropdown("open_by")
+    customers = q("SELECT * FROM rfq_customers ORDER BY name")
+    return render_template("portal/rfq_form.html", e=e, lists=lists, items=items, customers=customers, team_comms=team_comms, open_by_people=open_by_people)
+
+
+# ---- RFQ Detail (Template View) ----
+@app.route("/portal/rfq/<int:eid>/detail")
+@admin_required
+def rfq_detail(eid):
+    e = q("SELECT * FROM rfq_entries WHERE id = ?", (eid,), one=True)
+    if not e:
+        abort(404)
+    items = q("SELECT * FROM rfq_items WHERE rfq_entry_id = ? ORDER BY item_no", (eid,))
+    team_comms = q("SELECT * FROM rfq_team_commissions WHERE rfq_entry_id = ? ORDER BY id", (eid,))
+    total_quote = sum(float(it["amount"] or 0) for it in items)
+    total_team_comm = sum(float(tc["amount"] or 0) for tc in team_comms)
+    return render_template("portal/rfq_detail.html", e=e, items=items, total_quote=total_quote, team_comms=team_comms, total_team_comm=total_team_comm)
+
+
+# ---- RFQ Move Stage ----
+@app.route("/portal/rfq/<int:eid>/move", methods=["POST"])
+@admin_required
+def rfq_move(eid):
+    new_stage = request.form.get("new_stage", "").upper()
+    if new_stage not in RFQ_STAGES:
+        flash("Invalid stage.", "err")
+        return redirect(request.referrer or url_for("rfq_dashboard"))
+    execute("UPDATE rfq_entries SET stage = ?, updated_at = ? WHERE id = ?",
+            (new_stage, datetime.utcnow().isoformat(), eid))
+    flash(f"RFQ moved to {new_stage}.", "ok")
+    return redirect(request.referrer or url_for("rfq_stage_list", stage=new_stage))
+
+
+# ---- RFQ Delete ----
+@app.route("/portal/rfq/<int:eid>/delete", methods=["POST"])
+@admin_required
+def rfq_delete(eid):
+    execute("DELETE FROM rfq_items WHERE rfq_entry_id = ?", (eid,))
+    execute("DELETE FROM rfq_team_commissions WHERE rfq_entry_id = ?", (eid,))
+    execute("DELETE FROM rfq_entries WHERE id = ?", (eid,))
+    flash("RFQ deleted.", "ok")
+    return redirect(request.referrer or url_for("rfq_dashboard"))
+
+
+# ---- RFQ Customers ----
+@app.route("/portal/rfq-customers")
+@admin_required
+def rfq_customers_list():
+    rows = q("SELECT * FROM rfq_customers ORDER BY id DESC")
+    return render_template("portal/rfq_customers.html", customers=rows)
+
+
+@app.route("/portal/rfq-customers/new", methods=["GET", "POST"])
+@admin_required
+def rfq_customer_new():
+    if request.method == "POST":
+        f = request.form
+        execute("INSERT INTO rfq_customers (name, mobile, email, company_name, location, state, created_at) VALUES (?,?,?,?,?,?,?)",
+                (f.get("name","").strip(), f.get("mobile","").strip(), f.get("email","").strip(),
+                 f.get("company_name","").strip(), f.get("location","").strip(), f.get("state","").strip(),
+                 datetime.utcnow().isoformat()))
+        flash("Customer added.", "ok")
+        return redirect(url_for("rfq_customers_list"))
+    return render_template("portal/rfq_customer_form.html", c=None)
+
+
+@app.route("/portal/rfq-customers/<int:cid>/edit", methods=["GET", "POST"])
+@admin_required
+def rfq_customer_edit(cid):
+    c = q("SELECT * FROM rfq_customers WHERE id = ?", (cid,), one=True)
+    if not c:
+        abort(404)
+    if request.method == "POST":
+        f = request.form
+        execute("UPDATE rfq_customers SET name=?, mobile=?, email=?, company_name=?, location=?, state=? WHERE id=?",
+                (f.get("name","").strip(), f.get("mobile","").strip(), f.get("email","").strip(),
+                 f.get("company_name","").strip(), f.get("location","").strip(), f.get("state","").strip(), cid))
+        flash("Customer updated.", "ok")
+        return redirect(url_for("rfq_customers_list"))
+    return render_template("portal/rfq_customer_form.html", c=c)
+
+
+@app.route("/portal/rfq-customers/<int:cid>/delete", methods=["POST"])
+@admin_required
+def rfq_customer_delete(cid):
+    execute("DELETE FROM rfq_customers WHERE id = ?", (cid,))
+    flash("Customer deleted.", "ok")
+    return redirect(url_for("rfq_customers_list"))
+
+
+# ---- RFQ Lists Management ----
+@app.route("/portal/rfq-lists", methods=["GET", "POST"])
+@admin_required
+def rfq_lists_manage():
+    if request.method == "POST":
+        action = request.form.get("action", "")
+        if action == "add":
+            lt = request.form.get("list_type", "").strip()
+            val = request.form.get("value", "").strip()
+            if lt and val:
+                execute("INSERT INTO rfq_lists (list_type, value, sort_order) VALUES (?,?,?)", (lt, val, 999))
+                flash(f"'{val}' added to {lt}.", "ok")
+        elif action == "delete":
+            lid = request.form.get("list_id", "")
+            if lid:
+                execute("DELETE FROM rfq_lists WHERE id = ?", (int(lid),))
+                flash("List item deleted.", "ok")
+        return redirect(url_for("rfq_lists_manage"))
+
+    all_types = ["job_code", "job_status", "introducer", "source", "open_by", "job_title", "level"]
+    lists_data = {}
+    for lt in all_types:
+        lists_data[lt] = q("SELECT * FROM rfq_lists WHERE list_type = ? ORDER BY sort_order, id", (lt,))
+    return render_template("portal/rfq_lists_manage.html", lists_data=lists_data, all_types=all_types)
+
+
 def _setup_scheduler():
     """Start APScheduler background scheduler for expiry reminders."""
     from apscheduler.schedulers.background import BackgroundScheduler
