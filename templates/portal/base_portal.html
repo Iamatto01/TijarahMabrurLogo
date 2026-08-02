@@ -9,7 +9,7 @@
 <body>
 <div class="portal">
     <aside class="sidebar">
-        <a class="brand" href="{{ url_for('home') }}" style="text-decoration:none">
+        <a class="brand" href="{{ url_for('company_profile') if user and user.company_id else url_for('dashboard') }}" style="text-decoration:none">
             {% if tenant_company and tenant_company.logo_filename %}
                 <img src="{{ url_for('serve_logo', filename=tenant_company.logo_filename) }}" alt="logo" class="brand-logo" style="height:40px;max-width:150px;object-fit:contain;background:#fff;border-radius:8px;padding:4px">
             {% else %}
@@ -32,7 +32,6 @@
                 <a href="{{ url_for('company_profile') }}" class="{{ 'active' if request.endpoint == 'company_profile' }}">🏢 My Company</a>
             {% endif %}
             <div class="group">Account</div>
-            <a href="{{ url_for('home') }}">🏠 Website</a>
             <a href="{{ url_for('logout') }}">🚪 Logout</a>
         </nav>
     </aside>

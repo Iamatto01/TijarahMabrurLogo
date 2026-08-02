@@ -1,4 +1,4 @@
-﻿"""Database layer for Tijarah Mabrur portal (PostgreSQL + SQLite fallback)."""
+"""Database layer for Tijarah Mabrur portal (PostgreSQL + SQLite fallback)."""
 import os
 import sqlite3
 from datetime import datetime
@@ -76,6 +76,33 @@ CREATE TABLE IF NOT EXISTS machinery (
     company_id INTEGER,
     notes TEXT DEFAULT '',
     image_filename TEXT DEFAULT '',
+    cert_type TEXT DEFAULT 'PMT',
+    item_name TEXT DEFAULT '',
+    mawp TEXT DEFAULT '',
+    manufacturer TEXT DEFAULT '',
+    volume TEXT DEFAULT '',
+    year TEXT DEFAULT '',
+    before_image TEXT DEFAULT '',
+    medium TEXT DEFAULT '',
+    serviced_date TEXT DEFAULT '',
+    sv_image TEXT DEFAULT '',
+    sv_size TEXT DEFAULT '',
+    sv_type TEXT DEFAULT '',
+    sv_set_pressure TEXT DEFAULT '',
+    sv_calibrated_date TEXT DEFAULT '',
+    pg_image TEXT DEFAULT '',
+    pg_size TEXT DEFAULT '',
+    pg_type TEXT DEFAULT '',
+    pg_calibrated_date TEXT DEFAULT '',
+    doc_design_approval TEXT DEFAULT '',
+    doc_design_drawing TEXT DEFAULT '',
+    doc_ht_cert TEXT DEFAULT '',
+    doc_dosh TEXT DEFAULT '',
+    doc_service_report TEXT DEFAULT '',
+    doc_uttm_report TEXT DEFAULT '',
+    doc_sv_cert TEXT DEFAULT '' ,
+    doc_pg_cert TEXT DEFAULT '',
+    doc_cof TEXT DEFAULT '',
     created_at TEXT NOT NULL
 );
 
@@ -143,6 +170,35 @@ CREATE INDEX IF NOT EXISTS idx_expiry_reminders_sent ON expiry_reminders(sent);
 
 
 def _migrate(conn):
+    machinery_cols = [
+        ("cert_type", "TEXT DEFAULT 'PMT'"),
+        ("item_name", "TEXT DEFAULT ''"),
+        ("mawp", "TEXT DEFAULT ''"),
+        ("manufacturer", "TEXT DEFAULT ''"),
+        ("volume", "TEXT DEFAULT ''"),
+        ("year", "TEXT DEFAULT ''"),
+        ("before_image", "TEXT DEFAULT ''"),
+        ("medium", "TEXT DEFAULT ''"),
+        ("serviced_date", "TEXT DEFAULT ''"),
+        ("sv_image", "TEXT DEFAULT ''"),
+        ("sv_size", "TEXT DEFAULT ''"),
+        ("sv_type", "TEXT DEFAULT ''"),
+        ("sv_set_pressure", "TEXT DEFAULT ''"),
+        ("sv_calibrated_date", "TEXT DEFAULT ''"),
+        ("pg_image", "TEXT DEFAULT ''"),
+        ("pg_size", "TEXT DEFAULT ''"),
+        ("pg_type", "TEXT DEFAULT ''"),
+        ("pg_calibrated_date", "TEXT DEFAULT ''"),
+        ("doc_design_approval", "TEXT DEFAULT ''"),
+        ("doc_design_drawing", "TEXT DEFAULT ''"),
+        ("doc_ht_cert", "TEXT DEFAULT ''"),
+        ("doc_dosh", "TEXT DEFAULT ''"),
+        ("doc_service_report", "TEXT DEFAULT ''"),
+        ("doc_uttm_report", "TEXT DEFAULT ''"),
+        ("doc_sv_cert", "TEXT DEFAULT ''"),
+        ("doc_pg_cert", "TEXT DEFAULT ''"),
+        ("doc_cof", "TEXT DEFAULT ''"),
+    ]
     if _ENGINE == "sqlite":
         for table, col, ddl in [
             ("users", "company_id", "ALTER TABLE users ADD COLUMN company_id INTEGER"),
@@ -150,7 +206,7 @@ def _migrate(conn):
             ("machinery", "image_filename", "ALTER TABLE machinery ADD COLUMN image_filename TEXT DEFAULT ''"),
             ("companies", "email", "ALTER TABLE companies ADD COLUMN email TEXT DEFAULT ''"),
             ("reports", "pdf_filename", "ALTER TABLE reports ADD COLUMN pdf_filename TEXT DEFAULT ''"),
-        ]:
+        ] + [("machinery", col, f"ALTER TABLE machinery ADD COLUMN {col} {col_type}") for col, col_type in machinery_cols]:
             cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")]
             if col not in cols:
                 conn.execute(ddl)
@@ -184,7 +240,7 @@ def _migrate(conn):
             ("machinery", "image_filename", "TEXT DEFAULT ''"),
             ("companies", "email", "TEXT DEFAULT ''"),
             ("reports", "pdf_filename", "TEXT DEFAULT ''"),
-        ]:
+        ] + [("machinery", col, col_type) for col, col_type in machinery_cols]:
             try:
                 cur.execute(f"ALTER TABLE {table} ADD COLUMN {col} {col_type}")
             except Exception:

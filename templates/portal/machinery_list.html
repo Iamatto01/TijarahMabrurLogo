@@ -1,86 +1,336 @@
 {% extends "portal/base_portal.html" %}
-{% block title %}Machinery | Portal{% endblock %}
+{% block title %}Machinery List | Portal{% endblock %}
 {% block content %}
-<div class="portal-topbar">
-    <h1>Machinery List</h1>
-    <a class="btn" href="{{ url_for('machinery_new') }}">+ Add Machinery</a>
+
+<!-- Top Controls Matching Image 3 -->
+<div style="margin-bottom:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+        <div>
+            <span style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">Search by</span>
+            <div style="display:flex;align-items:center;gap:8px">
+                <select style="padding:8px 14px;border-radius:20px;border:1px solid #ccc;background:#fff;font-size:13px;min-width:140px">
+                    <option>Select</option>
+                    <option>Name / S/N</option>
+                    <option>Location</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px">
+            <form method="get" action="{{ url_for('machinery_list') }}" style="display:flex;align-items:center">
+                <input type="hidden" name="type" value="{{ cert_type }}">
+                <div style="position:relative;display:flex;align-items:center">
+                    <input type="text" name="q" value="{{ search }}" placeholder="Search…" style="padding:8px 36px 8px 16px;border-radius:20px;border:1px solid #ccc;background:#fff;font-size:13px;width:220px">
+                    <button type="submit" style="position:absolute;right:10px;background:none;border:none;cursor:pointer;color:#666;font-size:14px">🔍</button>
+                </div>
+            </form>
+            <a href="{{ url_for('machinery_new') }}" style="width:36px;height:36px;border-radius:50%;border:1px solid #333;display:inline-flex;align-items:center;justify-content:center;font-size:20px;color:#333;text-decoration:none;font-weight:300" title="Add Machinery">+</a>
+        </div>
+    </div>
+
+    <!-- PMT / PMA / PMD Pill Tabs -->
+    <div style="display:flex;gap:12px;margin-top:12px">
+        <a href="{{ url_for('machinery_list', type='PMT', q=search) }}" class="cert-tab {{ 'active' if cert_type == 'PMT' }}">PMT</a>
+        <a href="{{ url_for('machinery_list', type='PMA', q=search) }}" class="cert-tab {{ 'active' if cert_type == 'PMA' }}">PMA</a>
+        <a href="{{ url_for('machinery_list', type='PMD', q=search) }}" class="cert-tab {{ 'active' if cert_type == 'PMD' }}">PMD</a>
+    </div>
 </div>
 
-<div class="toolbar">
-    <form method="get">
-        <input type="text" name="q" value="{{ search }}" placeholder="Search name, serial, cert no, location…">
-        <button class="btn ghost" type="submit">Search</button>
-    </form>
-</div>
-
-<div class="panel">
-    <div class="panel-body tbl-scroll">
+<!-- Table Container Matching Image 3 -->
+<div class="panel" style="border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.06)">
+    <div class="panel-body tbl-scroll" style="padding:0">
         {% if machinery %}
-        <table class="tbl">
+        <table class="tbl machinery-table">
             <thead>
-                <tr>
-                    <th>Name</th><th>Category</th><th>Serial No.</th><th>Cert No. (PMA/PMT)</th>
-                    <th>Location</th>{% if user.role == 'admin' %}<th>Owner</th>{% endif %}
-                    <th>Status</th><th>Next Inspection</th><th></th>
+                <tr style="background:#e8ecef;color:#111;font-weight:700">
+                    <th style="width:50px">NO.</th>
+                    <th style="width:70px">ITEM</th>
+                    <th>{{ cert_type }}</th>
+                    <th>ITEM NAME</th>
+                    <th>S/N</th>
+                    <th>LOCATION</th>
+                    <th>EXP DATE</th>
+                    <th>COF</th>
+                    <th>REPORT</th>
                 </tr>
             </thead>
             <tbody>
                 {% for m in machinery %}
+                {% set loop_idx = (page - 1) * 25 + loop.index %}
                 <tr>
+                    <td style="color:#555">{{ loop_idx }}</td>
                     <td>
-                        <div style="display:flex;align-items:center;gap:10px">
+                        <!-- Clickable Image Thumbnail triggers Modal (Image 2) -->
+                        <div onclick='openMachineryModal({{ m|tojson|safe }})' style="cursor:pointer" title="Click to view detailed template popup">
                             {% if m.image_filename %}
-                            <img src="{{ url_for('serve_machinery_image', filename=m.image_filename) }}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid var(--line)" loading="lazy">
+                            <img src="{{ url_for('serve_machinery_image', filename=m.image_filename) }}" style="width:46px;height:46px;border-radius:6px;object-fit:cover;border:1px solid #ddd;box-shadow:0 1px 3px rgba(0,0,0,0.1)">
+                            {% else %}
+                            <div style="width:46px;height:46px;border-radius:6px;background:#ddd;display:flex;align-items:center;justify-content:center;font-size:20px">⚙️</div>
                             {% endif %}
-                            <div>
-                                <a href="{{ url_for('machinery_detail', mid=m.id) }}" style="font-weight:700;color:var(--text)">{{ m.name }}</a>
-                                {% if m.notes %}<br><small style="color:var(--muted)">{{ m.notes[:60] }}{% if m.notes|length>60 %}…{% endif %}</small>{% endif %}
-                            </div>
                         </div>
                     </td>
-                    <td>{{ m.category }}</td>
-                    <td>{{ m.serial_no or '—' }}</td>
-                    <td>{{ m.cert_no or '—' }}</td>
-                    <td>{{ m.location or '—' }}</td>
-                    {% if user.role == 'admin' %}<td>{{ m.owner_company or 'Company' }}</td>{% endif %}
-                    <td><span class="tag {{ m.status }}">{{ m.status }}</span></td>
-                    <td>{{ m.next_inspection or '—' }}</td>
-                    <td style="white-space:nowrap">
-                        <a class="btn sm ghost" href="{{ url_for('machinery_edit', mid=m.id) }}">Edit</a>
-                        <form method="post" action="{{ url_for('machinery_delete', mid=m.id) }}" style="display:inline" onsubmit="return confirm('Delete this machinery and its reports?')">
-                            <button class="btn sm danger" type="submit">Delete</button>
-                        </form>
+                    <td>
+                        <a href="{{ url_for('machinery_detail', mid=m.id) }}" style="font-weight:700;color:#222;text-decoration:none">
+                            {{ m.name }}
+                        </a>
+                    </td>
+                    <td style="color:#444">{{ m.item_name or '—' }}</td>
+                    <td style="color:#444">{{ m.serial_no or '—' }}</td>
+                    <td style="color:#444">{{ m.location or '—' }}</td>
+                    <td style="color:#444;white-space:nowrap">{{ m.next_inspection or '—' }}</td>
+                    <td>
+                        {% if m.doc_cof %}
+                        <a class="btn-cof" href="{{ url_for('serve_machinery_doc', filename=m.doc_cof) }}" target="_blank">View</a>
+                        {% else %}
+                        <a class="btn-cof" href="javascript:void(0)" onclick='openMachineryModal({{ m|tojson|safe }})'>View</a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <!-- Report Badges: SR, SV, PG, UT -->
+                        <div style="display:flex;gap:6px;align-items:center">
+                            <!-- SR Badge -->
+                            {% if m.doc_service_report %}
+                            <a href="{{ url_for('serve_machinery_doc', filename=m.doc_service_report) }}" target="_blank" class="rpt-badge active" title="Service Report (SR)">SR</a>
+                            {% else %}
+                            <span class="rpt-badge active" onclick='openMachineryModal({{ m|tojson|safe }})' title="Service Report">SR</span>
+                            {% endif %}
+
+                            <!-- SV Badge -->
+                            {% if m.doc_sv_cert %}
+                            <a href="{{ url_for('serve_machinery_doc', filename=m.doc_sv_cert) }}" target="_blank" class="rpt-badge text-only" title="Safety Valve Cert">SV</a>
+                            {% else %}
+                            <span class="rpt-badge text-only">SV</span>
+                            {% endif %}
+
+                            <!-- PG Badge -->
+                            {% if m.doc_pg_cert %}
+                            <a href="{{ url_for('serve_machinery_doc', filename=m.doc_pg_cert) }}" target="_blank" class="rpt-badge text-only" title="Pressure Gauge Cert">PG</a>
+                            {% else %}
+                            <span class="rpt-badge text-only">UT</span>
+                            {% endif %}
+
+                            <!-- UT Badge -->
+                            {% if m.doc_uttm_report %}
+                            <a href="{{ url_for('serve_machinery_doc', filename=m.doc_uttm_report) }}" target="_blank" class="rpt-badge text-only" title="UTTM Report">UT</a>
+                            {% else %}
+                            <span class="rpt-badge text-only">UT</span>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         {% else %}
-        <div class="empty">No machinery found. <a href="{{ url_for('machinery_new') }}">Add your first unit</a>.</div>
+        <div class="empty">No {{ cert_type }} machinery found. <a href="{{ url_for('machinery_new') }}">Add new unit</a>.</div>
         {% endif %}
     </div>
 </div>
 
 {% if pages > 1 %}
-<div class="toolbar" style="justify-content:space-between;align-items:center">
+<div class="toolbar" style="justify-content:space-between;align-items:center;margin-top:16px">
     <span style="color:var(--muted);font-size:.9rem">{{ total }} unit(s) — page {{ page }} of {{ pages }}</span>
     <span style="display:flex;gap:6px">
         {% if page > 1 %}
-            <a class="btn sm ghost" href="{{ url_for('machinery_list', q=search, page=page-1) }}">← Prev</a>
+            <a class="btn sm ghost" href="{{ url_for('machinery_list', type=cert_type, q=search, page=page-1) }}">← Prev</a>
         {% endif %}
         {% for p in range(1, pages + 1) %}
-            {% if p == page %}
-                <a class="btn sm" href="#">{{ p }}</a>
-            {% elif p == 1 or p == pages or (p >= page - 2 and p <= page + 2) %}
-                <a class="btn sm ghost" href="{{ url_for('machinery_list', q=search, page=p) }}">{{ p }}</a>
-            {% elif p == page - 3 or p == page + 3 %}
-                <span style="align-self:center;color:var(--muted)">…</span>
-            {% endif %}
+            <a class="btn sm {{ '' if p == page else 'ghost' }}" href="{{ url_for('machinery_list', type=cert_type, q=search, page=p) }}">{{ p }}</a>
         {% endfor %}
         {% if page < pages %}
-            <a class="btn sm ghost" href="{{ url_for('machinery_list', q=search, page=page+1) }}">Next →</a>
+            <a class="btn sm ghost" href="{{ url_for('machinery_list', type=cert_type, q=search, page=page+1) }}">Next →</a>
         {% endif %}
     </span>
 </div>
 {% endif %}
+
+
+<!-- Modal Popup Matching Image 2 Template -->
+<div id="machineryModal" class="img2-modal-overlay">
+    <div class="img2-modal">
+        <button class="img2-close" onclick="closeMachineryModal()">✕</button>
+
+        <!-- Modal Header -->
+        <div class="img2-header">
+            <div><span style="font-size:14px;color:#555"><span id="m_cert_label">PMT</span> no:</span> <strong id="m_cert_no" style="font-size:14px;color:#111"></strong></div>
+            <div><span style="font-size:14px;color:#555">Location:</span> <strong id="m_location" style="font-size:14px;color:#111"></strong></div>
+        </div>
+
+        <!-- Modal 4-Column Content Layout -->
+        <div class="img2-grid">
+            <!-- Column 1: Main Machine -->
+            <div class="img2-col">
+                <div class="img2-img-box">
+                    <img id="m_main_img" src="" alt="Main Machine">
+                    <div class="img2-img-label" id="m_name">MACHINE 3</div>
+                </div>
+                <div class="img2-details">
+                    <div><span class="lbl"><span id="m_cert_type_label">PMT</span> no:</span> <span class="val" id="m_cert_val">—</span></div>
+                    <div><span class="lbl">S/N:</span> <span class="val" id="m_sn">—</span></div>
+                    <div><span class="lbl">MAWP:</span> <span class="val" id="m_mawp">—</span></div>
+                    <div><span class="lbl">Manufacturer:</span> <span class="val" id="m_manufacturer">—</span></div>
+                    <div><span class="lbl">Volume:</span> <span class="val" id="m_volume">—</span></div>
+                    <div><span class="lbl">Year:</span> <span class="val" id="m_year">—</span></div>
+                </div>
+                <div class="img2-btns">
+                    <a id="btn_da" href="#" target="_blank" class="btn-pill">Design approval</a>
+                    <a id="btn_dd" href="#" target="_blank" class="btn-pill">Design drawing</a>
+                    <a id="btn_ht" href="#" target="_blank" class="btn-pill">HT certificate</a>
+                    <a id="btn_dosh" href="#" target="_blank" class="btn-pill">DOSH documents</a>
+                </div>
+            </div>
+
+            <!-- Column 2: Service / Before -->
+            <div class="img2-col">
+                <div class="img2-img-box empty-box">
+                    <img id="m_before_img" src="" style="display:none">
+                    <div class="img2-img-label center">Before</div>
+                </div>
+                <div class="img2-details">
+                    <div><span class="lbl">Medium:</span> <span class="val" id="m_medium">—</span></div>
+                    <div><span class="lbl">Serviced date:</span> <span class="val" id="m_serviced_date">—</span></div>
+                </div>
+                <div class="img2-btns" style="margin-top:auto">
+                    <a id="btn_sr" href="#" target="_blank" class="btn-pill">Service report</a>
+                    <a id="btn_ut" href="#" target="_blank" class="btn-pill">UTTM report</a>
+                </div>
+            </div>
+
+            <!-- Column 3: Safety Valve -->
+            <div class="img2-col">
+                <div class="img2-img-box empty-box">
+                    <img id="m_sv_img" src="" style="display:none">
+                    <div class="img2-img-label center">Safety valve</div>
+                </div>
+                <div class="img2-details">
+                    <div><span class="lbl">Size:</span> <span class="val" id="m_sv_size">—</span></div>
+                    <div><span class="lbl">Type:</span> <span class="val" id="m_sv_type">—</span></div>
+                    <div><span class="lbl">Set pressure:</span> <span class="val" id="m_sv_set_pressure">—</span></div>
+                    <div><span class="lbl">Calibrated date:</span> <span class="val" id="m_sv_calibrated_date">—</span></div>
+                </div>
+                <div class="img2-btns" style="margin-top:auto">
+                    <a id="btn_sv" href="#" target="_blank" class="btn-pill">SV calibration certificate</a>
+                </div>
+            </div>
+
+            <!-- Column 4: Pressure Gauge -->
+            <div class="img2-col">
+                <div class="img2-img-box empty-box">
+                    <img id="m_pg_img" src="" style="display:none">
+                    <div class="img2-img-label center">Pressure gauge</div>
+                </div>
+                <div class="img2-details">
+                    <div><span class="lbl">Size:</span> <span class="val" id="m_pg_size">—</span></div>
+                    <div><span class="lbl">Type:</span> <span class="val" id="m_pg_type">—</span></div>
+                    <div><span class="lbl">Calibrated date:</span> <span class="val" id="m_pg_calibrated_date">—</span></div>
+                </div>
+                <div class="img2-btns" style="margin-top:auto">
+                    <a id="btn_pg" href="#" target="_blank" class="btn-pill">PG calibration certificate</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openMachineryModal(m) {
+    var modal = document.getElementById('machineryModal');
+    var certType = m.cert_type || 'PMT';
+    
+    document.getElementById('m_cert_label').innerText = certType;
+    document.getElementById('m_cert_type_label').innerText = certType;
+    document.getElementById('m_cert_no').innerText = m.cert_no || m.name || '—';
+    document.getElementById('m_location').innerText = m.location || '—';
+    document.getElementById('m_name').innerText = m.name || 'MACHINE';
+
+    document.getElementById('m_cert_val').innerText = m.cert_no || m.name || '—';
+    document.getElementById('m_sn').innerText = m.serial_no || '—';
+    document.getElementById('m_mawp').innerText = m.mawp || '—';
+    document.getElementById('m_manufacturer').innerText = m.manufacturer || '—';
+    document.getElementById('m_volume').innerText = m.volume || '—';
+    document.getElementById('m_year').innerText = m.year || '—';
+
+    // Main Image
+    var mainImg = document.getElementById('m_main_img');
+    if (m.image_filename) {
+        mainImg.src = "/uploads/machinery/" + m.image_filename;
+        mainImg.style.display = 'block';
+    } else {
+        mainImg.src = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=600&auto=format&fit=crop";
+        mainImg.style.display = 'block';
+    }
+
+    // Before Image
+    var beforeImg = document.getElementById('m_before_img');
+    if (m.before_image) {
+        beforeImg.src = "/uploads/machinery/" + m.before_image;
+        beforeImg.style.display = 'block';
+    } else {
+        beforeImg.style.display = 'none';
+    }
+    document.getElementById('m_medium').innerText = m.medium || '—';
+    document.getElementById('m_serviced_date').innerText = m.serviced_date || '—';
+
+    // Safety Valve
+    var svImg = document.getElementById('m_sv_img');
+    if (m.sv_image) {
+        svImg.src = "/uploads/machinery/" + m.sv_image;
+        svImg.style.display = 'block';
+    } else {
+        svImg.style.display = 'none';
+    }
+    document.getElementById('m_sv_size').innerText = m.sv_size || '—';
+    document.getElementById('m_sv_type').innerText = m.sv_type || '—';
+    document.getElementById('m_sv_set_pressure').innerText = m.sv_set_pressure || '—';
+    document.getElementById('m_sv_calibrated_date').innerText = m.sv_calibrated_date || '—';
+
+    // Pressure Gauge
+    var pgImg = document.getElementById('m_pg_img');
+    if (m.pg_image) {
+        pgImg.src = "/uploads/machinery/" + m.pg_image;
+        pgImg.style.display = 'block';
+    } else {
+        pgImg.style.display = 'none';
+    }
+    document.getElementById('m_pg_size').innerText = m.pg_size || '—';
+    document.getElementById('m_pg_type').innerText = m.pg_type || '—';
+    document.getElementById('m_pg_calibrated_date').innerText = m.pg_calibrated_date || '—';
+
+    // Helper for buttons
+    function setBtn(btnId, filename) {
+        var btn = document.getElementById(btnId);
+        if (filename) {
+            btn.href = "/uploads/machinery_docs/" + filename;
+            btn.style.opacity = "1";
+            btn.style.pointerEvents = "auto";
+        } else {
+            btn.href = "javascript:void(0)";
+            btn.style.opacity = "0.7";
+        }
+    }
+
+    setBtn('btn_da', m.doc_design_approval);
+    setBtn('btn_dd', m.doc_design_drawing);
+    setBtn('btn_ht', m.doc_ht_cert);
+    setBtn('btn_dosh', m.doc_dosh);
+    setBtn('btn_sr', m.doc_service_report);
+    setBtn('btn_ut', m.doc_uttm_report);
+    setBtn('btn_sv', m.doc_sv_cert);
+    setBtn('btn_pg', m.doc_pg_cert);
+
+    modal.style.display = 'flex';
+}
+
+function closeMachineryModal() {
+    document.getElementById('machineryModal').style.display = 'none';
+}
+
+// Close on outside click
+window.onclick = function(e) {
+    var modal = document.getElementById('machineryModal');
+    if (e.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
 {% endblock %}

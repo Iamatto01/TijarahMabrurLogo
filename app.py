@@ -23,13 +23,25 @@ UPLOAD_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), "uploads")
 LOGO_DIR = os.path.join(UPLOAD_DIR, "logos")
 MACHINERY_IMG_DIR = os.path.join(UPLOAD_DIR, "machinery")
 REPORT_PDF_DIR = os.path.join(UPLOAD_DIR, "reports")
+MACHINERY_DOC_DIR = os.path.join(UPLOAD_DIR, "machinery_docs")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(LOGO_DIR, exist_ok=True)
 os.makedirs(MACHINERY_IMG_DIR, exist_ok=True)
 os.makedirs(REPORT_PDF_DIR, exist_ok=True)
+os.makedirs(MACHINERY_DOC_DIR, exist_ok=True)
 
 ALLOWED_LOGO_EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024  # 8 MB uploads
+
+
+def save_machinery_file(file_storage, target_dir, prefix="doc"):
+    if not file_storage or not file_storage.filename:
+        return ""
+    ext = os.path.splitext(file_storage.filename)[1].lower()
+    stored = f"{prefix}_{uuid.uuid4().hex}{ext}"
+    file_storage.save(os.path.join(target_dir, stored))
+    return stored
+
 
 # SMTP config for email reminders (set via env vars)
 SMTP_HOST = os.getenv("SMTP_HOST", "")
@@ -230,14 +242,18 @@ def dashboard():
 @login_required
 def machinery_list():
     u = current_user()
+    cert_type = request.args.get("type", "PMT").strip().upper()
     search = request.args.get("q", "").strip()
     page = max(request.args.get("page", 1, type=int), 1)
     scope, params = scope_clause(u)
     where = scope
     args = list(params)
+    if cert_type in ("PMT", "PMA", "PMD"):
+        where += " AND (m.cert_type = ? OR (m.cert_type IS NULL AND ? = 'PMT'))"
+        args += [cert_type, cert_type]
     if search:
-        where += " AND (m.name LIKE ? OR m.serial_no LIKE ? OR m.cert_no LIKE ? OR m.location LIKE ?)"
-        args += [f"%{search}%"] * 4
+        where += " AND (m.name LIKE ? OR m.item_name LIKE ? OR m.serial_no LIKE ? OR m.cert_no LIKE ? OR m.location LIKE ?)"
+        args += [f"%{search}%"] * 5
     total = q(f"SELECT COUNT(*) c FROM machinery m WHERE {where}", tuple(args), one=True)["c"]
     pages = max((total + PER_PAGE - 1) // PER_PAGE, 1)
     page = min(page, pages)
@@ -248,7 +264,7 @@ def machinery_list():
         tuple(args) + (PER_PAGE, (page - 1) * PER_PAGE),
     )
     return render_template("portal/machinery_list.html", machinery=rows, search=search,
-                           page=page, pages=pages, total=total)
+                           cert_type=cert_type, page=page, pages=pages, total=total)
 
 
 @app.route("/portal/machinery/new", methods=["GET", "POST"])
@@ -258,6 +274,7 @@ def machinery_new():
     owners = q("SELECT id, name, company FROM users WHERE role='client' ORDER BY company") if u["role"] == "admin" else []
     if request.method == "POST":
         f = request.form
+        files = request.files
         owner_id = f.get("owner_id") if u["role"] == "admin" else u["id"]
         company_id = None
         if owner_id:
@@ -265,16 +282,46 @@ def machinery_new():
             company_id = o["company_id"] if o else None
         elif u["role"] != "admin":
             company_id = u["company_id"]
+
+        image_filename = save_machinery_file(files.get("main_image"), MACHINERY_IMG_DIR, "m_main")
+        before_image = save_machinery_file(files.get("before_image"), MACHINERY_IMG_DIR, "m_before")
+        sv_image = save_machinery_file(files.get("sv_image"), MACHINERY_IMG_DIR, "m_sv")
+        pg_image = save_machinery_file(files.get("pg_image"), MACHINERY_IMG_DIR, "m_pg")
+
+        doc_design_approval = save_machinery_file(files.get("doc_design_approval"), MACHINERY_DOC_DIR, "doc_da")
+        doc_design_drawing = save_machinery_file(files.get("doc_design_drawing"), MACHINERY_DOC_DIR, "doc_dd")
+        doc_ht_cert = save_machinery_file(files.get("doc_ht_cert"), MACHINERY_DOC_DIR, "doc_ht")
+        doc_dosh = save_machinery_file(files.get("doc_dosh"), MACHINERY_DOC_DIR, "doc_dosh")
+        doc_service_report = save_machinery_file(files.get("doc_service_report"), MACHINERY_DOC_DIR, "doc_sr")
+        doc_uttm_report = save_machinery_file(files.get("doc_uttm_report"), MACHINERY_DOC_DIR, "doc_ut")
+        doc_sv_cert = save_machinery_file(files.get("doc_sv_cert"), MACHINERY_DOC_DIR, "doc_sv")
+        doc_pg_cert = save_machinery_file(files.get("doc_pg_cert"), MACHINERY_DOC_DIR, "doc_pg")
+        doc_cof = save_machinery_file(files.get("doc_cof"), MACHINERY_DOC_DIR, "doc_cof")
+
         execute(
-            """INSERT INTO machinery (name, category, serial_no, cert_no, location, status, next_inspection, owner_id, company_id, notes, created_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-            (f.get("name", "").strip(), f.get("category", "Other"), f.get("serial_no", "").strip(),
-             f.get("cert_no", "").strip(), f.get("location", "").strip(), f.get("status", "Active"),
-             f.get("next_inspection", ""), owner_id or None, company_id,
-             f.get("notes", "").strip(), datetime.utcnow().isoformat()),
+            """INSERT INTO machinery (
+                name, category, serial_no, cert_no, location, status, next_inspection, owner_id, company_id, notes,
+                image_filename, cert_type, item_name, mawp, manufacturer, volume, year,
+                before_image, medium, serviced_date, sv_image, sv_size, sv_type, sv_set_pressure, sv_calibrated_date,
+                pg_image, pg_size, pg_type, pg_calibrated_date,
+                doc_design_approval, doc_design_drawing, doc_ht_cert, doc_dosh, doc_service_report, doc_uttm_report, doc_sv_cert, doc_pg_cert, doc_cof,
+                created_at
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                f.get("name", "").strip(), f.get("category", "Other"), f.get("serial_no", "").strip(),
+                f.get("cert_no", "").strip(), f.get("location", "").strip(), f.get("status", "Active"),
+                f.get("next_inspection", ""), owner_id or None, company_id, f.get("notes", "").strip(),
+                image_filename, f.get("cert_type", "PMT").strip().upper(), f.get("item_name", "").strip(),
+                f.get("mawp", "").strip(), f.get("manufacturer", "").strip(), f.get("volume", "").strip(), f.get("year", "").strip(),
+                before_image, f.get("medium", "").strip(), f.get("serviced_date", "").strip(),
+                sv_image, f.get("sv_size", "").strip(), f.get("sv_type", "").strip(), f.get("sv_set_pressure", "").strip(), f.get("sv_calibrated_date", "").strip(),
+                pg_image, f.get("pg_size", "").strip(), f.get("pg_type", "").strip(), f.get("pg_calibrated_date", "").strip(),
+                doc_design_approval, doc_design_drawing, doc_ht_cert, doc_dosh, doc_service_report, doc_uttm_report, doc_sv_cert, doc_pg_cert, doc_cof,
+                datetime.utcnow().isoformat()
+            )
         )
         flash("Machinery added.", "ok")
-        return redirect(url_for("machinery_list"))
+        return redirect(url_for("machinery_list", type=f.get("cert_type", "PMT").strip().upper()))
     return render_template("portal/machinery_form.html", m=None, categories=CATEGORIES,
                            statuses=STATUSES, owners=owners)
 
@@ -289,21 +336,51 @@ def machinery_edit(mid):
     owners = q("SELECT id, name, company FROM users WHERE role='client' ORDER BY company") if u["role"] == "admin" else []
     if request.method == "POST":
         f = request.form
+        files = request.files
         owner_id = f.get("owner_id") if u["role"] == "admin" else m["owner_id"]
         company_id = m["company_id"]
         if u["role"] == "admin" and owner_id:
             o = q("SELECT company_id FROM users WHERE id = ?", (owner_id,), one=True)
             company_id = o["company_id"] if o else company_id
+
+        image_filename = save_machinery_file(files.get("main_image"), MACHINERY_IMG_DIR, "m_main") or (m.get("image_filename") if m.get("image_filename") else "")
+        before_image = save_machinery_file(files.get("before_image"), MACHINERY_IMG_DIR, "m_before") or (m.get("before_image") if m.get("before_image") else "")
+        sv_image = save_machinery_file(files.get("sv_image"), MACHINERY_IMG_DIR, "m_sv") or (m.get("sv_image") if m.get("sv_image") else "")
+        pg_image = save_machinery_file(files.get("pg_image"), MACHINERY_IMG_DIR, "m_pg") or (m.get("pg_image") if m.get("pg_image") else "")
+
+        doc_design_approval = save_machinery_file(files.get("doc_design_approval"), MACHINERY_DOC_DIR, "doc_da") or (m.get("doc_design_approval") if m.get("doc_design_approval") else "")
+        doc_design_drawing = save_machinery_file(files.get("doc_design_drawing"), MACHINERY_DOC_DIR, "doc_dd") or (m.get("doc_design_drawing") if m.get("doc_design_drawing") else "")
+        doc_ht_cert = save_machinery_file(files.get("doc_ht_cert"), MACHINERY_DOC_DIR, "doc_ht") or (m.get("doc_ht_cert") if m.get("doc_ht_cert") else "")
+        doc_dosh = save_machinery_file(files.get("doc_dosh"), MACHINERY_DOC_DIR, "doc_dosh") or (m.get("doc_dosh") if m.get("doc_dosh") else "")
+        doc_service_report = save_machinery_file(files.get("doc_service_report"), MACHINERY_DOC_DIR, "doc_sr") or (m.get("doc_service_report") if m.get("doc_service_report") else "")
+        doc_uttm_report = save_machinery_file(files.get("doc_uttm_report"), MACHINERY_DOC_DIR, "doc_ut") or (m.get("doc_uttm_report") if m.get("doc_uttm_report") else "")
+        doc_sv_cert = save_machinery_file(files.get("doc_sv_cert"), MACHINERY_DOC_DIR, "doc_sv") or (m.get("doc_sv_cert") if m.get("doc_sv_cert") else "")
+        doc_pg_cert = save_machinery_file(files.get("doc_pg_cert"), MACHINERY_DOC_DIR, "doc_pg") or (m.get("doc_pg_cert") if m.get("doc_pg_cert") else "")
+        doc_cof = save_machinery_file(files.get("doc_cof"), MACHINERY_DOC_DIR, "doc_cof") or (m.get("doc_cof") if m.get("doc_cof") else "")
+
         execute(
-            """UPDATE machinery SET name=?, category=?, serial_no=?, cert_no=?, location=?,
-               status=?, next_inspection=?, owner_id=?, company_id=?, notes=? WHERE id=?""",
-            (f.get("name", "").strip(), f.get("category", "Other"), f.get("serial_no", "").strip(),
-             f.get("cert_no", "").strip(), f.get("location", "").strip(), f.get("status", "Active"),
-             f.get("next_inspection", ""), owner_id or None, company_id,
-             f.get("notes", "").strip(), mid),
+            """UPDATE machinery SET
+                name=?, category=?, serial_no=?, cert_no=?, location=?, status=?, next_inspection=?, owner_id=?, company_id=?, notes=?,
+                image_filename=?, cert_type=?, item_name=?, mawp=?, manufacturer=?, volume=?, year=?,
+                before_image=?, medium=?, serviced_date=?, sv_image=?, sv_size=?, sv_type=?, sv_set_pressure=?, sv_calibrated_date=?,
+                pg_image=?, pg_size=?, pg_type=?, pg_calibrated_date=?,
+                doc_design_approval=?, doc_design_drawing=?, doc_ht_cert=?, doc_dosh=?, doc_service_report=?, doc_uttm_report=?, doc_sv_cert=?, doc_pg_cert=?, doc_cof=?
+                WHERE id=?""",
+            (
+                f.get("name", "").strip(), f.get("category", "Other"), f.get("serial_no", "").strip(),
+                f.get("cert_no", "").strip(), f.get("location", "").strip(), f.get("status", "Active"),
+                f.get("next_inspection", ""), owner_id or None, company_id, f.get("notes", "").strip(),
+                image_filename, f.get("cert_type", "PMT").strip().upper(), f.get("item_name", "").strip(),
+                f.get("mawp", "").strip(), f.get("manufacturer", "").strip(), f.get("volume", "").strip(), f.get("year", "").strip(),
+                before_image, f.get("medium", "").strip(), f.get("serviced_date", "").strip(),
+                sv_image, f.get("sv_size", "").strip(), f.get("sv_type", "").strip(), f.get("sv_set_pressure", "").strip(), f.get("sv_calibrated_date", "").strip(),
+                pg_image, f.get("pg_size", "").strip(), f.get("pg_type", "").strip(), f.get("pg_calibrated_date", "").strip(),
+                doc_design_approval, doc_design_drawing, doc_ht_cert, doc_dosh, doc_service_report, doc_uttm_report, doc_sv_cert, doc_pg_cert, doc_cof,
+                mid
+            ),
         )
         flash("Machinery updated.", "ok")
-        return redirect(url_for("machinery_list"))
+        return redirect(url_for("machinery_list", type=f.get("cert_type", "PMT").strip().upper()))
     return render_template("portal/machinery_form.html", m=m, categories=CATEGORIES,
                            statuses=STATUSES, owners=owners)
 
@@ -533,18 +610,20 @@ def expiry_reminder_delete(mid, rid):
 def serve_machinery_image(filename):
     return send_file(os.path.join(MACHINERY_IMG_DIR, filename))
 
+@app.route("/uploads/machinery_docs/<path:filename>")
+@login_required
+def serve_machinery_doc(filename):
+    return send_file(os.path.join(MACHINERY_DOC_DIR, filename))
+
+
 
 # ---------------- employee portal (Google Sheets embed) ----------------
-EMPLOYEE_SHEET_URL = os.getenv("EMPLOYEE_SHEET_URL", "")
-
 @app.route("/portal/employee")
 @login_required
 def employee_portal():
-    u = current_user()
-    if not EMPLOYEE_SHEET_URL:
-        flash("Employee portal not configured (set EMPLOYEE_SHEET_URL env var).", "warn")
-        return redirect(url_for("dashboard"))
-    return render_template("portal/employee_portal.html", sheet_url=EMPLOYEE_SHEET_URL)
+    sheet_url = os.getenv("EMPLOYEE_SHEET_URL", "")
+    return render_template("portal/employee_portal.html", sheet_url=sheet_url)
+
 
 
 # ---------------- logos & company profile ----------------
