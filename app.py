@@ -130,10 +130,13 @@ def login():
         if u and check_password_hash(u["password_hash"], password):
             session["user_id"] = u["id"]
             flash("Welcome back, %s!" % u["name"], "ok")
+            if u["role"] == "employee":
+                return redirect(url_for("employee_portal"))
             return redirect(request.args.get("next") or url_for("dashboard"))
         flash("Invalid email or password.", "err")
         return render_template("login.html", email=email_val)
     return render_template("login.html", email=email_val)
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -199,6 +202,8 @@ def logout():
 @login_required
 def dashboard():
     u = current_user()
+    if u and u["role"] == "employee":
+        return redirect(url_for("employee_portal"))
     from datetime import date, timedelta
     cutoff = (date.today() + timedelta(days=60)).isoformat()
     if u["role"] == "admin":
