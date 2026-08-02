@@ -722,6 +722,7 @@ def init_db():
             )
 
     if _ENGINE == "pg":
+        conn.commit()
         conn.close()
 
 
