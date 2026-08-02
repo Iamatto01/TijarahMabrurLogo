@@ -10,12 +10,13 @@
     <div class="panel-body tbl-scroll">
         {% if clients %}
         <table class="tbl">
-            <thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Machines</th><th>Joined</th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Company</th><th>Machines</th><th>Joined</th></tr></thead>
             <tbody>
                 {% for c in clients %}
                 <tr>
                     <td><b>{{ c.name }}</b></td>
                     <td>{{ c.email }}</td>
+                    <td><span class="tag {{ c.role }}">{{ c.role }}</span></td>
                     <td>{{ c.company or '—' }}</td>
                     <td>{{ c.machine_count }}</td>
                     <td>{{ c.created_at[:10] }}</td>

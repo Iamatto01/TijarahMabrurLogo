@@ -347,6 +347,15 @@ def init_db():
              datetime.utcnow().isoformat()),
         )
         client_id = cid2
+        
+        # Default Employee user
+        execute(
+            "INSERT INTO users (name, email, password_hash, role, company, company_id, created_at) VALUES (?,?,?,?,?,?,?)",
+            ("Demo Employee", "employee@demo.com", generate_password_hash("employee"),
+             "employee", "Demo Industries Sdn. Bhd.", demo_company_id,
+             datetime.utcnow().isoformat()),
+        )
+
         now = datetime.utcnow().isoformat()
         for m_data in [
             ("Air Receiver Tank A-101", "Pressure Vessel", "SN-AR-1001", "PMA-SEL-2024-0001", "Semenyih Yard", "Active", "2026-11-20", client_id, demo_company_id, "Annual DOSH inspection due", now),

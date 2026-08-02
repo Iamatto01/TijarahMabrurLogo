@@ -8,7 +8,7 @@
         <form method="post">
             <div class="field">
                 <label>Email</label>
-                <input type="email" name="email" required autofocus placeholder="you@company.com">
+                <input type="email" name="email" value="{{ email or '' }}" required autofocus placeholder="you@company.com">
             </div>
             <div class="field">
                 <label>Password</label>

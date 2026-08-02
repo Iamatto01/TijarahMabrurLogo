@@ -85,8 +85,8 @@ def inject_globals():
 
 def scope_clause(u, col="m.owner_id"):
     """Return (sql_fragment, params) limiting rows to what this user may see.
-    Admins see everything; clients see their own + company-wide rows."""
-    if u["role"] == "admin":
+    Admins and employees see everything; clients see their own + company-wide rows."""
+    if u["role"] in ("admin", "employee"):
         return "1=1", ()
     if u["company_id"]:
         return f"({col} = ? OR m.company_id = ?)", (u["id"], u["company_id"])
@@ -122,16 +122,18 @@ def home():
 # ---------------- auth ----------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    email_val = ""
     if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
+        email_val = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
-        u = q("SELECT * FROM users WHERE email = ?", (email,), one=True)
+        u = q("SELECT * FROM users WHERE email = ?", (email_val,), one=True)
         if u and check_password_hash(u["password_hash"], password):
             session["user_id"] = u["id"]
             flash("Welcome back, %s!" % u["name"], "ok")
             return redirect(request.args.get("next") or url_for("dashboard"))
         flash("Invalid email or password.", "err")
-    return render_template("login.html")
+        return render_template("login.html", email=email_val)
+    return render_template("login.html", email=email_val)
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -678,7 +680,7 @@ def company_profile():
 @admin_required
 def clients_list():
     clients = q("""SELECT u.*, (SELECT COUNT(*) FROM machinery m WHERE m.owner_id = u.id) AS machine_count
-                   FROM users u WHERE u.role = 'client' ORDER BY u.created_at DESC""")
+                   FROM users u WHERE u.role IN ('client', 'employee') ORDER BY u.created_at DESC""")
     return render_template("portal/clients_list.html", clients=clients)
 
 
@@ -689,6 +691,9 @@ def client_new():
     if request.method == "POST":
         f = request.form
         email = f.get("email", "").strip().lower()
+        role = f.get("role", "client").strip()
+        if role not in ("client", "employee"):
+            role = "client"
         if q("SELECT id FROM users WHERE email = ?", (email,), one=True):
             flash("Email already exists.", "err")
         else:
@@ -702,9 +707,9 @@ def client_new():
                 "INSERT INTO users (name, email, password_hash, role, company, company_id, created_at) VALUES (?,?,?,?,?,?,?)",
                 (f.get("name", "").strip(), email,
                  generate_password_hash(f.get("password", "changeme")),
-                 "client", comp_name, company_id, datetime.utcnow().isoformat()),
+                 role, comp_name, company_id, datetime.utcnow().isoformat()),
             )
-            flash("Client account created.", "ok")
+            flash(f"User account created ({role}).", "ok")
             return redirect(url_for("clients_list"))
     return render_template("portal/client_form.html", companies=companies)
 

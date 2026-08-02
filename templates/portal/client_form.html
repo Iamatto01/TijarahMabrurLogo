@@ -9,9 +9,18 @@
 <div class="panel" style="max-width:640px">
     <div class="panel-body">
         <form method="post">
-            <div class="field">
-                <label>Full Name *</label>
-                <input type="text" name="name" required>
+            <div class="form-row">
+                <div class="field">
+                    <label>Full Name *</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="field">
+                    <label>Account Role *</label>
+                    <select name="role" required style="font-weight:700">
+                        <option value="client">Client</option>
+                        <option value="employee">Employee / Staff</option>
+                    </select>
+                </div>
             </div>
             <div class="field">
                 <label>Link to Company (shared workspace + logo)</label>

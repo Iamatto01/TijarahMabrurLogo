@@ -271,6 +271,7 @@ table.tbl tr:hover td { background: rgba(1, 160, 255, .04); }
 .tag.Under\ Maintenance, .tag.Submitted { background: rgba(232, 147, 12, .12); color: #a56808; border: 1px solid var(--warn); }
 .tag.Expired, .tag.Draft { background: rgba(224, 69, 58, .1); color: #b03027; border: 1px solid var(--err); }
 .tag.admin { background: rgba(1, 160, 255, .1); color: var(--accent-2); border: 1px solid var(--accent); }
+.tag.employee { background: rgba(147, 51, 234, .1); color: #7e22ce; border: 1px solid #a855f7; }
 .tag.client { background: rgba(91, 114, 136, .1); color: var(--muted); border: 1px solid var(--muted); }
 
 .toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
