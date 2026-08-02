@@ -40,7 +40,7 @@
             <form method="post" style="display:inline">
                 <input type="hidden" name="action" value="delete">
                 <input type="hidden" name="list_id" value="{{ it.id }}">
-                <button type="submit" class="rfq-list-tag" title="Click to delete" onclick="return confirm('Delete \'{{ it.value }}\'?')">
+                <button type="submit" class="rfq-list-tag {{ lt }}-tag" data-value="{{ it.value|lower }}" title="Click to delete" onclick="return confirm('Delete \'{{ it.value }}\'?')">
                     {{ it.value }} <span style="color:#f44336;margin-left:4px;font-weight:800">×</span>
                 </button>
             </form>
@@ -52,4 +52,92 @@
     </div>
 </div>
 {% endfor %}
+
+<style>
+/* ─── Color-Coded List Tags Matching Google Sheet ─── */
+
+/* == JOB CODE == */
+.job_code-tag[data-value="dosh"]        { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+.job_code-tag[data-value="dodt"]        { background: #16213e; color: #fff; border-color: #16213e; }
+.job_code-tag[data-value="epcc"]        { background: #0f3460; color: #fff; border-color: #0f3460; }
+.job_code-tag[data-value="asset (pkns)"]{ background: #533483; color: #fff; border-color: #533483; }
+.job_code-tag[data-value="assessment"]  { background: #e94560; color: #fff; border-color: #e94560; }
+.job_code-tag[data-value="training"]    { background: #ff6b35; color: #fff; border-color: #ff6b35; }
+.job_code-tag[data-value="oshc"]        { background: #f9a825; color: #1a1a1a; border-color: #f9a825; }
+.job_code-tag[data-value="ppeai"]       { background: #00bfa5; color: #fff; border-color: #00bfa5; }
+.job_code-tag[data-value="gshc"]        { background: #2979ff; color: #fff; border-color: #2979ff; }
+.job_code-tag[data-value="gsmc"]        { background: #6a1b9a; color: #fff; border-color: #6a1b9a; }
+.job_code-tag[data-value="dod1"]        { background: #16213e; color: #fff; border-color: #16213e; }
+
+/* == JOB STATUS == */
+.job_status-tag[data-value="new task"]                          { background: #1b5e20; color: #fff; border-color: #1b5e20; }
+.job_status-tag[data-value="site visit"]                        { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+.job_status-tag[data-value="assessment"]                        { background: #388e3c; color: #fff; border-color: #388e3c; }
+.job_status-tag[data-value="quote"]                             { background: #e53935; color: #fff; border-color: #e53935; }
+.job_status-tag[data-value="required more details"]             { background: #f57c00; color: #fff; border-color: #f57c00; }
+.job_status-tag[data-value="ppcc"]                              { background: #7b1fa2; color: #fff; border-color: #7b1fa2; }
+.job_status-tag[data-value="waiting info from client"]          { background: #fdd835; color: #1a1a1a; border-color: #fdd835; }
+.job_status-tag[data-value="ready to discuss"]                  { background: #26a69a; color: #fff; border-color: #26a69a; }
+.job_status-tag[data-value="quotation sent"]                    { background: #1565c0; color: #fff; border-color: #1565c0; }
+.job_status-tag[data-value="quotation received"]                { background: #1976d2; color: #fff; border-color: #1976d2; }
+.job_status-tag[data-value="quotation waiting for approval"]    { background: #42a5f5; color: #fff; border-color: #42a5f5; }
+.job_status-tag[data-value="po in progress"]                    { background: #ff8f00; color: #fff; border-color: #ff8f00; }
+.job_status-tag[data-value="po estimati"]                       { background: #ef6c00; color: #fff; border-color: #ef6c00; }
+.job_status-tag[data-value="work progress"]                     { background: #00c853; color: #fff; border-color: #00c853; }
+.job_status-tag[data-value="waiting for deposit"]               { background: #ff6f00; color: #fff; border-color: #ff6f00; }
+.job_status-tag[data-value="invoice"]                           { background: #0277bd; color: #fff; border-color: #0277bd; }
+.job_status-tag[data-value="payment"]                           { background: #00695c; color: #fff; border-color: #00695c; }
+.job_status-tag[data-value="lost"]                              { background: #b71c1c; color: #fff; border-color: #b71c1c; }
+.job_status-tag[data-value="boss to call!"]                     { background: #d84315; color: #fff; border-color: #d84315; }
+.job_status-tag[data-value="presentation"]                      { background: #4527a0; color: #fff; border-color: #4527a0; }
+
+/* == INTRODUCER == */
+.introducer-tag[data-value="doc"]              { background: #1565c0; color: #fff; border-color: #1565c0; }
+.introducer-tag[data-value="syukri"]           { background: #6a1b9a; color: #fff; border-color: #6a1b9a; }
+.introducer-tag[data-value="a. hafiz"]         { background: #00838f; color: #fff; border-color: #00838f; }
+.introducer-tag[data-value="zed"]              { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+.introducer-tag[data-value="sharifah"]         { background: #ad1457; color: #fff; border-color: #ad1457; }
+.introducer-tag[data-value="captain"]          { background: #37474f; color: #fff; border-color: #37474f; }
+.introducer-tag[data-value="mr. mish"]         { background: #4e342e; color: #fff; border-color: #4e342e; }
+.introducer-tag[data-value="rico"]             { background: #e65100; color: #fff; border-color: #e65100; }
+.introducer-tag[data-value="shamsul jc"]       { background: #827717; color: #fff; border-color: #827717; }
+.introducer-tag[data-value="faizt bakhtiar"]   { background: #1b5e20; color: #fff; border-color: #1b5e20; }
+.introducer-tag[data-value="-"]                { background: #78909c; color: #fff; border-color: #78909c; }
+
+/* == SOURCE == */
+.source-tag[data-value="tmsb"]       { background: #0d47a1; color: #fff; border-color: #0d47a1; }
+.source-tag[data-value="tmsr"]       { background: #1b5e20; color: #fff; border-color: #1b5e20; }
+.source-tag[data-value="spectro"]    { background: #4a148c; color: #fff; border-color: #4a148c; }
+.source-tag[data-value="adv"]        { background: #bf360c; color: #fff; border-color: #bf360c; }
+.source-tag[data-value="insasr"]     { background: #006064; color: #fff; border-color: #006064; }
+.source-tag[data-value="safeair"]    { background: #e65100; color: #fff; border-color: #e65100; }
+.source-tag[data-value="suphin"]     { background: #33691e; color: #fff; border-color: #33691e; }
+.source-tag[data-value="3rd party"]  { background: #455a64; color: #fff; border-color: #455a64; }
+
+/* == OPEN BY == */
+.open_by-tag[data-value="shalhin"]   { background: #1565c0; color: #fff; border-color: #1565c0; }
+.open_by-tag[data-value="shalihin"]  { background: #1565c0; color: #fff; border-color: #1565c0; }
+.open_by-tag[data-value="leena"]     { background: #c62828; color: #fff; border-color: #c62828; }
+.open_by-tag[data-value="salihah"]   { background: #6a1b9a; color: #fff; border-color: #6a1b9a; }
+.open_by-tag[data-value="shahrul"]   { background: #00695c; color: #fff; border-color: #00695c; }
+.open_by-tag[data-value="aiman"]     { background: #e65100; color: #fff; border-color: #e65100; }
+.open_by-tag[data-value="rico"]      { background: #37474f; color: #fff; border-color: #37474f; }
+.open_by-tag[data-value="mish"]      { background: #4e342e; color: #fff; border-color: #4e342e; }
+
+/* == JOB TITLE == */
+.job_title-tag[data-value="new register"]         { background: #1a237e; color: #fff; border-color: #1a237e; }
+.job_title-tag[data-value="renew pmt/pma"]        { background: #b71c1c; color: #fff; border-color: #b71c1c; }
+.job_title-tag[data-value="service call"]          { background: #ff6f00; color: #fff; border-color: #ff6f00; }
+.job_title-tag[data-value="global inspection"]     { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+.job_title-tag[data-value="calibrate sv pg"]       { background: #6a1b9a; color: #fff; border-color: #6a1b9a; }
+.job_title-tag[data-value="design approval"]       { background: #00838f; color: #fff; border-color: #00838f; }
+.job_title-tag[data-value="hydrostatic test"]      { background: #0d47a1; color: #fff; border-color: #0d47a1; }
+.job_title-tag[data-value="uttm report"]           { background: #4e342e; color: #fff; border-color: #4e342e; }
+
+/* == LEVEL == */
+.level-tag[data-value="low"]      { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+.level-tag[data-value="medium"]   { background: #f9a825; color: #1a1a1a; border-color: #f9a825; }
+.level-tag[data-value="high"]     { background: #c62828; color: #fff; border-color: #c62828; }
+.level-tag[data-value="urgent"]   { background: #b71c1c; color: #fff; border-color: #b71c1c; font-weight: 700; }
+</style>
 {% endblock %}
