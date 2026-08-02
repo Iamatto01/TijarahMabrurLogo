@@ -409,7 +409,7 @@ def machinery_delete(mid):
     execute("DELETE FROM expiry_reminders WHERE machinery_id = ?", (mid,))
     execute("DELETE FROM machinery WHERE id = ?", (mid,))
     flash("Machinery deleted.", "ok")
-    return redirect(url_for("machinery_list"))
+    return redirect(request.referrer or url_for("machinery_list"))
 
 
 # ---------------- machinery detail page ----------------
@@ -535,7 +535,7 @@ def report_delete(rid):
         if os.path.exists(path): os.remove(path)
     execute("DELETE FROM reports WHERE id = ?", (rid,))
     flash("Report deleted.", "ok")
-    return redirect(url_for("machinery_detail", mid=r["machinery_id"]))
+    return redirect(request.referrer or url_for("machinery_detail", mid=r["machinery_id"]))
 
 
 # ---------------- portal: reports list & new ----------------
@@ -634,7 +634,45 @@ def employee_portal():
         match = re.search(r'src=["\']([^"\']+)["\']', raw_url)
         if match:
             sheet_url = match.group(1).replace("&amp;", "&")
-    return render_template("portal/employee_portal.html", sheet_url=sheet_url)
+
+    edit_url = sheet_url
+    if sheet_url and "docs.google.com/spreadsheets" in sheet_url:
+        if "/pubhtml" in sheet_url:
+            base_s = sheet_url.split("/pubhtml")[0]
+            sheet_url = base_s + "/edit?rm=minimal"
+            edit_url = base_s + "/edit"
+        elif "/edit" in sheet_url and "rm=minimal" not in sheet_url:
+            sep = "&" if "?" in sheet_url else "?"
+            sheet_url = f"{sheet_url}{sep}rm=minimal"
+
+    return render_template("portal/employee_portal.html", sheet_url=sheet_url, edit_url=edit_url, raw_url=raw_url)
+
+
+# ---------------- user management (admin) ----------------
+@app.route("/portal/users/<int:uid>/change-password", methods=["POST"])
+@admin_required
+def user_change_password(uid):
+    new_pass = request.form.get("new_password", "").strip()
+    if not new_pass or len(new_pass) < 6:
+        flash("Password must be at least 6 characters.", "err")
+    else:
+        execute("UPDATE users SET password_hash = ? WHERE id = ?",
+                (generate_password_hash(new_pass), uid))
+        flash("Password updated successfully.", "ok")
+    return redirect(request.referrer or url_for("clients_list"))
+
+
+@app.route("/portal/users/<int:uid>/delete", methods=["POST"])
+@admin_required
+def user_delete(uid):
+    u = current_user()
+    if u["id"] == uid:
+        flash("You cannot delete your own admin account.", "err")
+        return redirect(request.referrer or url_for("clients_list"))
+    execute("DELETE FROM machinery WHERE owner_id = ?", (uid,))
+    execute("DELETE FROM users WHERE id = ?", (uid,))
+    flash("User account deleted.", "ok")
+    return redirect(request.referrer or url_for("clients_list"))
 
 
 

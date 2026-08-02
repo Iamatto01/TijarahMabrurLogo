@@ -1,16 +1,21 @@
 {% extends "portal/base_portal.html" %}
 {% block title %}Employee Portal | Tijarah Mabrur{% endblock %}
 {% block content %}
-<div class="portal-topbar">
+<div class="portal-topbar" style="align-items:center">
     <div>
         <h1>👥 Employee Portal</h1>
-        <div class="who">Internal Operations & Task Management Dashboard</div>
+        <div class="who">Internal Operations &amp; Task Management Dashboard</div>
     </div>
+    {% if edit_url %}
+    <a class="btn sm" href="{{ edit_url }}" target="_blank" style="display:inline-flex;align-items:center;gap:6px">
+        ↗ Open Full Edit Mode in Google Sheets
+    </a>
+    {% endif %}
 </div>
 
 {% if sheet_url %}
 <div class="employee-portal-wrap">
-    <iframe src="{{ sheet_url }}" frameborder="0" allowfullscreen style="width:100%;height:750px;border-radius:12px;border:1px solid var(--line)"></iframe>
+    <iframe src="{{ sheet_url }}" frameborder="0" allowfullscreen style="width:100%;height:800px;border-radius:12px;border:1px solid var(--line);background:#ffffff"></iframe>
 </div>
 {% else %}
 <div class="panel" style="max-width:900px">
@@ -23,17 +28,11 @@
         <h4 style="margin-top:20px;color:var(--accent-2)">Option 1: Set Environment Variable (Recommended for Production / Render)</h4>
         <ol style="padding-left:20px;color:var(--text)">
             <li>Open your Google Sheet / Airtable / Notion page.</li>
-            <li>In Google Sheets: Click <strong>File → Share → Publish to web</strong>, then select <em>Embed</em> and copy the iframe <code>src</code> URL (e.g. <code>https://docs.google.com/spreadsheets/d/e/.../pubhtml?widget=true&headers=false</code>).</li>
+            <li>Copy the page / share link or embed link.</li>
             <li>Set the environment variable on your server (e.g. Render Dashboard environment settings):
-                <br><code style="background:var(--bg-2);padding:4px 10px;border-radius:4px;display:inline-block;margin-top:6px">EMPLOYEE_SHEET_URL=https://docs.google.com/spreadsheets/d/e/.../pubhtml</code>
+                <br><code style="background:var(--bg-2);padding:4px 10px;border-radius:4px;display:inline-block;margin-top:6px">EMPLOYEE_SHEET_URL=https://docs.google.com/spreadsheets/d/.../edit</code>
             </li>
         </ol>
-
-        <h4 style="margin-top:20px;color:var(--accent-2)">Sample Demo Embed</h4>
-        <p>To preview how it looks, here is a sample embedded Google Sheet placeholder:</p>
-        <div class="employee-portal-wrap" style="margin-top:14px">
-            <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Z5f7Gg0N_sample/pubhtml?widget=true&headers=false" frameborder="0" style="width:100%;height:450px;border-radius:8px;border:1px solid var(--line);background:#f9f9f9"></iframe>
-        </div>
     </div>
 </div>
 {% endif %}
