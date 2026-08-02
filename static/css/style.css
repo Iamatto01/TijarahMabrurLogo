@@ -56,6 +56,12 @@ img { max-width: 100%; }
 .btn.sm { padding: 6px 14px; font-size: 13px; }
 .btn.danger { background: transparent; border-color: var(--err); color: var(--err) !important; }
 .btn.danger:hover { background: rgba(224, 69, 58, .08); }
+a.link {
+    display: inline-block; margin-top: 14px; padding: 6px 14px; border-radius: 6px;
+    border: 1px solid var(--accent); background: transparent; color: var(--accent-2) !important;
+    font-size: 13px; font-weight: 600; text-decoration: none !important; transition: .15s;
+}
+a.link:hover { background: rgba(1, 160, 255, .08); }
 
 /* ---------- hero ---------- */
 .hero {

@@ -37,6 +37,11 @@ def serve_rfq_img(filename):
     from flask import send_from_directory
     return send_from_directory(RFQ_IMG_DIR, filename)
 
+@app.route("/favicon.ico")
+def favicon():
+    from flask import send_from_directory
+    return send_from_directory(os.path.join(app.root_path, "static", "img"), "logo.png", mimetype="image/png")
+
 ALLOWED_LOGO_EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024  # 8 MB uploads
 
