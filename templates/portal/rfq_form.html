@@ -6,10 +6,10 @@
     <a class="btn ghost" href="{{ url_for('rfq_stage_list', stage=e.stage if e else 'RFQ') }}">← Back</a>
 </div>
 
-<form method="post" style="max-width:1100px">
-    <!-- 1. General Info -->
+<form method="post" enctype="multipart/form-data" style="max-width:1100px">
+    <!-- 1. GENERAL INFORMATION -->
     <div class="panel">
-        <div class="panel-head"><h3>1. General Information</h3></div>
+        <div class="panel-head"><h3>1. RFQ Information</h3></div>
         <div class="panel-body">
             <div class="form-row">
                 <div class="field">
@@ -46,6 +46,7 @@
                 <div class="field">
                     <label>Date</label>
                     <input type="date" name="date" value="{{ e.date if e else '' }}">
+                    {% if e and e.date %}<div style="font-size:11px;color:var(--accent-2);margin-top:2px">Format: {{ e.date|fmt_date }}</div>{% endif %}
                 </div>
             </div>
             <div class="form-row">
@@ -106,14 +107,99 @@
             </div>
             <div class="field">
                 <label>Notes</label>
-                <textarea name="notes" rows="3" style="width:100%">{{ e.notes if e else '' }}</textarea>
+                <textarea name="notes" rows="2" style="width:100%">{{ e.notes if e else '' }}</textarea>
             </div>
         </div>
     </div>
 
-    <!-- 2. Quote Items -->
+    <!-- 2. MACHINERY SUMMARY -->
     <div class="panel">
-        <div class="panel-head"><h3>2. Quote Items</h3></div>
+        <div class="panel-head"><h3>2. Machinery Summary</h3></div>
+        <div class="panel-body">
+            <div class="form-row">
+                <div class="field">
+                    <label>PMT Unit</label>
+                    <input type="number" name="machinery_pmt" value="{{ e.machinery_pmt if e else 0 }}" min="0" onchange="calcMachineryTotal()">
+                </div>
+                <div class="field">
+                    <label>PMA Unit</label>
+                    <input type="number" name="machinery_pma" value="{{ e.machinery_pma if e else 0 }}" min="0" onchange="calcMachineryTotal()">
+                </div>
+                <div class="field">
+                    <label>PMD Unit</label>
+                    <input type="number" name="machinery_pmd" value="{{ e.machinery_pmd if e else 0 }}" min="0" onchange="calcMachineryTotal()">
+                </div>
+                <div class="field">
+                    <label>General Unit</label>
+                    <input type="number" name="machinery_general" value="{{ e.machinery_general if e else 0 }}" min="0" onchange="calcMachineryTotal()">
+                </div>
+                <div class="field">
+                    <label>Other Unit</label>
+                    <input type="number" name="machinery_other" value="{{ e.machinery_other if e else 0 }}" min="0" onchange="calcMachineryTotal()">
+                </div>
+                <div class="field">
+                    <label>Total Unit</label>
+                    <input type="number" id="machinery_total" readonly value="{{ (e.machinery_pmt + e.machinery_pma + e.machinery_pmd + e.machinery_general + e.machinery_other) if e else 0 }}" style="background:#eee;font-weight:700">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. ISSUE, PROGRESS & TERMS -->
+    <div class="panel">
+        <div class="panel-head"><h3>3. Issue, Progress & Terms</h3></div>
+        <div class="panel-body">
+            <div class="form-row">
+                <div class="field">
+                    <label>Issue</label>
+                    <textarea name="issue_notes" rows="3" style="width:100%" placeholder="Describe any issues...">{{ e.issue_notes if e else '' }}</textarea>
+                </div>
+                <div class="field">
+                    <label>Progress & Update</label>
+                    <textarea name="progress_notes" rows="3" style="width:100%" placeholder="Latest progress updates...">{{ e.progress_notes if e else '' }}</textarea>
+                </div>
+            </div>
+            <div class="field" style="margin-top:10px">
+                <label>Terms & Conditions</label>
+                <textarea name="terms_conditions" rows="3" style="width:100%" placeholder="1. Payment terms...&#10;2. Validity...">{{ e.terms_conditions if e else '' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. SUMMARY & SOLUTION / REMARK (WITH IMAGE) -->
+    <div class="panel">
+        <div class="panel-head"><h3>4. Summary & Solution / Remark (With Image)</h3></div>
+        <div class="panel-body">
+            <div class="field">
+                <label>Remark / Solution Description</label>
+                <textarea name="remark_text" rows="3" style="width:100%" placeholder="Add summary, solution, or remark details...">{{ e.remark_text if e else '' }}</textarea>
+            </div>
+            <div class="form-row" style="margin-top:10px">
+                <div class="field">
+                    <label>Upload Remark Image 📷</label>
+                    <input type="file" name="remark_image_file" accept="image/*">
+                </div>
+                <div class="field">
+                    <label>Or Image URL</label>
+                    <input type="url" name="remark_image" value="{{ e.remark_image if e else '' }}" placeholder="https://...">
+                </div>
+            </div>
+            {% if e and e.remark_image %}
+            <div style="margin-top:10px">
+                <label style="font-size:12px;color:var(--muted)">Current Image:</label><br>
+                {% if e.remark_image.startswith('http') %}
+                <img src="{{ e.remark_image }}" style="max-height:120px;border-radius:8px;border:1px solid var(--line)">
+                {% else %}
+                <img src="{{ url_for('serve_rfq_img', filename=e.remark_image) }}" style="max-height:120px;border-radius:8px;border:1px solid var(--line)">
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 5. QUOTE ITEMS -->
+    <div class="panel">
+        <div class="panel-head"><h3>5. Quote Items</h3></div>
         <div class="panel-body">
             <table class="tbl" id="quoteTable">
                 <thead>
@@ -149,14 +235,14 @@
         </div>
     </div>
 
-    <!-- 3. QUOTE & COST SUMMARY -->
+    <!-- 6. QUOTE & COST SUMMARY -->
     <div class="panel">
-        <div class="panel-head"><h3>3. Quote & Cost Summary</h3></div>
+        <div class="panel-head"><h3>6. Quote & Cost Summary</h3></div>
         <div class="panel-body">
             <div class="form-row">
                 <div class="field">
                     <label>Total Amount / Quote (RM)</label>
-                    <input type="number" name="amount" id="fld_amount" step="0.01" value="{{ e.amount if e else 0 }}">
+                    <input type="number" name="amount" id="fld_amount" step="0.01" value="{{ e.amount if e else 0 }}" onchange="recalcSummary()">
                 </div>
                 <div class="field">
                     <label>Total Cost (RM)</label>
@@ -170,9 +256,9 @@
         </div>
     </div>
 
-    <!-- 4. COMMISSION BREAKDOWN -->
+    <!-- 7. COMMISSION BREAKDOWN -->
     <div class="panel">
-        <div class="panel-head"><h3>4. Commission Breakdown</h3></div>
+        <div class="panel-head"><h3>7. Commission Breakdown</h3></div>
         <div class="panel-body">
             <!-- Introducer Commission -->
             <div style="background:#f8fbff;border-radius:8px;padding:14px;margin-bottom:14px;border-left:4px solid #01a0ff">
@@ -234,9 +320,9 @@
         </div>
     </div>
 
-    <!-- 5. Profit Summary -->
+    <!-- 8. PROFIT SUMMARY -->
     <div class="panel">
-        <div class="panel-head"><h3>5. Profit Summary</h3></div>
+        <div class="panel-head"><h3>8. Profit Summary</h3></div>
         <div class="panel-body">
             <div class="form-row">
                 <div class="field">
@@ -259,8 +345,15 @@
 </form>
 
 <script>
-// People options for teamwork dropdown
 var tcPeople = {{ open_by_people|tojson }};
+function calcMachineryTotal() {
+    var pmt = parseInt(document.querySelector('[name="machinery_pmt"]').value) || 0;
+    var pma = parseInt(document.querySelector('[name="machinery_pma"]').value) || 0;
+    var pmd = parseInt(document.querySelector('[name="machinery_pmd"]').value) || 0;
+    var gen = parseInt(document.querySelector('[name="machinery_general"]').value) || 0;
+    var oth = parseInt(document.querySelector('[name="machinery_other"]').value) || 0;
+    document.getElementById('machinery_total').value = pmt + pma + pmd + gen + oth;
+}
 function addRow() {
     var tbody = document.getElementById('quoteBody');
     var n = tbody.rows.length + 1;
@@ -278,6 +371,7 @@ function calcRow(el) {
     var price = parseFloat(tr.querySelector('[name="item_price[]"]').value) || 0;
     var days = parseFloat(tr.querySelector('[name="item_days[]"]').value) || 1;
     tr.querySelector('.row-amount').innerText = (qty * price * days).toFixed(2);
+    recalcSummary();
 }
 function addTcRow() {
     var tbody = document.getElementById('tcBody');
@@ -292,9 +386,15 @@ function calcTcRow(el) {
     var pct = parseFloat(tr.querySelector('[name="tc_pct[]"]').value) || 0;
     var grossProfit = parseFloat(document.getElementById('fld_gross').value) || 0;
     tr.querySelector('[name="tc_amt[]"]').value = (grossProfit * pct / 100).toFixed(2);
+    recalcSummary();
 }
 function recalcSummary() {
-    var amount = parseFloat(document.getElementById('fld_amount').value) || 0;
+    // Sum quote table items if amount not set manually
+    var itemsSum = 0;
+    document.querySelectorAll('.row-amount').forEach(function(td) { itemsSum += parseFloat(td.innerText) || 0; });
+    var amountInp = document.getElementById('fld_amount');
+    if (itemsSum > 0) { amountInp.value = itemsSum.toFixed(2); }
+    var amount = parseFloat(amountInp.value) || 0;
     var cost = parseFloat(document.getElementById('fld_cost').value) || 0;
     var gross = amount - cost;
     document.getElementById('fld_gross').value = gross.toFixed(2);
@@ -302,7 +402,6 @@ function recalcSummary() {
     document.getElementById('fld_intro_amt').value = (gross * introPct / 100).toFixed(2);
     var mgrPct = parseFloat(document.getElementById('fld_mgr_pct').value) || 0;
     document.getElementById('fld_mgr_amt').value = (gross * mgrPct / 100).toFixed(2);
-    // Sum all commissions
     var introAmt = parseFloat(document.getElementById('fld_intro_amt').value) || 0;
     var mgrAmt = parseFloat(document.getElementById('fld_mgr_amt').value) || 0;
     var tcTotal = 0;

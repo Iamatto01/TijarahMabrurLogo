@@ -24,11 +24,18 @@ LOGO_DIR = os.path.join(UPLOAD_DIR, "logos")
 MACHINERY_IMG_DIR = os.path.join(UPLOAD_DIR, "machinery")
 REPORT_PDF_DIR = os.path.join(UPLOAD_DIR, "reports")
 MACHINERY_DOC_DIR = os.path.join(UPLOAD_DIR, "machinery_docs")
+RFQ_IMG_DIR = os.path.join(UPLOAD_DIR, "rfq")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(LOGO_DIR, exist_ok=True)
 os.makedirs(MACHINERY_IMG_DIR, exist_ok=True)
 os.makedirs(REPORT_PDF_DIR, exist_ok=True)
 os.makedirs(MACHINERY_DOC_DIR, exist_ok=True)
+os.makedirs(RFQ_IMG_DIR, exist_ok=True)
+
+@app.route("/uploads/rfq/<filename>")
+def serve_rfq_img(filename):
+    from flask import send_from_directory
+    return send_from_directory(RFQ_IMG_DIR, filename)
 
 ALLOWED_LOGO_EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024  # 8 MB uploads
@@ -57,6 +64,20 @@ def fromjson_filter(s):
         return json.loads(s)
     except Exception:
         return []
+
+
+@app.template_filter("fmt_date")
+def fmt_date_filter(d_str):
+    if not d_str:
+        return ""
+    try:
+        if "T" in str(d_str):
+            dt = datetime.fromisoformat(str(d_str))
+        else:
+            dt = datetime.strptime(str(d_str), "%Y-%m-%d")
+        return dt.strftime("%d %B %Y").lstrip("0")
+    except Exception:
+        return str(d_str)
 
 
 CATEGORIES = ["Pressure Vessel", "Lifting Device", "Boiler", "Compressor", "Other"]
@@ -1140,10 +1161,26 @@ def rfq_dashboard():
     state_rows = q("SELECT state, COUNT(*) c FROM rfq_entries WHERE state != '' GROUP BY state ORDER BY c DESC")
     job_code_rows = q("SELECT job_code, COUNT(*) c FROM rfq_entries WHERE job_code != '' GROUP BY job_code ORDER BY c DESC")
 
+
+
+    # Recent entries
+    recent = q("SELECT * FROM rfq_entries ORDER BY id DESC LIMIT 8")
+
+    # Staff performance stats (open_by)
+    staff_stats = q("""SELECT open_by, COUNT(*) c, COALESCE(SUM(amount),0) total,
+                    SUM(CASE WHEN stage='PYMT' THEN 1 ELSE 0 END) closed,
+                    SUM(CASE WHEN stage='LOST' THEN 1 ELSE 0 END) lost
+                    FROM rfq_entries WHERE open_by != '' GROUP BY open_by ORDER BY c DESC""")
+
+    # Totals
+    total_profit = q("SELECT COALESCE(SUM(net_profit),0) s FROM rfq_entries", one=True)["s"]
+    total_cost = q("SELECT COALESCE(SUM(total_cost),0) s FROM rfq_entries", one=True)["s"]
+
     return render_template("portal/rfq_dashboard.html",
                            stages_data=stages_data, total_all=total_all, total_amount=total_amount,
                            open_by_rows=open_by_rows, source_rows=source_rows,
-                           introducer_rows=introducer_rows, state_rows=state_rows, job_code_rows=job_code_rows)
+                           introducer_rows=introducer_rows, state_rows=state_rows, job_code_rows=job_code_rows,
+                           recent=recent, staff_stats=staff_stats, total_profit=total_profit, total_cost=total_cost)
 
 
 # ---- RFQ Stage List ----
@@ -1157,7 +1194,34 @@ def rfq_stage_list(stage):
     stage_counts = {}
     for s in RFQ_STAGES:
         stage_counts[s] = q("SELECT COUNT(*) c FROM rfq_entries WHERE stage = ?", (s,), one=True)["c"]
-    return render_template("portal/rfq_stage_list.html", stage=stage, rows=rows, stages=RFQ_STAGES, stage_counts=stage_counts)
+    lists = {lt: _rfq_dropdown(lt) for lt in ["job_code","job_status","introducer","source","open_by","job_title","level"]}
+    return render_template("portal/rfq_stage_list.html", stage=stage, rows=rows, stages=RFQ_STAGES, stage_counts=stage_counts, lists=lists)
+
+
+# ---- RFQ Inline Update (from stage list) ----
+@app.route("/portal/rfq/<int:eid>/inline-update", methods=["POST"])
+@admin_required
+def rfq_inline_update(eid):
+    e = q("SELECT * FROM rfq_entries WHERE id = ?", (eid,), one=True)
+    if not e:
+        abort(404)
+    f = request.form
+    fields_map = {
+        "client_name": "client_name", "job_code": "job_code", "job_title": "job_title",
+        "amount": "amount", "location": "location", "state": "state", "date": "date",
+        "job_status": "job_status", "level": "level", "introducer": "introducer",
+        "source": "source", "open_by": "open_by", "notes": "notes"
+    }
+    field = f.get("field", "")
+    value = f.get("value", "").strip()
+    if field in fields_map:
+        col = fields_map[field]
+        if field == "amount":
+            value = float(value or 0)
+        execute(f"UPDATE rfq_entries SET {col} = ?, updated_at = ? WHERE id = ?",
+                (value, datetime.utcnow().isoformat(), eid))
+        flash(f"{field.replace('_',' ').title()} updated.", "ok")
+    return redirect(request.referrer or url_for("rfq_stage_list", stage=e["stage"]))
 
 
 # ---- RFQ New ----
@@ -1168,11 +1232,19 @@ def rfq_new():
         f = request.form
         rfq_id = _next_rfq_id()
         now = datetime.utcnow().isoformat()
+        
+        # Handle remark image file upload
+        rm_file = request.files.get("remark_image_file")
+        remark_img = save_machinery_file(rm_file, RFQ_IMG_DIR, "rfq_remark") if rm_file else f.get("remark_image","").strip()
+
         entry_id = execute("""INSERT INTO rfq_entries (rfq_id, client_name, job_code, job_title, amount, location, state, date,
                     job_status, level, introducer, source, open_by, stage, commission, total_cost, net_profit,
                     deposit_pct, introducer_comm_pct, introducer_comm_amt, manager_comm_pct, manager_comm_amt, gross_profit,
-                    contact_number, email, person_in_charge, map_link, notes, created_at, updated_at)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    contact_number, email, person_in_charge, map_link, notes,
+                    machinery_pmt, machinery_pma, machinery_pmd, machinery_general, machinery_other,
+                    issue_notes, progress_notes, terms_conditions, remark_text, remark_image,
+                    created_at, updated_at)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (rfq_id, f.get("client_name","").strip(), f.get("job_code",""), f.get("job_title",""), float(f.get("amount",0) or 0),
                  f.get("location","").strip(), f.get("state","").strip(), f.get("date",""),
                  f.get("job_status","NEW TASK"), f.get("level",""), f.get("introducer",""), f.get("source",""), f.get("open_by",""),
@@ -1180,7 +1252,12 @@ def rfq_new():
                  float(f.get("deposit_pct",0) or 0), float(f.get("introducer_comm_pct",0) or 0), float(f.get("introducer_comm_amt",0) or 0),
                  float(f.get("manager_comm_pct",0) or 0), float(f.get("manager_comm_amt",0) or 0), float(f.get("gross_profit",0) or 0),
                  f.get("contact_number","").strip(), f.get("email","").strip(), f.get("person_in_charge","").strip(),
-                 f.get("map_link","").strip(), f.get("notes","").strip(), now, now))
+                 f.get("map_link","").strip(), f.get("notes","").strip(),
+                 int(f.get("machinery_pmt",0) or 0), int(f.get("machinery_pma",0) or 0), int(f.get("machinery_pmd",0) or 0),
+                 int(f.get("machinery_general",0) or 0), int(f.get("machinery_other",0) or 0),
+                 f.get("issue_notes","").strip(), f.get("progress_notes","").strip(), f.get("terms_conditions","").strip(),
+                 f.get("remark_text","").strip(), remark_img,
+                 now, now))
         # Save quote items
         items_desc = request.form.getlist("item_desc[]")
         items_qty = request.form.getlist("item_qty[]")
@@ -1222,10 +1299,21 @@ def rfq_edit(eid):
     if request.method == "POST":
         f = request.form
         now = datetime.utcnow().isoformat()
+        
+        # Handle remark image file upload
+        rm_file = request.files.get("remark_image_file")
+        if rm_file and rm_file.filename:
+            remark_img = save_machinery_file(rm_file, RFQ_IMG_DIR, "rfq_remark")
+        else:
+            remark_img = e.get("remark_image", "")
+
         execute("""UPDATE rfq_entries SET client_name=?, job_code=?, job_title=?, amount=?, location=?, state=?, date=?,
                     job_status=?, level=?, introducer=?, source=?, open_by=?, commission=?, total_cost=?, net_profit=?,
                     deposit_pct=?, introducer_comm_pct=?, introducer_comm_amt=?, manager_comm_pct=?, manager_comm_amt=?, gross_profit=?,
-                    contact_number=?, email=?, person_in_charge=?, map_link=?, notes=?, updated_at=? WHERE id=?""",
+                    contact_number=?, email=?, person_in_charge=?, map_link=?, notes=?,
+                    machinery_pmt=?, machinery_pma=?, machinery_pmd=?, machinery_general=?, machinery_other=?,
+                    issue_notes=?, progress_notes=?, terms_conditions=?, remark_text=?, remark_image=?,
+                    updated_at=? WHERE id=?""",
                 (f.get("client_name","").strip(), f.get("job_code",""), f.get("job_title",""), float(f.get("amount",0) or 0),
                  f.get("location","").strip(), f.get("state","").strip(), f.get("date",""),
                  f.get("job_status",""), f.get("level",""), f.get("introducer",""), f.get("source",""), f.get("open_by",""),
@@ -1233,7 +1321,12 @@ def rfq_edit(eid):
                  float(f.get("deposit_pct",0) or 0), float(f.get("introducer_comm_pct",0) or 0), float(f.get("introducer_comm_amt",0) or 0),
                  float(f.get("manager_comm_pct",0) or 0), float(f.get("manager_comm_amt",0) or 0), float(f.get("gross_profit",0) or 0),
                  f.get("contact_number","").strip(), f.get("email","").strip(), f.get("person_in_charge","").strip(),
-                 f.get("map_link","").strip(), f.get("notes","").strip(), now, eid))
+                 f.get("map_link","").strip(), f.get("notes","").strip(),
+                 int(f.get("machinery_pmt",0) or 0), int(f.get("machinery_pma",0) or 0), int(f.get("machinery_pmd",0) or 0),
+                 int(f.get("machinery_general",0) or 0), int(f.get("machinery_other",0) or 0),
+                 f.get("issue_notes","").strip(), f.get("progress_notes","").strip(), f.get("terms_conditions","").strip(),
+                 f.get("remark_text","").strip(), remark_img,
+                 now, eid))
         # Update quote items
         execute("DELETE FROM rfq_items WHERE rfq_entry_id = ?", (eid,))
         items_desc = request.form.getlist("item_desc[]")

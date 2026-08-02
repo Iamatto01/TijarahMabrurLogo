@@ -1,29 +1,43 @@
 {% extends "portal/base_portal.html" %}
 {% block title %}{{ stage }} List | RFQ{% endblock %}
 {% block content %}
-<div class="portal-topbar">
-    <h1>📑 {{ stage }} <span style="color:var(--muted);font-weight:400">(Request for Quotation)</span></h1>
-    <a class="btn" href="{{ url_for('rfq_new') }}">+ New RFQ</a>
+<style>
+.rfq-tbl td.editable { cursor: pointer; position: relative; }
+.rfq-tbl td.editable:hover { background: #e3f2fd !important; }
+.rfq-tbl td.editable:hover::after { content: '✏️'; position: absolute; right: 2px; top: 2px; font-size: 10px; }
+.inline-form { display: flex; gap: 4px; align-items: center; }
+.inline-form input, .inline-form select { font-size: 12px; padding: 3px 6px; border: 1px solid var(--accent); border-radius: 4px; outline: none; }
+.inline-form input { min-width: 80px; }
+.inline-form button { font-size: 11px; padding: 2px 8px; border: none; border-radius: 4px; cursor: pointer; }
+.inline-form .save { background: var(--accent); color: #fff; }
+.inline-form .cancel { background: #eee; color: var(--text); }
+</style>
+
+<div class="portal-topbar" style="padding-bottom:6px">
+    <h1 style="font-size:18px">📑 {{ stage }} <span style="color:var(--muted);font-weight:400;font-size:13px">({{ rows|length }} entries)</span></h1>
+    <div style="display:flex;gap:6px">
+        <a class="btn sm" href="{{ url_for('rfq_new') }}">+ New RFQ</a>
+        <a class="btn sm ghost" href="{{ url_for('rfq_dashboard') }}">📊 Dashboard</a>
+    </div>
 </div>
 
 <!-- Stage Tabs -->
-<div class="toolbar" style="gap:6px;flex-wrap:wrap">
+<div class="toolbar" style="gap:4px;flex-wrap:wrap;margin-bottom:10px">
     {% for s in stages %}
     <a class="btn sm {{ '' if stage == s else 'ghost' }}" href="{{ url_for('rfq_stage_list', stage=s) }}"
-       style="{{ 'font-weight:800' if stage == s else '' }}">
-        {{ s }} <span style="font-size:11px;opacity:.7;margin-left:4px">({{ stage_counts[s] }})</span>
+       style="{{ 'font-weight:800' if stage == s else '' }};font-size:12px;padding:5px 10px">
+        {{ s }} <span style="font-size:10px;opacity:.7">({{ stage_counts[s] }})</span>
     </a>
     {% endfor %}
-    <a class="btn sm ghost" href="{{ url_for('rfq_dashboard') }}" style="margin-left:auto">📊 Dashboard</a>
 </div>
 
-<div class="panel">
-    <div class="panel-body tbl-scroll">
+<div class="panel" style="margin:0">
+    <div class="panel-body tbl-scroll" style="padding:0">
         {% if rows %}
         <table class="tbl rfq-tbl">
             <thead>
                 <tr>
-                    <th>No</th>
+                    <th>#</th>
                     <th>RFQ ID</th>
                     <th>CLIENT NAME</th>
                     <th>JOB CODE</th>
@@ -37,11 +51,8 @@
                     <th>INTRODUCER</th>
                     <th>SOURCE</th>
                     <th>OPEN BY</th>
-                    <th style="text-align:right">COMMISSION</th>
-                    <th style="text-align:right">COST</th>
-                    <th style="text-align:right">PROFIT</th>
                     <th style="text-align:center">MOVE</th>
-                    <th style="text-align:center">ACTIONS</th>
+                    <th style="text-align:center">ACT</th>
                 </tr>
             </thead>
             <tbody>
@@ -49,73 +60,91 @@
                 <tr>
                     <td>{{ loop.index }}</td>
                     <td><a href="{{ url_for('rfq_detail', eid=r.id) }}" style="font-weight:700;color:var(--accent-2)">{{ r.rfq_id }}</a></td>
-                    <td><a href="{{ url_for('rfq_detail', eid=r.id) }}" style="font-weight:600;color:var(--text)">{{ r.client_name }}</a></td>
-                    <td>{{ r.job_code }}</td>
-                    <td>{{ r.job_title }}</td>
-                    <td style="text-align:right;white-space:nowrap">RM {{ '{:,.2f}'.format(r.amount or 0) }}</td>
-                    <td>{{ r.location }}</td>
-                    <td>{{ r.state }}</td>
-                    <td>{{ r.date }}</td>
-                    <td>
-                        {% set sc = r.job_status %}
-                        <span class="tag {% if 'NEW' in sc %}Active{% elif 'LOST' in sc %}Expired{% elif 'Waiting' in sc %}Under_Maintenance{% else %}Approved{% endif %}">{{ sc }}</span>
+                    <td class="editable" onclick="inlineEdit(this,{{ r.id }},'client_name','text','{{ r.client_name|e }}')">{{ r.client_name }}</td>
+                    <td class="editable" onclick="inlineSelect(this,{{ r.id }},'job_code',{{ lists.job_code|tojson }},'{{ r.job_code }}')">{{ r.job_code }}</td>
+                    <td class="editable" onclick="inlineSelect(this,{{ r.id }},'job_title',{{ lists.job_title|tojson }},'{{ r.job_title }}')">{{ r.job_title }}</td>
+                    <td style="text-align:right" class="editable" onclick="inlineEdit(this,{{ r.id }},'amount','number','{{ r.amount or 0 }}')">RM {{ '{:,.0f}'.format(r.amount or 0) }}</td>
+                    <td class="editable" onclick="inlineEdit(this,{{ r.id }},'location','text','{{ r.location|e }}')">{{ r.location }}</td>
+                    <td class="editable" onclick="inlineEdit(this,{{ r.id }},'state','text','{{ r.state|e }}')">{{ r.state }}</td>
+                    <td class="editable" onclick="inlineEdit(this,{{ r.id }},'date','date','{{ r.date }}')">{{ r.date }}</td>
+                    <td class="editable" onclick="inlineSelect(this,{{ r.id }},'job_status',{{ lists.job_status|tojson }},'{{ r.job_status }}')">
+                        <span class="tag {% if 'NEW' in (r.job_status or '') %}Active{% elif 'LOST' in (r.job_status or '') %}Expired{% elif 'Waiting' in (r.job_status or '') %}Under_Maintenance{% else %}Approved{% endif %}" style="font-size:10px">{{ r.job_status }}</span>
                     </td>
-                    <td>
-                        {% if r.level == 'High' %}<span style="color:#f44336;font-weight:700">🔴 High</span>
-                        {% elif r.level == 'Medium' %}<span style="color:#ff9800;font-weight:600">🟡 Medium</span>
-                        {% elif r.level == 'Low' %}<span style="color:#4caf50">🟢 Low</span>
-                        {% else %}{{ r.level }}{% endif %}
+                    <td class="editable" onclick="inlineSelect(this,{{ r.id }},'level',{{ lists.level|tojson }},'{{ r.level }}')">
+                        {% if r.level == 'High' %}<span style="color:#f44336;font-weight:700">🔴</span>
+                        {% elif r.level == 'Medium' %}<span style="color:#ff9800">🟡</span>
+                        {% elif r.level == 'Low' %}<span style="color:#4caf50">🟢</span>
+                        {% endif %}{{ r.level }}
                     </td>
-                    <td>{{ r.introducer }}</td>
-                    <td>{{ r.source }}</td>
-                    <td>{{ r.open_by }}</td>
-                    <td style="text-align:right">RM {{ '{:,.2f}'.format(r.commission or 0) }}</td>
-                    <td style="text-align:right">RM {{ '{:,.2f}'.format(r.total_cost or 0) }}</td>
-                    <td style="text-align:right">RM {{ '{:,.2f}'.format(r.net_profit or 0) }}</td>
+                    <td class="editable" onclick="inlineSelect(this,{{ r.id }},'introducer',{{ lists.introducer|tojson }},'{{ r.introducer }}')">{{ r.introducer }}</td>
+                    <td class="editable" onclick="inlineSelect(this,{{ r.id }},'source',{{ lists.source|tojson }},'{{ r.source }}')">{{ r.source }}</td>
+                    <td class="editable" onclick="inlineSelect(this,{{ r.id }},'open_by',{{ lists.open_by|tojson }},'{{ r.open_by }}')">{{ r.open_by }}</td>
                     <td style="text-align:center;white-space:nowrap">
                         <form method="post" action="{{ url_for('rfq_move', eid=r.id) }}" style="display:inline">
-                            <select name="new_stage" onchange="this.form.submit()" style="font-size:12px;padding:3px 6px;border-radius:6px;border:1px solid var(--line);cursor:pointer">
-                                <option value="">Move…</option>
-                                {% for s in stages %}
-                                {% if s != stage %}
-                                <option value="{{ s }}">→ {{ s }}</option>
-                                {% endif %}
-                                {% endfor %}
+                            <select name="new_stage" onchange="this.form.submit()" style="font-size:11px;padding:2px 4px;border-radius:4px;border:1px solid var(--line);cursor:pointer;width:65px">
+                                <option value="">→</option>
+                                {% for s in stages %}{% if s != stage %}<option value="{{ s }}">{{ s }}</option>{% endif %}{% endfor %}
                             </select>
                         </form>
                     </td>
                     <td style="text-align:center;white-space:nowrap">
-                        <a class="btn sm ghost" href="{{ url_for('rfq_edit', eid=r.id) }}">✏️</a>
-                        <button class="btn sm danger" onclick="confirmDel({{ r.id }}, '{{ r.rfq_id }}', '{{ r.client_name }}')">🗑️</button>
+                        <a class="btn sm ghost" href="{{ url_for('rfq_edit', eid=r.id) }}" style="padding:2px 6px;font-size:11px">✏️</a>
+                        <button class="btn sm danger" onclick="confirmDel({{ r.id }},'{{ r.rfq_id }}','{{ r.client_name|e }}')" style="padding:2px 6px;font-size:11px">🗑️</button>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         {% else %}
-        <div class="empty">No entries in {{ stage }}. <a href="{{ url_for('rfq_new') }}">Create a new RFQ</a>.</div>
+        <div class="empty" style="padding:30px">No entries in {{ stage }}. <a href="{{ url_for('rfq_new') }}">Create a new RFQ</a>.</div>
         {% endif %}
     </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
 <div id="delModal" class="img2-modal-overlay">
-    <div class="img2-modal" style="max-width:440px;background:#fff;padding:28px;border-radius:14px;text-align:center">
+    <div class="img2-modal" style="max-width:420px;background:#fff;padding:24px;border-radius:14px;text-align:center">
         <h3 style="margin-top:0;color:#f44336">⚠️ Confirm Delete</h3>
-        <p style="color:var(--muted)">Are you sure you want to delete this RFQ?</p>
+        <p style="color:var(--muted)">Delete this RFQ?</p>
         <p><b id="delInfo" style="color:var(--text)"></b></p>
-        <p style="font-size:12px;color:#f44336">This action cannot be undone!</p>
-        <form id="delForm" method="post" action="" style="display:flex;gap:10px;justify-content:center;margin-top:20px">
+        <form id="delForm" method="post" style="display:flex;gap:8px;justify-content:center;margin-top:16px">
             <button type="button" class="btn ghost sm" onclick="document.getElementById('delModal').style.display='none'">Cancel</button>
             <button type="submit" class="btn sm danger">🗑️ Delete</button>
         </form>
     </div>
 </div>
+
 <script>
 function confirmDel(id, rfqId, client) {
     document.getElementById('delInfo').innerText = rfqId + ' — ' + client;
     document.getElementById('delForm').action = '/portal/rfq/' + id + '/delete';
     document.getElementById('delModal').style.display = 'flex';
+}
+
+// Inline editing
+function inlineEdit(td, id, field, type, val) {
+    if (td.querySelector('.inline-form')) return; // already editing
+    var orig = td.innerHTML;
+    td.innerHTML = '<form class="inline-form" method="post" action="/portal/rfq/'+id+'/inline-update">' +
+        '<input type="hidden" name="field" value="'+field+'">' +
+        '<input type="'+type+'" name="value" value="'+val+'" autofocus style="width:'+(type==='date'?'130px':'90px')+'">' +
+        '<button type="submit" class="save">✓</button>' +
+        '<button type="button" class="cancel" onclick="this.closest(\'td\').innerHTML=window._orig">✕</button></form>';
+    window._orig = orig;
+    td.querySelector('input[name=value]').focus();
+}
+
+function inlineSelect(td, id, field, options, current) {
+    if (td.querySelector('.inline-form')) return;
+    var orig = td.innerHTML;
+    var opts = '<option value="">—</option>';
+    options.forEach(function(o) { opts += '<option value="'+o+'"'+(o===current?' selected':'')+'>'+o+'</option>'; });
+    td.innerHTML = '<form class="inline-form" method="post" action="/portal/rfq/'+id+'/inline-update">' +
+        '<input type="hidden" name="field" value="'+field+'">' +
+        '<select name="value" onchange="this.form.submit()" style="min-width:80px">'+opts+'</select>' +
+        '<button type="button" class="cancel" onclick="this.closest(\'td\').innerHTML=window._orig">✕</button></form>';
+    window._orig = orig;
+    td.querySelector('select').focus();
 }
 </script>
 {% endblock %}

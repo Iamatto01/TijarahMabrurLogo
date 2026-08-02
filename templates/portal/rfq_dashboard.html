@@ -1,96 +1,155 @@
 {% extends "portal/base_portal.html" %}
 {% block title %}RFQ Dashboard | Portal{% endblock %}
 {% block content %}
-<div class="portal-topbar">
+<div class="portal-topbar" style="padding-bottom:8px">
     <div>
-        <h1>📋 RFQ Dashboard</h1>
-        <div class="who">TMSB Dashboard {{ "now"|default("2026") }}</div>
+        <h1 style="font-size:18px">📋 RFQ Dashboard</h1>
     </div>
-    <a class="btn" href="{{ url_for('rfq_new') }}">+ New RFQ</a>
+    <a class="btn sm" href="{{ url_for('rfq_new') }}">+ New RFQ</a>
 </div>
 
-<!-- Stage Summary Cards -->
-<div class="rfq-stage-cards">
+<!-- Stage Summary Cards (compact) -->
+<div class="rfq-stage-cards" style="grid-template-columns:repeat(8,1fr);gap:8px;margin-bottom:14px">
     {% for s in stages_data %}
-    <a href="{{ url_for('rfq_stage_list', stage=s.stage) }}" class="rfq-card" style="border-top:4px solid {{ s.color }}">
-        <div class="rfq-card-count" style="color:{{ s.color }}">{{ s.count }}</div>
-        <div class="rfq-card-stage">{{ s.stage }}</div>
-        <div class="rfq-card-amount">RM {{ '{:,.2f}'.format(s.total) }}</div>
+    <a href="{{ url_for('rfq_stage_list', stage=s.stage) }}" class="rfq-card" style="border-top:3px solid {{ s.color }};padding:10px 8px">
+        <div class="rfq-card-count" style="color:{{ s.color }};font-size:24px">{{ s.count }}</div>
+        <div class="rfq-card-stage" style="font-size:11px">{{ s.stage }}</div>
+        <div class="rfq-card-amount" style="font-size:10px">RM {{ '{:,.0f}'.format(s.total) }}</div>
     </a>
     {% endfor %}
-    <div class="rfq-card rfq-card-total">
-        <div class="rfq-card-count">{{ total_all }}</div>
-        <div class="rfq-card-stage">TOTAL LEAD</div>
-        <div class="rfq-card-amount">RM {{ '{:,.2f}'.format(total_amount) }}</div>
+    <div class="rfq-card rfq-card-total" style="padding:10px 8px">
+        <div class="rfq-card-count" style="font-size:24px">{{ total_all }}</div>
+        <div class="rfq-card-stage" style="font-size:11px">TOTAL</div>
+        <div class="rfq-card-amount" style="font-size:10px">RM {{ '{:,.0f}'.format(total_amount) }}</div>
     </div>
 </div>
 
-<!-- Charts Row -->
-<div class="rfq-charts-row">
-    <div class="panel rfq-chart-panel">
-        <div class="panel-head"><h3>Stages Overview</h3></div>
-        <div class="panel-body"><canvas id="stageChart" height="260"></canvas></div>
+<!-- Financial Summary Mini-Cards -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
+    <div class="panel" style="margin:0;padding:12px 14px;text-align:center">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Total Revenue</div>
+        <div style="font-size:18px;font-weight:800;color:var(--accent-2)">RM {{ '{:,.0f}'.format(total_amount) }}</div>
     </div>
-    <div class="panel rfq-chart-panel">
-        <div class="panel-head"><h3>Open By</h3></div>
-        <div class="panel-body">
-            <table class="tbl" style="font-size:13px">
-                <thead><tr><th>Person</th><th style="text-align:right">Count</th></tr></thead>
+    <div class="panel" style="margin:0;padding:12px 14px;text-align:center">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Total Cost</div>
+        <div style="font-size:18px;font-weight:800;color:#e8930c">RM {{ '{:,.0f}'.format(total_cost) }}</div>
+    </div>
+    <div class="panel" style="margin:0;padding:12px 14px;text-align:center">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Net Profit</div>
+        <div style="font-size:18px;font-weight:800;color:#1da857">RM {{ '{:,.0f}'.format(total_profit) }}</div>
+    </div>
+    <div class="panel" style="margin:0;padding:12px 14px;text-align:center">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Margin</div>
+        <div style="font-size:18px;font-weight:800;color:#9c27b0">{% if total_amount %}{{ '{:.1f}'.format((total_amount - total_cost) / total_amount * 100) }}%{% else %}0%{% endif %}</div>
+    </div>
+</div>
+
+<!-- Main Grid: Charts + Staff + Recent -->
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">
+    <!-- Bar Chart -->
+    <div class="panel" style="margin:0">
+        <div class="panel-head" style="padding:8px 14px"><h3 style="font-size:13px;margin:0">Stages</h3></div>
+        <div class="panel-body" style="padding:8px 14px"><canvas id="stageChart" height="160"></canvas></div>
+    </div>
+    <!-- Staff Performance -->
+    <div class="panel" style="margin:0">
+        <div class="panel-head" style="padding:8px 14px"><h3 style="font-size:13px;margin:0">👤 RFQ Staff</h3></div>
+        <div class="panel-body" style="padding:4px 10px">
+            <table class="tbl" style="font-size:12px">
+                <thead><tr><th>Staff</th><th style="text-align:right">RFQ</th><th style="text-align:right">RM</th><th style="text-align:right">✅</th><th style="text-align:right">❌</th></tr></thead>
                 <tbody>
-                    {% for ob in open_by_rows %}
-                    <tr><td><b>{{ ob.open_by }}</b></td><td style="text-align:right">{{ ob.c }}</td></tr>
+                    {% for st in staff_stats %}
+                    <tr>
+                        <td><b>{{ st.open_by }}</b></td>
+                        <td style="text-align:right">{{ st.c }}</td>
+                        <td style="text-align:right;white-space:nowrap">{{ '{:,.0f}'.format(st.total) }}</td>
+                        <td style="text-align:right;color:#1da857;font-weight:600">{{ st.closed }}</td>
+                        <td style="text-align:right;color:#f44336;font-weight:600">{{ st.lost }}</td>
+                    </tr>
                     {% endfor %}
+                    {% if not staff_stats %}
+                    <tr><td colspan="5" style="color:var(--muted);text-align:center">No staff data</td></tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>
     </div>
+    <!-- Open By Pie -->
+    <div class="panel" style="margin:0">
+        <div class="panel-head" style="padding:8px 14px"><h3 style="font-size:13px;margin:0">Open By</h3></div>
+        <div class="panel-body" style="padding:8px 14px"><canvas id="openByChart" height="160"></canvas></div>
+    </div>
 </div>
 
-<!-- Pie Charts -->
-<div class="rfq-charts-row rfq-pie-row">
-    <div class="panel rfq-chart-panel">
-        <div class="panel-head"><h3>Introducer</h3></div>
-        <div class="panel-body"><canvas id="introducerChart" height="220"></canvas></div>
+<!-- Pie Charts Row (compact) -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+    <div class="panel" style="margin:0">
+        <div class="panel-head" style="padding:6px 12px"><h3 style="font-size:12px;margin:0">Introducer</h3></div>
+        <div class="panel-body" style="padding:6px 12px"><canvas id="introducerChart" height="140"></canvas></div>
     </div>
-    <div class="panel rfq-chart-panel">
-        <div class="panel-head"><h3>Source</h3></div>
-        <div class="panel-body"><canvas id="sourceChart" height="220"></canvas></div>
+    <div class="panel" style="margin:0">
+        <div class="panel-head" style="padding:6px 12px"><h3 style="font-size:12px;margin:0">Source</h3></div>
+        <div class="panel-body" style="padding:6px 12px"><canvas id="sourceChart" height="140"></canvas></div>
     </div>
-    <div class="panel rfq-chart-panel">
-        <div class="panel-head"><h3>Job Code</h3></div>
-        <div class="panel-body"><canvas id="jobCodeChart" height="220"></canvas></div>
+    <div class="panel" style="margin:0">
+        <div class="panel-head" style="padding:6px 12px"><h3 style="font-size:12px;margin:0">Job Code</h3></div>
+        <div class="panel-body" style="padding:6px 12px"><canvas id="jobCodeChart" height="140"></canvas></div>
     </div>
-    <div class="panel rfq-chart-panel">
-        <div class="panel-head"><h3>State</h3></div>
-        <div class="panel-body"><canvas id="stateChart" height="220"></canvas></div>
+    <div class="panel" style="margin:0">
+        <div class="panel-head" style="padding:6px 12px"><h3 style="font-size:12px;margin:0">State</h3></div>
+        <div class="panel-body" style="padding:6px 12px"><canvas id="stateChart" height="140"></canvas></div>
+    </div>
+</div>
+
+<!-- Recent RFQs -->
+<div class="panel" style="margin:0 0 14px">
+    <div class="panel-head" style="padding:8px 14px;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="font-size:13px;margin:0">📄 Recent RFQs</h3>
+        <a href="{{ url_for('rfq_stage_list', stage='RFQ') }}" style="font-size:12px">View all →</a>
+    </div>
+    <div class="panel-body" style="padding:0">
+        <table class="tbl" style="font-size:12px">
+            <thead><tr><th>RFQ ID</th><th>Client</th><th>Job</th><th style="text-align:right">Amount</th><th>Stage</th><th>Status</th><th>Open By</th><th>Date</th></tr></thead>
+            <tbody>
+                {% for r in recent %}
+                <tr>
+                    <td><a href="{{ url_for('rfq_detail', eid=r.id) }}" style="font-weight:700;color:var(--accent-2)">{{ r.rfq_id }}</a></td>
+                    <td style="font-weight:600">{{ r.client_name }}</td>
+                    <td>{{ r.job_code }}</td>
+                    <td style="text-align:right;white-space:nowrap">RM {{ '{:,.0f}'.format(r.amount or 0) }}</td>
+                    <td><span class="tag" style="font-size:10px">{{ r.stage }}</span></td>
+                    <td><span style="font-size:11px">{{ r.job_status }}</span></td>
+                    <td>{{ r.open_by }}</td>
+                    <td style="font-size:11px;color:var(--muted)">{{ r.date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script>
-const PIE_COLORS = ['#01a0ff','#f5a623','#4caf50','#9c27b0','#e91e63','#ff9800','#f44336','#607d8b','#795548','#00bcd4','#8bc34a','#cddc39'];
-// Bar Chart
+const P = ['#01a0ff','#f5a623','#4caf50','#9c27b0','#e91e63','#ff9800','#f44336','#607d8b','#795548','#00bcd4','#8bc34a','#cddc39'];
+Chart.defaults.font.size = 11;
+// Bar
 new Chart(document.getElementById('stageChart'), {
     type: 'bar',
     data: {
         labels: {{ stages_data|map(attribute='stage')|list|tojson }},
-        datasets: [{
-            label: 'Count',
-            data: {{ stages_data|map(attribute='count')|list|tojson }},
-            backgroundColor: {{ stages_data|map(attribute='color')|list|tojson }},
-            borderRadius: 6, borderSkipped: false
-        }]
+        datasets: [{ data: {{ stages_data|map(attribute='count')|list|tojson }}, backgroundColor: {{ stages_data|map(attribute='color')|list|tojson }}, borderRadius: 4, borderSkipped: false }]
     },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
 });
-// Pie charts
+// Pie helper
 function pie(id, labels, data) {
     new Chart(document.getElementById(id), {
         type: 'doughnut',
-        data: { labels, datasets: [{ data, backgroundColor: PIE_COLORS.slice(0, data.length), borderWidth: 2 }] },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+        data: { labels, datasets: [{ data, backgroundColor: P.slice(0, data.length), borderWidth: 1 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { size: 10 }, boxWidth: 10, padding: 4 } } } }
     });
 }
+pie('openByChart', {{ open_by_rows|map(attribute='open_by')|list|tojson }}, {{ open_by_rows|map(attribute='c')|list|tojson }});
 pie('introducerChart', {{ introducer_rows|map(attribute='introducer')|list|tojson }}, {{ introducer_rows|map(attribute='c')|list|tojson }});
 pie('sourceChart', {{ source_rows|map(attribute='source')|list|tojson }}, {{ source_rows|map(attribute='c')|list|tojson }});
 pie('jobCodeChart', {{ job_code_rows|map(attribute='job_code')|list|tojson }}, {{ job_code_rows|map(attribute='c')|list|tojson }});
