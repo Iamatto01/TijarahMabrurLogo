@@ -677,22 +677,27 @@ def init_db():
         ]
 
         for (rfq_id, client_name, job_code, job_title, amount, location, state, date, job_status, level, introducer, source, open_by, stage, total_cost, gross_profit, net_profit, dep_pct, intro_pct, intro_amt, mgr_pct, mgr_amt) in rfq_data_list:
-            total_comm = intro_amt + mgr_amt
-            entry_id = execute("""INSERT INTO rfq_entries (rfq_id, client_name, job_code, job_title, amount, location, state, date,
-                        job_status, level, introducer, source, open_by, stage, commission, total_cost, net_profit,
-                        deposit_pct, introducer_comm_pct, introducer_comm_amt, manager_comm_pct, manager_comm_amt, gross_profit,
-                        notes, created_at, updated_at)
-                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                    (rfq_id, client_name, job_code, job_title, amount, location, state, date,
-                     job_status, level, introducer, source, open_by, stage, total_comm, total_cost, net_profit,
-                     dep_pct, intro_pct, intro_amt, mgr_pct, mgr_amt, gross_profit,
-                     f"Statutory compliance project for {client_name}", now, now))
+            try:
+                total_comm = intro_amt + mgr_amt
+                _returning = " RETURNING id" if _ENGINE == "pg" else ""
+                entry_id = execute(f"""INSERT INTO rfq_entries (rfq_id, client_name, job_code, job_title, amount, location, state, date,
+                            job_status, level, introducer, source, open_by, stage, commission, total_cost, net_profit,
+                            deposit_pct, introducer_comm_pct, introducer_comm_amt, manager_comm_pct, manager_comm_amt, gross_profit,
+                            notes, created_at, updated_at)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?){_returning}""",
+                        (rfq_id, client_name, job_code, job_title, amount, location, state, date,
+                         job_status, level, introducer, source, open_by, stage, total_comm, total_cost, net_profit,
+                         dep_pct, intro_pct, intro_amt, mgr_pct, mgr_amt, gross_profit,
+                         f"Statutory compliance project for {client_name}", now, now))
 
-            # Add 2 Quote items per RFQ entry
-            execute("INSERT INTO rfq_items (rfq_entry_id, item_no, description, qty, unit_price, days, amount) VALUES (?,?,?,?,?,?,?)",
-                    (entry_id, 1, f"Engineering Assessment & {job_title} for {client_name}", 1, amount * 0.7, 1, amount * 0.7))
-            execute("INSERT INTO rfq_items (rfq_entry_id, item_no, description, qty, unit_price, days, amount) VALUES (?,?,?,?,?,?,?)",
-                    (entry_id, 2, f"DOSH Documentation, Endorsement & Hydrostatic Test", 1, amount * 0.3, 1, amount * 0.3))
+                # Add 2 Quote items per RFQ entry
+                if entry_id:
+                    execute("INSERT INTO rfq_items (rfq_entry_id, item_no, description, qty, unit_price, days, amount) VALUES (?,?,?,?,?,?,?)",
+                            (entry_id, 1, f"Engineering Assessment & {job_title} for {client_name}", 1, amount * 0.7, 1, amount * 0.7))
+                    execute("INSERT INTO rfq_items (rfq_entry_id, item_no, description, qty, unit_price, days, amount) VALUES (?,?,?,?,?,?,?)",
+                            (entry_id, 2, f"DOSH Documentation, Endorsement & Hydrostatic Test", 1, amount * 0.3, 1, amount * 0.3))
+            except Exception as e:
+                print(f"[SEED] Warning: could not insert {rfq_id}: {e}")
 
     # ── Seed Reports for Demo ──
     rep_check = q("SELECT id FROM reports LIMIT 1", one=True)
@@ -767,17 +772,23 @@ def q(sql, args=(), one=False):
 def execute(sql, args=()):
     if _ENGINE == "pg":
         sql = sql.replace("?", "%s")
+        # Auto-append RETURNING id for INSERT if not already present
+        sql_upper = sql.strip().upper()
+        has_returning = "RETURNING" in sql_upper
+        if sql_upper.startswith("INSERT") and not has_returning:
+            sql = sql.rstrip().rstrip(";") + " RETURNING id"
+            has_returning = True
     if _ENGINE == "pg":
         conn = _pg_connect()
         try:
             cur = conn.cursor()
             cur.execute(sql, args)
-            if "RETURNING id" in sql.upper():
+            if has_returning:
                 row = cur.fetchone()
                 conn.commit()
                 return row[0] if row else None
             conn.commit()
-            return cur.lastrowid if hasattr(cur, 'lastrowid') and cur.lastrowid else None
+            return None
         except Exception:
             conn.rollback()
             raise
