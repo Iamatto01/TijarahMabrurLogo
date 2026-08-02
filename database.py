@@ -24,16 +24,11 @@ def _detect_engine():
 
 _ENGINE = _detect_engine()
 _PLACEHOLDER = "%s" if _ENGINE == "pg" else "?"
-_pg_conn = None
-
-
 def _pg_connect():
-    global _pg_conn
-    if _pg_conn is None or _pg_conn.closed:
-        import psycopg2
-        _pg_conn = psycopg2.connect(DATABASE_URL)
-        _pg_conn.autocommit = False
-    return _pg_conn
+    import psycopg2
+    conn = psycopg2.connect(DATABASE_URL)
+    conn.autocommit = False
+    return conn
 
 
 def _serial():
@@ -424,6 +419,7 @@ def init_db():
                 except Exception:
                     conn.rollback()
         conn.commit()
+        conn.close()
     else:
         conn = get_db()
         conn.executescript(SCHEMA)
@@ -431,6 +427,7 @@ def init_db():
         _migrate(conn)
         conn.executescript(INDEXES)
         conn.commit()
+        conn.close()
 
     admin_email = "tmsb@tijarahmabrur.com"
     # Update existing admin account email if present
@@ -725,10 +722,6 @@ def init_db():
                 "INSERT INTO reports (machinery_id, title, report_type, summary, pdf_filename, status, created_by, created_at) VALUES (?,?,?,?,?,?,?,?)",
                 (m["id"], full_title, rtype, rsum, "", rstat, admin_id, now)
             )
-
-    if _ENGINE == "pg":
-        conn.commit()
-        conn.close()
 
 
 def _fetch_rows(cur, rows):
