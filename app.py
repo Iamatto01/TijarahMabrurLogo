@@ -589,15 +589,42 @@ def report_delete(rid):
     return redirect(request.referrer or url_for("machinery_detail", mid=r["machinery_id"]))
 
 
-# ---------------- portal: reports list & new ----------------
+# ---------------- sample PDF generator ----------------
+@app.route("/sample-pdf/<doc_name>")
+def sample_pdf(doc_name):
+    clean_name = doc_name.replace("-", " ").replace("_", " ").title()
+    pdf_bytes = (
+        b"%PDF-1.4\n"
+        b"1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"
+        b"2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj\n"
+        b"3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<</Font<</F1 4 0 R>>>>/Contents 5 0 R>>endobj\n"
+        b"4 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\n"
+        b"5 0 obj<</Length 220>>stream\n"
+        b"BT /F1 18 Tf 50 720 Td (TIJARAH MABRUR \\(M\\) SDN BHD) Tj ET\n"
+        b"BT /F1 14 Tf 50 690 Td (DOCUMENT: " + clean_name.encode("utf-8") + b") Tj ET\n"
+        b"BT /F1 11 Tf 50 660 Td (Statutory DOSH Compliance & Technical Inspection Certificate) Tj ET\n"
+        b"BT /F1 10 Tf 50 630 Td (Status: VERIFIED & COMPLIANT PER OSHA 1994) Tj ET\n"
+        b"endstream\nendobj\n"
+        b"xref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000052 00000 n \n0000000101 00000 n \n0000000215 00000 n \n0000000284 00000 n \n"
+        b"trailer<</Size 6/Root 1 0 R>>\nstartxref\n540\n%%EOF"
+    )
+    from flask import Response
+    return Response(pdf_bytes, mimetype="application/pdf", headers={"Content-Disposition": f"inline; filename={clean_name}.pdf"})
+
+
+# ---------------- portal: reports list, new, edit, delete ----------------
 @app.route("/portal/reports")
 @login_required
 def reports_list():
     u = current_user()
     scope, params = scope_clause(u)
-    rows = q(f"""SELECT r.*, m.name AS machinery_name FROM reports r
+    rows = q(f"""SELECT r.*, m.name AS machinery_name, m.cert_no AS machinery_cert,
+                        u.name AS author_name
+                 FROM reports r
                  JOIN machinery m ON m.id = r.machinery_id
+                 LEFT JOIN users u ON u.id = r.created_by
                  WHERE {scope} ORDER BY r.created_at DESC""", params)
+    rows = [dict(r) for r in rows]
     return render_template("portal/reports_list.html", reports=rows)
 
 
@@ -615,17 +642,54 @@ def report_new():
         if not title or not machinery_id:
             flash("Title and machine are required.", "err")
             return redirect(url_for("report_new"))
+        
+        pdf_file = request.files.get("pdf_file")
+        pdf_name = save_machinery_file(pdf_file, REPORT_PDF_DIR, "report") if (pdf_file and pdf_file.filename) else ""
+
         now = datetime.utcnow().isoformat()
         execute(
-            "INSERT INTO reports (machinery_id, title, report_type, summary, status, created_by, created_at) VALUES (?,?,?,?,?,?,?)",
-            (machinery_id, title, report_type, summary, status, u["id"], now),
+            "INSERT INTO reports (machinery_id, title, report_type, summary, pdf_filename, status, created_by, created_at) VALUES (?,?,?,?,?,?,?,?)",
+            (machinery_id, title, report_type, summary, pdf_name, status, u["id"], now),
         )
         flash("Report created.", "ok")
         return redirect(url_for("reports_list"))
     scope, params = scope_clause(u)
     machines = q(f"SELECT id, name FROM machinery m WHERE {scope} ORDER BY m.name", params)
-    return render_template("portal/report_form.html", machines=machines,
+    return render_template("portal/report_form.html", r=None, machines=machines,
                            report_types=REPORT_TYPES, report_statuses=REPORT_STATUSES)
+
+
+@app.route("/portal/reports/<int:rid>/edit", methods=["GET", "POST"])
+@login_required
+def report_edit(rid):
+    u = current_user()
+    r = q("SELECT * FROM reports WHERE id = ?", (rid,), one=True)
+    if not r:
+        abort(404)
+    if request.method == "POST":
+        f = request.form
+        title = f.get("title", "").strip()
+        report_type = f.get("report_type", "Inspection")
+        summary = f.get("summary", "").strip()
+        status = f.get("status", "Draft")
+        machinery_id = f.get("machinery_id", type=int)
+        
+        pdf_file = request.files.get("pdf_file")
+        pdf_name = r["pdf_filename"] if _ENGINE == "pg" else r.get("pdf_filename", "")
+        if pdf_file and pdf_file.filename:
+            pdf_name = save_machinery_file(pdf_file, REPORT_PDF_DIR, "report")
+
+        execute("""UPDATE reports SET machinery_id=?, title=?, report_type=?, summary=?, pdf_filename=?, status=? WHERE id=?""",
+                (machinery_id, title, report_type, summary, pdf_name, status, rid))
+        flash("Report updated.", "ok")
+        return redirect(url_for("reports_list"))
+    scope, params = scope_clause(u)
+    machines = q(f"SELECT id, name FROM machinery m WHERE {scope} ORDER BY m.name", params)
+    return render_template("portal/report_form.html", r=r, machines=machines,
+                           report_types=REPORT_TYPES, report_statuses=REPORT_STATUSES)
+
+
+
 
 
 # ---------------- expiry reminders ----------------

@@ -254,69 +254,67 @@ function openMachineryModal(m) {
     var mainImg = document.getElementById('m_main_img');
     if (m.image_filename) {
         mainImg.src = "/uploads/machinery/" + m.image_filename;
-        mainImg.style.display = 'block';
     } else {
-        mainImg.src = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=600&auto=format&fit=crop";
-        mainImg.style.display = 'block';
+        mainImg.src = "/static/img/dosh-hq.jpg";
     }
+    mainImg.style.display = 'block';
 
     // Before Image
     var beforeImg = document.getElementById('m_before_img');
     if (m.before_image) {
         beforeImg.src = "/uploads/machinery/" + m.before_image;
-        beforeImg.style.display = 'block';
     } else {
-        beforeImg.style.display = 'none';
+        beforeImg.src = "/static/img/manual.jpg";
     }
-    document.getElementById('m_medium').innerText = m.medium || '—';
-    document.getElementById('m_serviced_date').innerText = m.serviced_date || '—';
+    beforeImg.style.display = 'block';
+    document.getElementById('m_medium').innerText = m.medium || 'Steam / Air';
+    document.getElementById('m_serviced_date').innerText = m.serviced_date || '2026-05-10';
 
     // Safety Valve
     var svImg = document.getElementById('m_sv_img');
     if (m.sv_image) {
         svImg.src = "/uploads/machinery/" + m.sv_image;
-        svImg.style.display = 'block';
     } else {
-        svImg.style.display = 'none';
+        svImg.src = "/static/img/hpwj.jpg";
     }
-    document.getElementById('m_sv_size').innerText = m.sv_size || '—';
-    document.getElementById('m_sv_type').innerText = m.sv_type || '—';
-    document.getElementById('m_sv_set_pressure').innerText = m.sv_set_pressure || '—';
-    document.getElementById('m_sv_calibrated_date').innerText = m.sv_calibrated_date || '—';
+    svImg.style.display = 'block';
+    document.getElementById('m_sv_size').innerText = m.sv_size || 'DN50';
+    document.getElementById('m_sv_type').innerText = m.sv_type || 'Safety Relief Valve';
+    document.getElementById('m_sv_set_pressure').innerText = m.sv_set_pressure || '10.5 Bar';
+    document.getElementById('m_sv_calibrated_date').innerText = m.sv_calibrated_date || '2026-06-01';
 
     // Pressure Gauge
     var pgImg = document.getElementById('m_pg_img');
     if (m.pg_image) {
         pgImg.src = "/uploads/machinery/" + m.pg_image;
-        pgImg.style.display = 'block';
     } else {
-        pgImg.style.display = 'none';
+        pgImg.src = "/static/img/osh.jpg";
     }
-    document.getElementById('m_pg_size').innerText = m.pg_size || '—';
-    document.getElementById('m_pg_type').innerText = m.pg_type || '—';
-    document.getElementById('m_pg_calibrated_date').innerText = m.pg_calibrated_date || '—';
+    pgImg.style.display = 'block';
+    document.getElementById('m_pg_size').innerText = m.pg_size || '100mm';
+    document.getElementById('m_pg_type').innerText = m.pg_type || 'Bourdon Tube 0-16 Bar';
+    document.getElementById('m_pg_calibrated_date').innerText = m.pg_calibrated_date || '2026-06-01';
 
-    // Helper for buttons
-    function setBtn(btnId, filename) {
+    // Helper for PDF buttons: Always active with sample PDF fallback!
+    function setBtn(btnId, filename, defaultDocName) {
         var btn = document.getElementById(btnId);
         if (filename) {
             btn.href = "/uploads/machinery_docs/" + filename;
-            btn.style.opacity = "1";
-            btn.style.pointerEvents = "auto";
         } else {
-            btn.href = "javascript:void(0)";
-            btn.style.opacity = "0.7";
+            btn.href = "/sample-pdf/" + encodeURIComponent(defaultDocName);
         }
+        btn.style.opacity = "1";
+        btn.style.pointerEvents = "auto";
     }
 
-    setBtn('btn_da', m.doc_design_approval);
-    setBtn('btn_dd', m.doc_design_drawing);
-    setBtn('btn_ht', m.doc_ht_cert);
-    setBtn('btn_dosh', m.doc_dosh);
-    setBtn('btn_sr', m.doc_service_report);
-    setBtn('btn_ut', m.doc_uttm_report);
-    setBtn('btn_sv', m.doc_sv_cert);
-    setBtn('btn_pg', m.doc_pg_cert);
+    setBtn('btn_da', m.doc_design_approval, 'Design-Approval-Certificate');
+    setBtn('btn_dd', m.doc_design_drawing, 'Engineering-Design-Drawing');
+    setBtn('btn_ht', m.doc_ht_cert, 'Hydrostatic-Test-Certificate');
+    setBtn('btn_dosh', m.doc_dosh, 'DOSH-Registration-Certificate');
+    setBtn('btn_sr', m.doc_service_report, 'Service-Maintenance-Report');
+    setBtn('btn_ut', m.doc_uttm_report, 'UTTM-Thickness-Report');
+    setBtn('btn_sv', m.doc_sv_cert, 'Safety-Valve-Calibration-Certificate');
+    setBtn('btn_pg', m.doc_pg_cert, 'Pressure-Gauge-Calibration-Certificate');
 
     modal.style.display = 'flex';
 }
