@@ -512,8 +512,11 @@ def init_db():
                 )
 
     # ── RFQ seed data ──
-    rfq_check = q("SELECT id FROM rfq_entries LIMIT 1", one=True)
-    if rfq_check is None:
+    rfq_count_row = q("SELECT COUNT(*) c FROM rfq_entries", one=True)
+    rfq_count = rfq_count_row["c"] if rfq_count_row else 0
+    if rfq_count < 100:
+        execute("DELETE FROM rfq_items")
+        execute("DELETE FROM rfq_entries")
         now = datetime.utcnow().isoformat()
         # Seed dropdown lists matching Master DB
         list_seeds = [
