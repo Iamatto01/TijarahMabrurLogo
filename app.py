@@ -623,7 +623,12 @@ def serve_machinery_doc(filename):
 @app.route("/portal/employee")
 @login_required
 def employee_portal():
-    sheet_url = os.getenv("EMPLOYEE_SHEET_URL", "")
+    raw_url = os.getenv("EMPLOYEE_SHEET_URL", "").strip()
+    sheet_url = raw_url
+    if raw_url and "<iframe" in raw_url and "src=" in raw_url:
+        match = re.search(r'src=["\']([^"\']+)["\']', raw_url)
+        if match:
+            sheet_url = match.group(1).replace("&amp;", "&")
     return render_template("portal/employee_portal.html", sheet_url=sheet_url)
 
 
