@@ -637,13 +637,13 @@ def employee_portal():
 
     edit_url = sheet_url
     if sheet_url and "docs.google.com/spreadsheets" in sheet_url:
-        if "/pubhtml" in sheet_url:
-            base_s = sheet_url.split("/pubhtml")[0]
-            sheet_url = base_s + "/edit?rm=minimal"
-            edit_url = base_s + "/edit"
-        elif "/edit" in sheet_url and "rm=minimal" not in sheet_url:
-            sep = "&" if "?" in sheet_url else "?"
-            sheet_url = f"{sheet_url}{sep}rm=minimal"
+        sp_id_match = re.search(r'/d/([a-zA-Z0-9-_]+)', sheet_url)
+        if sp_id_match:
+            sp_id = sp_id_match.group(1)
+            # Google blocks /edit inside iframe. Use /pubhtml or /preview for iframe and /edit for button.
+            if "/edit" in sheet_url:
+                sheet_url = f"https://docs.google.com/spreadsheets/d/{sp_id}/pubhtml?widget=true&headers=false"
+            edit_url = f"https://docs.google.com/spreadsheets/d/{sp_id}/edit"
 
     return render_template("portal/employee_portal.html", sheet_url=sheet_url, edit_url=edit_url, raw_url=raw_url)
 
