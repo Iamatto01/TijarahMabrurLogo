@@ -30,15 +30,15 @@
 @media print { .portal .sidebar, .portal-topbar, .toolbar, .no-print { display: none !important; } .portal-main { margin: 0; padding: 0; } .rfq-tpl { border: none; } }
 </style>
 
-<div class="portal-topbar no-print">
-    <div>
-        <h1>📑 {{ e.rfq_id }} — {{ e.client_name }}</h1>
-        <div class="who">Stage: <b style="color:var(--accent-2)">{{ e.stage }}</b></div>
+<div class="portal-topbar no-print" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:12px">
+        <a class="btn ghost sm" href="{{ url_for('rfq_stage_list', stage=e.stage) }}">Back</a>
+        <h1 style="font-size:20px;margin:0">📑 {{ e.rfq_id }} — {{ e.client_name }} <span style="font-size:13px;color:var(--muted)">({{ e.stage }})</span></h1>
     </div>
     <div style="display:flex;gap:8px">
+        <a class="btn ghost sm" href="{{ url_for('rfq_folder', eid=e.id) }}">📂 Open Folder</a>
         <a class="btn ghost sm" href="{{ url_for('rfq_edit', eid=e.id) }}">✏️ Edit</a>
         <button class="btn sm" onclick="window.print()">🖨️ Print</button>
-        <a class="btn ghost sm" href="{{ url_for('rfq_stage_list', stage=e.stage) }}">← Back</a>
     </div>
 </div>
 

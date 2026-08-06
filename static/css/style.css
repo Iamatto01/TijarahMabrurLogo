@@ -831,4 +831,89 @@ table.tbl tr:hover td { background: rgba(1, 160, 255, .04); }
     .stat-cards { grid-template-columns: 1fr; }
 }
 
+/* ── Global Color-Coded Dropdowns Matching LISTS ── */
+select.colored-select, .rfq-list-tag {
+    font-weight: 700;
+    transition: background 0.2s, color 0.2s;
+    border-radius: 6px;
+}
+/* == JOB CODE == */
+[data-value="dosh"]        { background: #1a1a2e !important; color: #ffffff !important; }
+[data-value="dodt"]        { background: #16213e !important; color: #ffffff !important; }
+[data-value="epcc"]        { background: #0f3460 !important; color: #ffffff !important; }
+[data-value="asset (pkns)"]{ background: #533483 !important; color: #ffffff !important; }
+[data-value="assessment"]  { background: #e94560 !important; color: #ffffff !important; }
+[data-value="training"]    { background: #ff6b35 !important; color: #ffffff !important; }
+[data-value="oshc"]        { background: #f9a825 !important; color: #1a1a1a !important; }
+[data-value="ppeai"]       { background: #00bfa5 !important; color: #ffffff !important; }
+[data-value="gshc"]        { background: #2979ff !important; color: #ffffff !important; }
+[data-value="gsmc"]        { background: #6a1b9a !important; color: #ffffff !important; }
+[data-value="dod1"]        { background: #16213e !important; color: #ffffff !important; }
+
+/* == JOB STATUS == */
+[data-value="new task"]                          { background: #1b5e20 !important; color: #ffffff !important; }
+[data-value="site visit"]                        { background: #2e7d32 !important; color: #ffffff !important; }
+[data-value="quote"]                             { background: #e53935 !important; color: #ffffff !important; }
+[data-value="required more details"]             { background: #f57c00 !important; color: #ffffff !important; }
+[data-value="ppcc"]                              { background: #7b1fa2 !important; color: #ffffff !important; }
+[data-value="waiting info from client"]          { background: #fdd835 !important; color: #1a1a1a !important; }
+[data-value="ready to discuss"]                  { background: #26a69a !important; color: #ffffff !important; }
+[data-value="quotation sent"]                    { background: #1565c0 !important; color: #ffffff !important; }
+[data-value="quotation received"]                { background: #1976d2 !important; color: #ffffff !important; }
+[data-value="quotation waiting for approval"]    { background: #42a5f5 !important; color: #ffffff !important; }
+[data-value="po in progress"]                    { background: #ff8f00 !important; color: #ffffff !important; }
+[data-value="po estimati"]                       { background: #ef6c00 !important; color: #ffffff !important; }
+[data-value="work progress"]                     { background: #00c853 !important; color: #ffffff !important; }
+[data-value="waiting for deposit"]               { background: #ff6f00 !important; color: #ffffff !important; }
+[data-value="invoice"]                           { background: #0277bd !important; color: #ffffff !important; }
+[data-value="payment"]                           { background: #00695c !important; color: #ffffff !important; }
+[data-value="lost"]                              { background: #b71c1c !important; color: #ffffff !important; }
+
+/* == INTRODUCER == */
+[data-value="doc"]              { background: #1565c0 !important; color: #ffffff !important; }
+[data-value="syukri"]           { background: #6a1b9a !important; color: #ffffff !important; }
+[data-value="a. hafiz"]         { background: #00838f !important; color: #ffffff !important; }
+[data-value="zed"]              { background: #2e7d32 !important; color: #ffffff !important; }
+[data-value="sharifah"]         { background: #ad1457 !important; color: #ffffff !important; }
+[data-value="captain"]          { background: #37474f !important; color: #ffffff !important; }
+[data-value="mr. mish"]         { background: #4e342e !important; color: #ffffff !important; }
+[data-value="rico"]             { background: #e65100 !important; color: #ffffff !important; }
+[data-value="shamsul jc"]       { background: #827717 !important; color: #ffffff !important; }
+[data-value="faizt bakhtiar"]   { background: #1b5e20 !important; color: #ffffff !important; }
+
+/* == SOURCE == */
+[data-value="tmsb"]       { background: #0d47a1 !important; color: #ffffff !important; }
+[data-value="tmsr"]       { background: #1b5e20 !important; color: #ffffff !important; }
+[data-value="spectro"]    { background: #4a148c !important; color: #ffffff !important; }
+[data-value="adv"]        { background: #bf360c !important; color: #ffffff !important; }
+[data-value="insasr"]     { background: #006064 !important; color: #ffffff !important; }
+[data-value="safeair"]    { background: #e65100 !important; color: #ffffff !important; }
+[data-value="suphin"]     { background: #33691e !important; color: #ffffff !important; }
+[data-value="3rd party"]  { background: #455a64 !important; color: #ffffff !important; }
+
+/* == OPEN BY == */
+[data-value="shalhin"]   { background: #1565c0 !important; color: #ffffff !important; }
+[data-value="shalihin"]  { background: #1565c0 !important; color: #ffffff !important; }
+[data-value="leena"]     { background: #c62828 !important; color: #ffffff !important; }
+[data-value="salihah"]   { background: #6a1b9a !important; color: #ffffff !important; }
+[data-value="shahrul"]   { background: #00695c !important; color: #ffffff !important; }
+[data-value="aiman"]     { background: #e65100 !important; color: #ffffff !important; }
+[data-value="mish"]      { background: #4e342e !important; color: #ffffff !important; }
+
+/* == JOB TITLE == */
+[data-value="new register"]         { background: #1a237e !important; color: #ffffff !important; }
+[data-value="renew pmt/pma"]        { background: #b71c1c !important; color: #ffffff !important; }
+[data-value="service call"]          { background: #ff6f00 !important; color: #ffffff !important; }
+[data-value="global inspection"]     { background: #2e7d32 !important; color: #ffffff !important; }
+[data-value="calibrate sv pg"]       { background: #6a1b9a !important; color: #ffffff !important; }
+[data-value="design approval"]       { background: #00838f !important; color: #ffffff !important; }
+[data-value="hydrostatic test"]      { background: #0d47a1 !important; color: #ffffff !important; }
+[data-value="uttm report"]           { background: #4e342e !important; color: #ffffff !important; }
+
+/* == LEVEL == */
+[data-value="low"]      { background: #2e7d32 !important; color: #ffffff !important; }
+[data-value="medium"]   { background: #f9a825 !important; color: #1a1a1a !important; }
+[data-value="high"]     { background: #c62828 !important; color: #ffffff !important; }
+[data-value="urgent"]   { background: #b71c1c !important; color: #ffffff !important; }
+
 

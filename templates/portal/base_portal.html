@@ -123,6 +123,25 @@ if (toggleBtn) {
         });
     });
 })();
+
+// Dynamic Color Tag Auto-Styling for Select Dropdowns
+function applyGlobalSelectColors() {
+    document.querySelectorAll('select').forEach(function(sel) {
+        var val = (sel.value || '').toLowerCase().trim();
+        if (val) {
+            sel.setAttribute('data-value', val);
+            sel.classList.add('colored-select');
+        } else {
+            sel.removeAttribute('data-value');
+        }
+    });
+}
+document.addEventListener('DOMContentLoaded', applyGlobalSelectColors);
+document.addEventListener('change', function(e) {
+    if (e.target && e.target.tagName === 'SELECT') {
+        applyGlobalSelectColors();
+    }
+});
 </script>
 </body>
 </html>

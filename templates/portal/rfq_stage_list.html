@@ -177,11 +177,16 @@
 }
 </style>
 
-<div class="portal-topbar" style="padding-bottom:6px;flex-wrap:wrap;gap:10px">
-    <h1 style="font-size:18px">📑 {{ stage }} <span style="color:var(--muted);font-weight:400;font-size:13px">({{ rows|length }} entries)</span></h1>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <a class="btn sm" href="{{ url_for('rfq_new') }}">+ New RFQ</a>
-        <a class="btn sm ghost" href="{{ url_for('rfq_dashboard') }}">📊 Dashboard</a>
+<div class="portal-topbar" style="padding-bottom:6px;flex-wrap:wrap;gap:10px;display:flex;justify-content:space-between;align-items:center">
+    <div style="display:flex;align-items:center;gap:10px">
+        <a class="btn ghost sm" href="{{ url_for('dashboard') if user.role == 'admin' else url_for('rfq_stage_list', stage='RFQ') }}">Back</a>
+        <h1 style="font-size:18px;margin:0">📑 {{ stage }} <span style="color:var(--muted);font-weight:400;font-size:13px">({{ rows|length }} entries)</span></h1>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+        {% if user.role == 'admin' %}
+        <a class="btn sm ghost" href="{{ url_for('rfq_dashboard') }}">Dashboard</a>
+        {% endif %}
+        <a class="btn sm" href="{{ url_for('rfq_new') }}">New RFQ</a>
     </div>
 </div>
 
@@ -213,7 +218,7 @@
             {% for r in rows %}
             <div class="rfq-mobile-card" data-id="{{ r.id }}">
                 <div class="rfq-card-header">
-                    <a href="{{ url_for('rfq_detail', eid=r.id) }}" class="rfq-card-id">{{ r.rfq_id }}</a>
+                    <a href="{{ url_for('rfq_folder', eid=r.id) }}" class="rfq-card-id">📂 {{ r.rfq_id }}</a>
                     <span class="sheets-tag {% if 'NEW' in (r.job_status or '') %}tag-active{% elif 'LOST' in (r.job_status or '') %}tag-expired{% elif 'Waiting' in (r.job_status or '') %}tag-warn{% else %}tag-ok{% endif %}">
                         {{ r.job_status }}
                     </span>
@@ -287,7 +292,7 @@
                     {% for r in rows %}
                     <tr data-id="{{ r.id }}" data-stage="{{ r.stage }}">
                         <td class="cell-rfq-id" data-field="rfq_id" data-type="text" data-id="{{ r.id }}">
-                            <a href="{{ url_for('rfq_detail', eid=r.id) }}" style="font-weight:700;color:var(--accent-2);display:block;padding:0 8px">{{ r.rfq_id }}</a>
+                            <a href="{{ url_for('rfq_folder', eid=r.id) }}" style="font-weight:700;color:var(--accent-2);display:block;padding:0 8px" title="Open RFQ Folder Explorer">📂 {{ r.rfq_id }}</a>
                         </td>
                         <td class="editable" data-field="client_name" data-type="text" data-id="{{ r.id }}">{{ r.client_name }}</td>
                         <td class="editable dropdown-cell" data-field="job_code" data-id="{{ r.id }}" data-options="{{ lists.job_code|tojson }}">{{ r.job_code }}</td>

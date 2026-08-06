@@ -1,9 +1,11 @@
 {% extends "portal/base_portal.html" %}
 {% block title %}{{ 'Edit' if e else 'New' }} RFQ | Portal{% endblock %}
 {% block content %}
-<div class="portal-topbar">
-    <h1>{{ 'Edit RFQ — ' ~ e.rfq_id if e else '+ New RFQ' }}</h1>
-    <a class="btn ghost" href="{{ url_for('rfq_stage_list', stage=e.stage if e else 'RFQ') }}">← Back</a>
+<div class="portal-topbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:12px">
+        <a class="btn ghost sm" href="{{ url_for('rfq_stage_list', stage=e.stage if e else 'RFQ') }}">Back</a>
+        <h1 style="font-size:20px;margin:0">{{ 'Edit RFQ — ' ~ e.rfq_id if e else 'New RFQ' }}</h1>
+    </div>
 </div>
 
 <form method="post" enctype="multipart/form-data" style="max-width:1100px">

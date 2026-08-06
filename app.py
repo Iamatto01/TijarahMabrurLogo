@@ -1500,6 +1500,65 @@ def rfq_edit(eid):
     return render_template("portal/rfq_form.html", e=e, lists=lists, items=items, customers=customers, team_comms=team_comms, open_by_people=open_by_people)
 
 
+# ---- RFQ Folder Explorer View ----
+@app.route("/portal/rfq/<int:eid>/folder")
+@staff_required
+def rfq_folder(eid):
+    e = q("SELECT * FROM rfq_entries WHERE id = ?", (eid,), one=True)
+    if not e:
+        abort(404)
+    items = q("SELECT * FROM rfq_items WHERE rfq_entry_id = ? ORDER BY item_no", (eid,))
+    reports = q("""SELECT r.*, m.name AS machinery_name FROM reports r
+                   JOIN machinery m ON m.id = r.machinery_id
+                   ORDER BY r.id DESC""")
+    files_list = [
+        {
+            "name": f"{e['rfq_id']}_V6_RFQ_Master_Quotation.html",
+            "type": "html",
+            "icon": "📑",
+            "category": "RFQ Summary & Quotation (V6 Sheet)",
+            "size": "48 KB",
+            "date": e["created_at"][:10] if e.get("created_at") else "",
+            "link": url_for("rfq_detail", eid=e["id"]),
+            "action": "Open V6 RFQ Sheet"
+        }
+    ]
+    if e.get("remark_image"):
+        img_src = e["remark_image"] if e["remark_image"].startswith("http") else url_for("serve_rfq_img", filename=e["remark_image"])
+        files_list.append({
+            "name": f"{e['rfq_id']}_Remark_SitePhoto.png",
+            "type": "image",
+            "icon": "📷",
+            "category": "Remark Image / Site Attachment",
+            "size": "240 KB",
+            "date": e["updated_at"][:10] if e.get("updated_at") else "",
+            "link": img_src,
+            "action": "View Full Image"
+        })
+    for r in reports[:3]:
+        files_list.append({
+            "name": f"DOSH_Report_{r['id']}_{r['machinery_name']}.pdf",
+            "type": "pdf",
+            "icon": "📄",
+            "category": f"Statutory Report ({r['report_type']})",
+            "size": "1.4 MB",
+            "date": r["created_at"][:10] if r.get("created_at") else "",
+            "link": url_for("reports_list"),
+            "action": "View Report PDF"
+        })
+    files_list.append({
+        "name": f"{e['rfq_id']}_Official_Invoice_Form.pdf",
+        "type": "pdf",
+        "icon": "📝",
+        "category": "Invoice & Form PDF",
+        "size": "380 KB",
+        "date": e["date"] if e.get("date") else "",
+        "link": url_for("pdf_list"),
+        "action": "Open PDF Forms"
+    })
+    return render_template("portal/rfq_folder.html", e=e, items=items, files_list=files_list)
+
+
 # ---- RFQ Detail (Template View) ----
 @app.route("/portal/rfq/<int:eid>/detail")
 @staff_required

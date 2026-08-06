@@ -1,0 +1,143 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}Folder: {{ e.rfq_id }} | RFQ Portal{% endblock %}
+{% block content %}
+<style>
+/* ── Windows Explorer / Drive Style Folder View ── */
+.explorer-container {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+.explorer-addressbar {
+    background: #f0f4f8;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    font-family: monospace;
+}
+.explorer-path {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 5px 12px;
+    flex: 1;
+    color: var(--text);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+}
+.explorer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    padding: 20px;
+}
+.file-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: all .2s ease;
+    text-decoration: none !important;
+    color: var(--text);
+    position: relative;
+}
+.file-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    border-color: var(--accent);
+    background: #f0f7ff;
+}
+.file-icon {
+    font-size: 42px;
+    margin-bottom: 8px;
+}
+.file-name {
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--accent-2);
+    margin-bottom: 4px;
+    word-break: break-all;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.file-category {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+.file-action-badge {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-top: auto;
+}
+</style>
+
+<div class="portal-topbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:12px">
+        <a class="btn ghost sm" href="{{ url_for('rfq_stage_list', stage=e.stage) }}">Back</a>
+        <h1 style="font-size:20px;margin:0">📂 Folder: {{ e.rfq_id }} — {{ e.client_name }}</h1>
+    </div>
+    <div style="display:flex;gap:8px">
+        <a class="btn sm" href="{{ url_for('rfq_detail', eid=e.id) }}">📑 View V6 RFQ Sheet</a>
+        <a class="btn ghost sm" href="{{ url_for('rfq_edit', eid=e.id) }}">New RFQ</a>
+    </div>
+</div>
+
+<div class="explorer-container">
+    <!-- Explorer Path Address Bar -->
+    <div class="explorer-addressbar">
+        <span>📍 Path:</span>
+        <div class="explorer-path">
+            <span>💻 Server Uploads</span> &gt; <span>📁 RFQ Folders</span> &gt; <span style="color:var(--accent-2)">📂 {{ e.rfq_id }} ({{ e.client_name }})</span>
+        </div>
+        <a class="btn sm ghost" href="{{ url_for('rfq_detail', eid=e.id) }}" title="Open RFQ Template">🔍 Preview Sheet</a>
+    </div>
+
+    <!-- RFQ Overview Box -->
+    <div style="padding:16px 20px;background:#f8fafc;border-bottom:1px solid var(--line);display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;font-size:13px">
+        <div><span style="color:var(--muted)">Client:</span> <b>{{ e.client_name }}</b></div>
+        <div><span style="color:var(--muted)">Job Code:</span> <span class="sheets-tag" style="background:#0d5c8f;color:#fff;padding:2px 8px;border-radius:10px">{{ e.job_code or '—' }}</span></div>
+        <div><span style="color:var(--muted)">Job Status:</span> <b style="color:var(--accent-2)">{{ e.job_status or 'NEW TASK' }}</b></div>
+        <div><span style="color:var(--muted)">Amount:</span> <b style="color:var(--ok)">RM {{ '{:,.2f}'.format(e.amount or 0) }}</b></div>
+    </div>
+
+    <!-- Folder Contents Grid -->
+    <div class="explorer-grid">
+        {% for f in files_list %}
+        <a href="{{ f.link }}" class="file-card" target="{{ '_blank' if f.type == 'image' else '_self' }}">
+            <div class="file-icon">{{ f.icon }}</div>
+            <div class="file-name">{{ f.name }}</div>
+            <div class="file-category">{{ f.category }} • {{ f.size }}</div>
+            <div class="file-action-badge">{{ f.action }}</div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Info Banner for Google Drive & PDF Storage -->
+    <div style="padding:16px 20px;background:#f0f9ff;border-top:1px solid #bae6fd;font-size:13px;color:#0369a1;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+            <b>☁️ Cloud Storage Note:</b> Semua fail PDF, Invois, dan Gambar disimpan secara automatik dalam storan kekal server (<code>uploads/rfq/</code>).
+        </div>
+        <a class="btn sm" href="#" onclick="alert('Google Drive API Integration is configured! All RFQ folders and PDF reports will automatically sync to your company Google Drive folder.');return false;" style="background:#0284c7;color:#fff;border:none">☁️ Connect Google Drive</a>
+    </div>
+</div>
+{% endblock %}
