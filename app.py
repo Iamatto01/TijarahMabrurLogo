@@ -190,8 +190,8 @@ def login():
         if u and check_password_hash(u["password_hash"], password):
             session["user_id"] = u["id"]
             flash("Welcome back, %s!" % u["name"], "ok")
-            if u["role"] == "employee":
-                return redirect(url_for("employee_portal"))
+            if u["role"] in ("employee", "staff", "worker"):
+                return redirect(url_for("rfq_stage_list", stage="RFQ"))
             return redirect(request.args.get("next") or url_for("dashboard"))
         flash("Invalid email or password.", "err")
         return render_template("login.html", email=email_val)
@@ -262,8 +262,8 @@ def logout():
 @login_required
 def dashboard():
     u = current_user()
-    if u and u["role"] == "employee":
-        return redirect(url_for("employee_portal"))
+    if u and u["role"] in ("employee", "staff", "worker"):
+        return redirect(url_for("rfq_stage_list", stage="RFQ"))
     from datetime import date, timedelta
     cutoff = (date.today() + timedelta(days=60)).isoformat()
     if u["role"] == "admin":
@@ -309,6 +309,8 @@ def dashboard():
 @login_required
 def machinery_list():
     u = current_user()
+    if u and u["role"] in ("employee", "staff", "worker"):
+        return redirect(url_for("rfq_stage_list", stage="RFQ"))
     cert_type = request.args.get("type", "PMT").strip().upper()
     search = request.args.get("q", "").strip()
     page = max(request.args.get("page", 1, type=int), 1)
@@ -627,6 +629,8 @@ def sample_pdf(doc_name):
 @login_required
 def reports_list():
     u = current_user()
+    if u and u["role"] in ("employee", "staff", "worker"):
+        return redirect(url_for("rfq_stage_list", stage="RFQ"))
     scope, params = scope_clause(u)
     rows = q(f"""SELECT r.*, m.name AS machinery_name, m.cert_no AS machinery_cert,
                         u.name AS author_name
@@ -997,6 +1001,8 @@ def _machinery_options(u):
 @login_required
 def pdf_list():
     u = current_user()
+    if u and u["role"] in ("employee", "staff", "worker"):
+        return redirect(url_for("rfq_stage_list", stage="RFQ"))
     templates = q("""SELECT t.*,
                         (SELECT COUNT(*) FROM pdf_submissions s WHERE s.template_id = t.id) AS sub_count
                      FROM pdf_templates t ORDER BY t.created_at DESC""")
@@ -1231,12 +1237,20 @@ def _next_rfq_id():
 
 
 def _rfq_dropdown(list_type):
-    return [r["value"] for r in q("SELECT value FROM rfq_lists WHERE list_type = ? ORDER BY sort_order, id", (list_type,))]
+    rows = q("SELECT value FROM rfq_lists WHERE list_type = ? ORDER BY sort_order, id", (list_type,))
+    seen = set()
+    res = []
+    for r in rows:
+        val = r["value"].strip() if r["value"] else ""
+        if val and val.lower() not in seen:
+            seen.add(val.lower())
+            res.append(val)
+    return res
 
 
 # ---- RFQ Dashboard ----
 @app.route("/portal/rfq-dashboard")
-@staff_required
+@admin_required
 def rfq_dashboard():
     stages_data = []
     for stage in RFQ_STAGES:
@@ -1496,14 +1510,14 @@ def rfq_delete(eid):
 
 # ---- RFQ Customers ----
 @app.route("/portal/rfq-customers")
-@staff_required
+@admin_required
 def rfq_customers_list():
     rows = q("SELECT * FROM rfq_customers ORDER BY id DESC")
     return render_template("portal/rfq_customers.html", customers=rows)
 
 
 @app.route("/portal/rfq-customers/new", methods=["GET", "POST"])
-@staff_required
+@admin_required
 def rfq_customer_new():
     if request.method == "POST":
         f = request.form
@@ -1517,7 +1531,7 @@ def rfq_customer_new():
 
 
 @app.route("/portal/rfq-customers/<int:cid>/edit", methods=["GET", "POST"])
-@staff_required
+@admin_required
 def rfq_customer_edit(cid):
     c = q("SELECT * FROM rfq_customers WHERE id = ?", (cid,), one=True)
     if not c:
@@ -1533,7 +1547,7 @@ def rfq_customer_edit(cid):
 
 
 @app.route("/portal/rfq-customers/<int:cid>/delete", methods=["POST"])
-@staff_required
+@admin_required
 def rfq_customer_delete(cid):
     execute("DELETE FROM rfq_customers WHERE id = ?", (cid,))
     flash("Customer deleted.", "ok")
@@ -1542,7 +1556,7 @@ def rfq_customer_delete(cid):
 
 # ---- RFQ Lists Management ----
 @app.route("/portal/rfq-lists", methods=["GET", "POST"])
-@staff_required
+@admin_required
 def rfq_lists_manage():
     if request.method == "POST":
         action = request.form.get("action", "")

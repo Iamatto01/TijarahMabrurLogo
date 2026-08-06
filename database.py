@@ -528,11 +528,17 @@ def init_db():
                 )
 
     # ── RFQ seed data ──
+    # Clean up duplicate list entries if present
+    execute("""DELETE FROM rfq_lists WHERE id NOT IN (
+        SELECT MIN(id) FROM rfq_lists GROUP BY list_type, LOWER(TRIM(value))
+    )""")
+
     rfq_count_row = q("SELECT COUNT(*) c FROM rfq_entries", one=True)
     rfq_count = rfq_count_row["c"] if rfq_count_row else 0
     if rfq_count < 100:
         execute("DELETE FROM rfq_items")
         execute("DELETE FROM rfq_entries")
+        execute("DELETE FROM rfq_lists")
         now = datetime.utcnow().isoformat()
         # Seed dropdown lists matching Master DB
         list_seeds = [

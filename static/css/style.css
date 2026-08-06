@@ -741,7 +741,7 @@ table.tbl tr:hover td { background: rgba(1, 160, 255, .04); }
     .rfq-stage-cards { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     /* Container padding */
     .container { padding: 0 16px; }
 

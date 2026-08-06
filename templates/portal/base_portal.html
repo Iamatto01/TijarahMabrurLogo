@@ -37,28 +37,28 @@
             <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close menu">✕</button>
         </div>
         <nav>
-            <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}"><span class="nav-text">📊 Dashboard</span></a>
-            <a href="{{ url_for('machinery_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('machinery') }}"><span class="nav-text">⚙️ Machinery</span></a>
-            <a href="{{ url_for('reports_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('report') }}"><span class="nav-text">📄 Reports</span></a>
-            <a href="{{ url_for('pdf_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('pdf') }}"><span class="nav-text">📝 PDF Forms</span></a>
-            {% if user and user.role == 'admin' %}
-                <div class="group">Admin</div>
-                <a href="{{ url_for('companies_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('compan') }}"><span class="nav-text">🏢 Companies</span></a>
-                <a href="{{ url_for('clients_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('client') }}"><span class="nav-text">👥 Clients</span></a>
-                <a href="{{ url_for('db_viewer') }}" class="{{ 'active' if request.endpoint == 'db_viewer' }}"><span class="nav-text">🗄️ Database</span></a>
-                <div class="group">RFQ Management</div>
-                <a href="{{ url_for('rfq_dashboard') }}" class="{{ 'active' if request.endpoint == 'rfq_dashboard' }}"><span class="nav-text">📋 RFQ Dashboard</span></a>
+            {% if user and user.role in ['employee', 'staff', 'worker'] %}
+                <div class="group">Worker Portal</div>
                 <a href="{{ url_for('rfq_stage_list', stage='RFQ') }}" class="{{ 'active' if request.endpoint == 'rfq_stage_list' }}"><span class="nav-text">📑 RFQ Stages</span></a>
-                <a href="{{ url_for('rfq_customers_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('rfq_customer') }}"><span class="nav-text">👤 Customers</span></a>
-                <a href="{{ url_for('rfq_lists_manage') }}" class="{{ 'active' if request.endpoint == 'rfq_lists_manage' }}"><span class="nav-text">📝 Lists</span></a>
-            {% elif user and user.role in ['employee', 'staff', 'worker'] %}
-                <div class="group">RFQ Management</div>
-                <a href="{{ url_for('rfq_dashboard') }}" class="{{ 'active' if request.endpoint == 'rfq_dashboard' }}"><span class="nav-text">📋 RFQ Dashboard</span></a>
-                <a href="{{ url_for('rfq_stage_list', stage='RFQ') }}" class="{{ 'active' if request.endpoint == 'rfq_stage_list' }}"><span class="nav-text">📑 RFQ Stages</span></a>
-                <a href="{{ url_for('rfq_customers_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('rfq_customer') }}"><span class="nav-text">👤 Customers</span></a>
-                <a href="{{ url_for('rfq_lists_manage') }}" class="{{ 'active' if request.endpoint == 'rfq_lists_manage' }}"><span class="nav-text">📝 Lists</span></a>
-            {% elif user and user.company_id %}
-                <a href="{{ url_for('company_profile') }}" class="{{ 'active' if request.endpoint == 'company_profile' }}"><span class="nav-text">🏢 My Company</span></a>
+                <a href="{{ url_for('rfq_new') }}" class="{{ 'active' if request.endpoint == 'rfq_new' }}"><span class="nav-text">➕ New RFQ</span></a>
+            {% else %}
+                <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}"><span class="nav-text">📊 Dashboard</span></a>
+                <a href="{{ url_for('machinery_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('machinery') }}"><span class="nav-text">⚙️ Machinery</span></a>
+                <a href="{{ url_for('reports_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('report') }}"><span class="nav-text">📄 Reports</span></a>
+                <a href="{{ url_for('pdf_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('pdf') }}"><span class="nav-text">📝 PDF Forms</span></a>
+                {% if user and user.role == 'admin' %}
+                    <div class="group">Admin</div>
+                    <a href="{{ url_for('companies_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('compan') }}"><span class="nav-text">🏢 Companies</span></a>
+                    <a href="{{ url_for('clients_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('client') }}"><span class="nav-text">👥 Clients</span></a>
+                    <a href="{{ url_for('db_viewer') }}" class="{{ 'active' if request.endpoint == 'db_viewer' }}"><span class="nav-text">🗄️ Database</span></a>
+                    <div class="group">RFQ Management</div>
+                    <a href="{{ url_for('rfq_dashboard') }}" class="{{ 'active' if request.endpoint == 'rfq_dashboard' }}"><span class="nav-text">📋 RFQ Dashboard</span></a>
+                    <a href="{{ url_for('rfq_stage_list', stage='RFQ') }}" class="{{ 'active' if request.endpoint == 'rfq_stage_list' }}"><span class="nav-text">📑 RFQ Stages</span></a>
+                    <a href="{{ url_for('rfq_customers_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('rfq_customer') }}"><span class="nav-text">👤 Customers</span></a>
+                    <a href="{{ url_for('rfq_lists_manage') }}" class="{{ 'active' if request.endpoint == 'rfq_lists_manage' }}"><span class="nav-text">📝 Lists</span></a>
+                {% elif user and user.company_id %}
+                    <a href="{{ url_for('company_profile') }}" class="{{ 'active' if request.endpoint == 'company_profile' }}"><span class="nav-text">🏢 My Company</span></a>
+                {% endif %}
             {% endif %}
             <div class="group">Account</div>
             <a href="{{ url_for('logout') }}"><span class="nav-text">🚪 Logout</span></a>
@@ -86,7 +86,7 @@ function setCollapsed(collapsed) {
     localStorage.setItem('sidebarCollapsed', collapsed);
 }
 
-if (isCollapsed && window.innerWidth > 768) setCollapsed(true);
+if (isCollapsed && window.innerWidth > 1024) setCollapsed(true);
 
 if (toggleBtn) {
     toggleBtn.addEventListener('click', function() {
@@ -119,7 +119,7 @@ if (toggleBtn) {
 
     sidebar.querySelectorAll('a').forEach(function(link) {
         link.addEventListener('click', function() {
-            if (window.innerWidth <= 768) closeMobileSidebar();
+            if (window.innerWidth <= 1024) closeMobileSidebar();
         });
     });
 })();
