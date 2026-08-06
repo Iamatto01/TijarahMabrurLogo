@@ -163,6 +163,16 @@ def admin_required(f):
     return wrapper
 
 
+def staff_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        u = current_user()
+        if not u or u["role"] not in ("admin", "employee", "staff", "worker"):
+            abort(403)
+        return f(*args, **kwargs)
+    return wrapper
+
+
 # ---------------- public website ----------------
 @app.route("/")
 def home():
@@ -1226,7 +1236,7 @@ def _rfq_dropdown(list_type):
 
 # ---- RFQ Dashboard ----
 @app.route("/portal/rfq-dashboard")
-@admin_required
+@staff_required
 def rfq_dashboard():
     stages_data = []
     for stage in RFQ_STAGES:
@@ -1268,7 +1278,7 @@ def rfq_dashboard():
 
 # ---- RFQ Stage List ----
 @app.route("/portal/rfq/stage/<stage>")
-@admin_required
+@staff_required
 def rfq_stage_list(stage):
     stage = stage.upper()
     if stage not in RFQ_STAGES:
@@ -1283,7 +1293,7 @@ def rfq_stage_list(stage):
 
 # ---- RFQ Inline Update (from stage list) ----
 @app.route("/portal/rfq/<int:eid>/inline-update", methods=["POST"])
-@admin_required
+@staff_required
 def rfq_inline_update(eid):
     e = q("SELECT * FROM rfq_entries WHERE id = ?", (eid,), one=True)
     if not e:
@@ -1309,7 +1319,7 @@ def rfq_inline_update(eid):
 
 # ---- RFQ New ----
 @app.route("/portal/rfq/new", methods=["GET", "POST"])
-@admin_required
+@staff_required
 def rfq_new():
     if request.method == "POST":
         f = request.form
@@ -1374,7 +1384,7 @@ def rfq_new():
 
 # ---- RFQ Edit ----
 @app.route("/portal/rfq/<int:eid>/edit", methods=["GET", "POST"])
-@admin_required
+@staff_required
 def rfq_edit(eid):
     e = q("SELECT * FROM rfq_entries WHERE id = ?", (eid,), one=True)
     if not e:
@@ -1447,7 +1457,7 @@ def rfq_edit(eid):
 
 # ---- RFQ Detail (Template View) ----
 @app.route("/portal/rfq/<int:eid>/detail")
-@admin_required
+@staff_required
 def rfq_detail(eid):
     e = q("SELECT * FROM rfq_entries WHERE id = ?", (eid,), one=True)
     if not e:
@@ -1461,7 +1471,7 @@ def rfq_detail(eid):
 
 # ---- RFQ Move Stage ----
 @app.route("/portal/rfq/<int:eid>/move", methods=["POST"])
-@admin_required
+@staff_required
 def rfq_move(eid):
     new_stage = request.form.get("new_stage", "").upper()
     if new_stage not in RFQ_STAGES:
@@ -1475,7 +1485,7 @@ def rfq_move(eid):
 
 # ---- RFQ Delete ----
 @app.route("/portal/rfq/<int:eid>/delete", methods=["POST"])
-@admin_required
+@staff_required
 def rfq_delete(eid):
     execute("DELETE FROM rfq_items WHERE rfq_entry_id = ?", (eid,))
     execute("DELETE FROM rfq_team_commissions WHERE rfq_entry_id = ?", (eid,))
@@ -1486,14 +1496,14 @@ def rfq_delete(eid):
 
 # ---- RFQ Customers ----
 @app.route("/portal/rfq-customers")
-@admin_required
+@staff_required
 def rfq_customers_list():
     rows = q("SELECT * FROM rfq_customers ORDER BY id DESC")
     return render_template("portal/rfq_customers.html", customers=rows)
 
 
 @app.route("/portal/rfq-customers/new", methods=["GET", "POST"])
-@admin_required
+@staff_required
 def rfq_customer_new():
     if request.method == "POST":
         f = request.form
@@ -1507,7 +1517,7 @@ def rfq_customer_new():
 
 
 @app.route("/portal/rfq-customers/<int:cid>/edit", methods=["GET", "POST"])
-@admin_required
+@staff_required
 def rfq_customer_edit(cid):
     c = q("SELECT * FROM rfq_customers WHERE id = ?", (cid,), one=True)
     if not c:
@@ -1523,7 +1533,7 @@ def rfq_customer_edit(cid):
 
 
 @app.route("/portal/rfq-customers/<int:cid>/delete", methods=["POST"])
-@admin_required
+@staff_required
 def rfq_customer_delete(cid):
     execute("DELETE FROM rfq_customers WHERE id = ?", (cid,))
     flash("Customer deleted.", "ok")
@@ -1532,7 +1542,7 @@ def rfq_customer_delete(cid):
 
 # ---- RFQ Lists Management ----
 @app.route("/portal/rfq-lists", methods=["GET", "POST"])
-@admin_required
+@staff_required
 def rfq_lists_manage():
     if request.method == "POST":
         action = request.form.get("action", "")

@@ -1,16 +1,22 @@
 {% extends "portal/base_portal.html" %}
 {% block title %}Employee Portal | Tijarah Mabrur{% endblock %}
 {% block content %}
-<div class="portal-topbar" style="align-items:center">
+<div class="portal-topbar" style="align-items:center;flex-wrap:wrap;gap:12px">
     <div>
         <h1>👥 Employee Portal</h1>
-        <div class="who">Internal Operations &amp; Task Management Dashboard</div>
+        <div class="who">Internal Operations, RFQ Management &amp; Field Reports</div>
     </div>
-    {% if edit_url %}
-    <a class="btn sm" href="{{ edit_url }}" target="_blank" style="display:inline-flex;align-items:center;gap:6px">
-        ↗ Open Full Edit Mode in Google Sheets
-    </a>
-    {% endif %}
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a class="btn sm" href="{{ url_for('rfq_dashboard') }}">📋 RFQ Dashboard</a>
+        <a class="btn sm ghost" href="{{ url_for('rfq_stage_list', stage='RFQ') }}">📑 RFQ Stages</a>
+        <a class="btn sm ghost" href="{{ url_for('machinery_list') }}">⚙️ Machinery</a>
+        <a class="btn sm ghost" href="{{ url_for('reports_list') }}">📄 Reports</a>
+        {% if edit_url %}
+        <a class="btn sm" href="{{ edit_url }}" target="_blank" style="display:inline-flex;align-items:center;gap:6px">
+            ↗ Full Sheet Edit
+        </a>
+        {% endif %}
+    </div>
 </div>
 
 {% if sheet_url %}

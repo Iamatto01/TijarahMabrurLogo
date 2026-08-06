@@ -51,6 +51,12 @@
                 <a href="{{ url_for('rfq_stage_list', stage='RFQ') }}" class="{{ 'active' if request.endpoint == 'rfq_stage_list' }}"><span class="nav-text">📑 RFQ Stages</span></a>
                 <a href="{{ url_for('rfq_customers_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('rfq_customer') }}"><span class="nav-text">👤 Customers</span></a>
                 <a href="{{ url_for('rfq_lists_manage') }}" class="{{ 'active' if request.endpoint == 'rfq_lists_manage' }}"><span class="nav-text">📝 Lists</span></a>
+            {% elif user and user.role in ['employee', 'staff', 'worker'] %}
+                <div class="group">RFQ Management</div>
+                <a href="{{ url_for('rfq_dashboard') }}" class="{{ 'active' if request.endpoint == 'rfq_dashboard' }}"><span class="nav-text">📋 RFQ Dashboard</span></a>
+                <a href="{{ url_for('rfq_stage_list', stage='RFQ') }}" class="{{ 'active' if request.endpoint == 'rfq_stage_list' }}"><span class="nav-text">📑 RFQ Stages</span></a>
+                <a href="{{ url_for('rfq_customers_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('rfq_customer') }}"><span class="nav-text">👤 Customers</span></a>
+                <a href="{{ url_for('rfq_lists_manage') }}" class="{{ 'active' if request.endpoint == 'rfq_lists_manage' }}"><span class="nav-text">📝 Lists</span></a>
             {% elif user and user.company_id %}
                 <a href="{{ url_for('company_profile') }}" class="{{ 'active' if request.endpoint == 'company_profile' }}"><span class="nav-text">🏢 My Company</span></a>
             {% endif %}
