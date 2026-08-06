@@ -1,4 +1,5 @@
 """Tijarah Mabrur website + client portal (Flask + SQLite)."""
+import base64
 import io
 import json
 import os
@@ -6,6 +7,25 @@ import re
 import uuid
 from datetime import datetime
 from functools import wraps
+
+def _save_base64_image(b64_str):
+    if not b64_str or not b64_str.startswith("data:image"):
+        return None
+    try:
+        header, encoded = b64_str.split(",", 1)
+        ext = ".png"
+        if "jpeg" in header or "jpg" in header:
+            ext = ".jpg"
+        elif "webp" in header:
+            ext = ".webp"
+        data = base64.b64decode(encoded)
+        filename = f"rfq_remark_{uuid.uuid4().hex[:10]}{ext}"
+        filepath = os.path.join(RFQ_IMG_DIR, filename)
+        with open(filepath, "wb") as f:
+            f.write(data)
+        return filename
+    except Exception:
+        return None
 
 from flask import (Flask, abort, flash, g, redirect, render_template, request,
                    send_file, session, url_for)
@@ -1340,9 +1360,16 @@ def rfq_new():
         rfq_id = _next_rfq_id()
         now = datetime.utcnow().isoformat()
         
-        # Handle remark image file upload
+        # Handle remark image clipboard paste (base64) or file upload or URL
+        b64_img = f.get("remark_image_base64", "").strip()
         rm_file = request.files.get("remark_image_file")
-        remark_img = save_machinery_file(rm_file, RFQ_IMG_DIR, "rfq_remark") if rm_file else f.get("remark_image","").strip()
+        if b64_img:
+            saved_b64 = _save_base64_image(b64_img)
+            remark_img = saved_b64 if saved_b64 else f.get("remark_image","").strip()
+        elif rm_file and rm_file.filename:
+            remark_img = save_machinery_file(rm_file, RFQ_IMG_DIR, "rfq_remark")
+        else:
+            remark_img = f.get("remark_image","").strip()
 
         entry_id = execute("""INSERT INTO rfq_entries (rfq_id, client_name, job_code, job_title, amount, location, state, date,
                     job_status, level, introducer, source, open_by, stage, commission, total_cost, net_profit,
@@ -1407,12 +1434,16 @@ def rfq_edit(eid):
         f = request.form
         now = datetime.utcnow().isoformat()
         
-        # Handle remark image file upload
+        # Handle remark image clipboard paste (base64) or file upload or URL
+        b64_img = f.get("remark_image_base64", "").strip()
         rm_file = request.files.get("remark_image_file")
-        if rm_file and rm_file.filename:
+        if b64_img:
+            saved_b64 = _save_base64_image(b64_img)
+            remark_img = saved_b64 if saved_b64 else e.get("remark_image", "")
+        elif rm_file and rm_file.filename:
             remark_img = save_machinery_file(rm_file, RFQ_IMG_DIR, "rfq_remark")
         else:
-            remark_img = e.get("remark_image", "")
+            remark_img = f.get("remark_image", "") if f.get("remark_image", "") else e.get("remark_image", "")
 
         execute("""UPDATE rfq_entries SET client_name=?, job_code=?, job_title=?, amount=?, location=?, state=?, date=?,
                     job_status=?, level=?, introducer=?, source=?, open_by=?, commission=?, total_cost=?, net_profit=?,
