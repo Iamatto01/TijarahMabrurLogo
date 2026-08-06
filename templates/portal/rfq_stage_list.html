@@ -177,31 +177,83 @@
 }
 </style>
 
-<div class="portal-topbar" style="padding-bottom:6px">
+<div class="portal-topbar" style="padding-bottom:6px;flex-wrap:wrap;gap:10px">
     <h1 style="font-size:18px">📑 {{ stage }} <span style="color:var(--muted);font-weight:400;font-size:13px">({{ rows|length }} entries)</span></h1>
-    <div style="display:flex;gap:6px">
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
         <a class="btn sm" href="{{ url_for('rfq_new') }}">+ New RFQ</a>
         <a class="btn sm ghost" href="{{ url_for('rfq_dashboard') }}">📊 Dashboard</a>
     </div>
 </div>
 
-<!-- Stage Tabs -->
-<div class="toolbar" style="gap:4px;flex-wrap:wrap;margin-bottom:10px">
-    {% for s in stages %}
-    <a class="btn sm {{ '' if stage == s else 'ghost' }}" href="{{ url_for('rfq_stage_list', stage=s) }}"
-       style="{{ 'font-weight:800' if stage == s else '' }};font-size:12px;padding:5px 10px">
-        {{ s }} <span style="font-size:10px;opacity:.7">({{ stage_counts[s] }})</span>
-    </a>
-    {% endfor %}
+<!-- Stage Tabs Scrollable -->
+<div class="rfq-stage-tabs-wrap">
+    <div class="rfq-stage-tabs">
+        {% for s in stages %}
+        <a class="btn sm {{ '' if stage == s else 'ghost' }}" href="{{ url_for('rfq_stage_list', stage=s) }}"
+           style="{{ 'font-weight:800' if stage == s else '' }};font-size:12px;padding:6px 12px;white-space:nowrap">
+            {{ s }} <span style="font-size:10px;opacity:.75">({{ stage_counts[s] }})</span>
+        </a>
+        {% endfor %}
+    </div>
 </div>
 
 <div class="sheets-wrap">
-    <div class="sheets-toolbar">
+    <div class="sheets-toolbar" style="flex-wrap:wrap;gap:8px">
         <span style="font-weight:600;color:var(--muted);font-size:12px">📊 {{ stage }} Stage</span>
-        <span style="color:var(--muted);font-size:11px;flex:1">Double-click any cell to edit. Dropdown cells show a ▼ arrow.</span>
-        <button class="btn-sm" onclick="exportSheetsCSV()">📥 Export CSV</button>
+        <span style="color:var(--muted);font-size:11px;flex:1" class="desktop-only-inline">Double-click any cell to edit. Dropdown cells show a ▼ arrow. Scroll horizontally to view all columns.</span>
+        <div style="display:flex;gap:6px;margin-left:auto">
+            <button class="btn-sm" id="viewToggleBtn" onclick="toggleRfqView()">📱 Card View</button>
+            <button class="btn-sm" onclick="exportSheetsCSV()">📥 Export CSV</button>
+        </div>
     </div>
-    <div class="sheets-grid">
+
+    <!-- Mobile Card View Container -->
+    <div class="rfq-mobile-cards-view" id="rfqMobileCards" style="display:none">
+        {% if rows %}
+            {% for r in rows %}
+            <div class="rfq-mobile-card" data-id="{{ r.id }}">
+                <div class="rfq-card-header">
+                    <a href="{{ url_for('rfq_detail', eid=r.id) }}" class="rfq-card-id">{{ r.rfq_id }}</a>
+                    <span class="sheets-tag {% if 'NEW' in (r.job_status or '') %}tag-active{% elif 'LOST' in (r.job_status or '') %}tag-expired{% elif 'Waiting' in (r.job_status or '') %}tag-warn{% else %}tag-ok{% endif %}">
+                        {{ r.job_status }}
+                    </span>
+                </div>
+                <div class="rfq-card-body">
+                    <div class="rfq-card-client"><strong>{{ r.client_name }}</strong></div>
+                    <div class="rfq-card-info">
+                        <span>🏷️ {{ r.job_code or 'N/A' }}</span> • 
+                        <span>📋 {{ r.job_title or 'N/A' }}</span>
+                    </div>
+                    <div class="rfq-card-meta">
+                        <span>📍 {{ r.location }}{% if r.state %}, {{ r.state }}{% endif %}</span>
+                        <span>📅 {{ r.date }}</span>
+                    </div>
+                    <div class="rfq-card-price">
+                        <strong>RM {{ '{:,.2f}'.format(r.amount or 0) }}</strong>
+                    </div>
+                </div>
+                <div class="rfq-card-actions">
+                    <form method="post" action="{{ url_for('rfq_move', eid=r.id) }}" style="display:inline-flex;align-items:center;gap:4px">
+                        <span style="font-size:11px;color:var(--muted)">Move:</span>
+                        <select name="new_stage" onchange="this.form.submit()" style="font-size:11px;padding:3px 6px;border-radius:4px;border:1px solid var(--line)">
+                            <option value="">Choose Stage →</option>
+                            {% for s in stages %}{% if s != stage %}<option value="{{ s }}">{{ s }}</option>{% endif %}{% endfor %}
+                        </select>
+                    </form>
+                    <div style="display:flex;gap:6px">
+                        <a class="btn sm ghost" href="{{ url_for('rfq_edit', eid=r.id) }}" style="padding:3px 8px;font-size:12px">✏️ Edit</a>
+                        <button class="btn sm danger" onclick="confirmDel({{ r.id }},'{{ r.rfq_id }}','{{ r.client_name|e }}')" style="padding:3px 8px;font-size:12px">🗑️</button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty" style="padding:30px">No entries in {{ stage }}. <a href="{{ url_for('rfq_new') }}">Create a new RFQ</a>.</div>
+        {% endif %}
+    </div>
+
+    <!-- Table View Container -->
+    <div class="sheets-grid" id="rfqSheetsGrid">
         <!-- Row numbers -->
         <div class="sheets-row-header">
             {% for r in rows %}
@@ -211,24 +263,24 @@
         <!-- Table -->
         <div class="sheets-table-wrap">
             {% if rows %}
-            <table class="sheets-tbl" id="rfqSheetsTbl">
+            <table class="sheets-tbl" id="rfqSheetsTbl" style="min-width:1280px">
                 <thead>
                     <tr>
-                        <th class="sortable" data-col="rfq_id" data-type="text">RFQ ID</th>
-                        <th class="sortable" data-col="client_name" data-type="text">CLIENT NAME</th>
-                        <th class="has-dropdown" data-col="job_code">JOB CODE</th>
-                        <th class="has-dropdown" data-col="job_title">JOB TITLE</th>
-                        <th class="sortable" data-col="amount" data-type="number" style="text-align:right">AMOUNT</th>
-                        <th class="sortable" data-col="location" data-type="text">LOCATION</th>
-                        <th class="sortable" data-col="state" data-type="text">STATE</th>
-                        <th class="sortable" data-col="date" data-type="date">DATE</th>
-                        <th class="has-dropdown" data-col="job_status">JOB STATUS</th>
-                        <th class="has-dropdown" data-col="level">LEVEL</th>
-                        <th class="has-dropdown" data-col="introducer">INTRODUCER</th>
-                        <th class="has-dropdown" data-col="source">SOURCE</th>
-                        <th class="has-dropdown" data-col="open_by">OPEN BY</th>
-                        <th style="text-align:center">MOVE</th>
-                        <th style="text-align:center">ACT</th>
+                        <th class="sortable" data-col="rfq_id" data-type="text" style="width:110px">RFQ ID</th>
+                        <th class="sortable" data-col="client_name" data-type="text" style="width:170px">CLIENT NAME</th>
+                        <th class="has-dropdown" data-col="job_code" style="width:110px">JOB CODE</th>
+                        <th class="has-dropdown" data-col="job_title" style="width:140px">JOB TITLE</th>
+                        <th class="sortable" data-col="amount" data-type="number" style="text-align:right;width:110px">AMOUNT</th>
+                        <th class="sortable" data-col="location" data-type="text" style="width:120px">LOCATION</th>
+                        <th class="sortable" data-col="state" data-type="text" style="width:100px">STATE</th>
+                        <th class="sortable" data-col="date" data-type="date" style="width:100px">DATE</th>
+                        <th class="has-dropdown" data-col="job_status" style="width:130px">JOB STATUS</th>
+                        <th class="has-dropdown" data-col="level" style="width:90px">LEVEL</th>
+                        <th class="has-dropdown" data-col="introducer" style="width:110px">INTRODUCER</th>
+                        <th class="has-dropdown" data-col="source" style="width:100px">SOURCE</th>
+                        <th class="has-dropdown" data-col="open_by" style="width:100px">OPEN BY</th>
+                        <th style="text-align:center;width:75px">MOVE</th>
+                        <th style="text-align:center;width:80px">ACT</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -278,6 +330,40 @@
         </div>
     </div>
 </div>
+
+<script>
+function toggleRfqView() {
+    const cardsView = document.getElementById('rfqMobileCards');
+    const gridView = document.getElementById('rfqSheetsGrid');
+    const btn = document.getElementById('viewToggleBtn');
+    if (cardsView.style.display === 'none') {
+        cardsView.style.display = 'block';
+        gridView.style.display = 'none';
+        btn.innerText = '📊 Table View';
+        localStorage.setItem('rfq_view_mode', 'cards');
+    } else {
+        cardsView.style.display = 'none';
+        gridView.style.display = 'grid';
+        btn.innerText = '📱 Card View';
+        localStorage.setItem('rfq_view_mode', 'table');
+    }
+}
+
+// Auto select card view on mobile if preferred or narrow screen
+(function() {
+    const mode = localStorage.getItem('rfq_view_mode');
+    if (mode === 'cards' || (window.innerWidth <= 768 && mode !== 'table')) {
+        const cardsView = document.getElementById('rfqMobileCards');
+        const gridView = document.getElementById('rfqSheetsGrid');
+        const btn = document.getElementById('viewToggleBtn');
+        if (cardsView && gridView && btn) {
+            cardsView.style.display = 'block';
+            gridView.style.display = 'none';
+            btn.innerText = '📊 Table View';
+        }
+    }
+})();
+</script>
 
 <!-- Delete Confirmation Modal -->
 <div id="delModal" class="img2-modal-overlay">

@@ -9,6 +9,17 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+<div class="portal-mobile-header">
+    <button class="portal-mobile-toggle" id="portalMobileToggle" aria-label="Open Navigation Menu">
+        <span></span><span></span><span></span>
+    </button>
+    <a class="mobile-brand" href="{{ url_for('dashboard') }}" style="text-decoration:none">
+        <img src="{{ url_for('static', filename='img/main-logo.png') }}" alt="Tijarah Mabrur" class="mobile-logo">
+        <span class="mobile-title">{{ tenant_company.name if tenant_company else 'TIJARAH MABRUR' }}</span>
+    </a>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
 <div class="portal">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-head">
@@ -23,13 +34,14 @@
             <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
                 <span></span><span></span><span></span>
             </button>
+            <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close menu">✕</button>
         </div>
         <nav>
             <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}"><span class="nav-text">📊 Dashboard</span></a>
             <a href="{{ url_for('machinery_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('machinery') }}"><span class="nav-text">⚙️ Machinery</span></a>
             <a href="{{ url_for('reports_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('report') }}"><span class="nav-text">📄 Reports</span></a>
             <a href="{{ url_for('pdf_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('pdf') }}"><span class="nav-text">📝 PDF Forms</span></a>
-            {% if user.role == 'admin' %}
+            {% if user and user.role == 'admin' %}
                 <div class="group">Admin</div>
                 <a href="{{ url_for('companies_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('compan') }}"><span class="nav-text">🏢 Companies</span></a>
                 <a href="{{ url_for('clients_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('client') }}"><span class="nav-text">👥 Clients</span></a>
@@ -39,7 +51,7 @@
                 <a href="{{ url_for('rfq_stage_list', stage='RFQ') }}" class="{{ 'active' if request.endpoint == 'rfq_stage_list' }}"><span class="nav-text">📑 RFQ Stages</span></a>
                 <a href="{{ url_for('rfq_customers_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('rfq_customer') }}"><span class="nav-text">👤 Customers</span></a>
                 <a href="{{ url_for('rfq_lists_manage') }}" class="{{ 'active' if request.endpoint == 'rfq_lists_manage' }}"><span class="nav-text">📝 Lists</span></a>
-            {% elif user.company_id %}
+            {% elif user and user.company_id %}
                 <a href="{{ url_for('company_profile') }}" class="{{ 'active' if request.endpoint == 'company_profile' }}"><span class="nav-text">🏢 My Company</span></a>
             {% endif %}
             <div class="group">Account</div>
@@ -56,7 +68,7 @@
     </main>
 </div>
 <script>
-// Sidebar collapse toggle
+// Sidebar collapse toggle for Desktop
 const sidebar = document.getElementById('sidebar');
 const portal = document.querySelector('.portal');
 const toggleBtn = document.getElementById('sidebarToggle');
@@ -68,47 +80,43 @@ function setCollapsed(collapsed) {
     localStorage.setItem('sidebarCollapsed', collapsed);
 }
 
-if (isCollapsed) setCollapsed(true);
+if (isCollapsed && window.innerWidth > 768) setCollapsed(true);
 
-toggleBtn.addEventListener('click', function() {
-    const collapsed = !sidebar.classList.contains('collapsed');
-    setCollapsed(collapsed);
-});
-
-// Mobile menu toggle
-function setupMobileMenu() {
-    if (window.innerWidth <= 768) {
-        // Create overlay if not exists
-        let overlay = document.querySelector('.sidebar-overlay');
-        if (!overlay) {
-            overlay = document.createElement('div');
-            overlay.className = 'sidebar-overlay';
-            document.body.appendChild(overlay);
-        }
-
-        // Create mobile menu button if not exists
-        let mobileBtn = document.querySelector('.mobile-menu-btn');
-        if (!mobileBtn) {
-            mobileBtn = document.createElement('button');
-            mobileBtn.className = 'mobile-menu-btn';
-            mobileBtn.innerHTML = '☰ Menu';
-            mobileBtn.onclick = function() {
-                sidebar.classList.add('open');
-                overlay.classList.add('active');
-            };
-            document.querySelector('.portal-main').prepend(mobileBtn);
-        }
-
-        // Close sidebar when clicking overlay
-        overlay.onclick = function() {
-            sidebar.classList.remove('open');
-            overlay.classList.remove('active');
-        };
-    }
+if (toggleBtn) {
+    toggleBtn.addEventListener('click', function() {
+        const collapsed = !sidebar.classList.contains('collapsed');
+        setCollapsed(collapsed);
+    });
 }
 
-setupMobileMenu();
-window.addEventListener('resize', setupMobileMenu);
+// Mobile sidebar drawer setup
+(function() {
+    const mobileToggle = document.getElementById('portalMobileToggle');
+    const overlay = document.getElementById('sidebarOverlay');
+    const closeBtn = document.getElementById('sidebarCloseBtn');
+
+    function openMobileSidebar() {
+        sidebar.classList.add('open');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileSidebar() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    if (mobileToggle) mobileToggle.addEventListener('click', openMobileSidebar);
+    if (overlay) overlay.addEventListener('click', closeMobileSidebar);
+    if (closeBtn) closeBtn.addEventListener('click', closeMobileSidebar);
+
+    sidebar.querySelectorAll('a').forEach(function(link) {
+        link.addEventListener('click', function() {
+            if (window.innerWidth <= 768) closeMobileSidebar();
+        });
+    });
+})();
 </script>
 </body>
 </html>

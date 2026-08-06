@@ -441,6 +441,25 @@ def init_db():
              "admin", "Tijarah Mabrur (M) Sdn. Bhd.", datetime.utcnow().isoformat()),
         )
 
+    # Seed Worker / Employee accounts for demo
+    worker_email = "worker@tijarahmabrur.com"
+    wrow = q("SELECT id FROM users WHERE email = ?", (worker_email,), one=True)
+    if wrow is None:
+        execute(
+            "INSERT INTO users (name, email, password_hash, role, company, created_at) VALUES (?,?,?,?,?,?)",
+            ("TMSB Worker / Inspector", worker_email, generate_password_hash("worker123"),
+             "employee", "Tijarah Mabrur (M) Sdn. Bhd.", datetime.utcnow().isoformat()),
+        )
+
+    staff_email = "staff@tijarahmabrur.com"
+    srow = q("SELECT id FROM users WHERE email = ?", (staff_email,), one=True)
+    if srow is None:
+        execute(
+            "INSERT INTO users (name, email, password_hash, role, company, created_at) VALUES (?,?,?,?,?,?)",
+            ("TMSB Staff Member", staff_email, generate_password_hash("staff123"),
+             "employee", "Tijarah Mabrur (M) Sdn. Bhd.", datetime.utcnow().isoformat()),
+        )
+
     # ── Seed Dozens of Companies & Clients for Demo ──
     companies_seed = [
         ("Petronas Chemicals Group Berhad", "199801003700", "Complex Kerteh, 24300 Kerteh, Terengganu", "+609-826 8000", "petronas@tijarahmabrur.com"),
