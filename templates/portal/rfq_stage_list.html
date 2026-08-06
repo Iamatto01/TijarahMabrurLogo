@@ -2,15 +2,179 @@
 {% block title %}{{ stage }} List | RFQ{% endblock %}
 {% block content %}
 <style>
-.rfq-tbl td.editable { cursor: pointer; position: relative; }
-.rfq-tbl td.editable:hover { background: #e3f2fd !important; }
-.rfq-tbl td.editable:hover::after { content: '✏️'; position: absolute; right: 2px; top: 2px; font-size: 10px; }
-.inline-form { display: flex; gap: 4px; align-items: center; }
-.inline-form input, .inline-form select { font-size: 12px; padding: 3px 6px; border: 1px solid var(--accent); border-radius: 4px; outline: none; }
-.inline-form input { min-width: 80px; }
-.inline-form button { font-size: 11px; padding: 2px 8px; border: none; border-radius: 4px; cursor: pointer; }
-.inline-form .save { background: var(--accent); color: #fff; }
-.inline-form .cancel { background: #eee; color: var(--text); }
+/* ── Google Sheets Layout ── */
+.sheets-wrap {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+.sheets-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: #f7f9fc;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
+}
+.sheets-toolbar .btn-sm {
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    background: #fff;
+    cursor: pointer;
+}
+.sheets-toolbar .btn-sm:hover { background: var(--bg-2); }
+.sheets-toolbar .btn-sm.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.sheets-grid {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    height: calc(100vh - 280px);
+    max-height: calc(100vh - 280px);
+}
+.sheets-row-header {
+    background: #f0f4f8;
+    border-right: 1px solid var(--line);
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    padding: 0;
+    user-select: none;
+}
+.sheets-row-header div {
+    padding: 6px 4px;
+    border-bottom: 1px solid var(--line);
+    height: 28px;
+    line-height: 28px;
+}
+.sheets-row-header div:last-child { border-bottom: none; }
+
+.sheets-table-wrap {
+    overflow: auto;
+    flex: 1;
+}
+.sheets-tbl {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 12.5px;
+    table-layout: fixed;
+}
+.sheets-tbl th {
+    background: #f7fbff;
+    border-bottom: 1px solid var(--line);
+    padding: 6px 8px;
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    cursor: pointer;
+    user-select: none;
+}
+.sheets-tbl th.sortable:hover { background: #e8f1fa; }
+.sheets-tbl th.sortable.sorted-asc::after { content: ' ↑'; }
+.sheets-tbl th.sortable.sorted-desc::after { content: ' ↓'; }
+.sheets-tbl td {
+    padding: 0;
+    border-bottom: 1px solid var(--line);
+    height: 28px;
+    vertical-align: middle;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: cell;
+    position: relative;
+}
+.sheets-tbl td.editable { cursor: cell; }
+.sheets-tbl td.editable:hover { background: #e3f2fd; }
+.sheets-tbl td.editable:hover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px dashed var(--accent);
+    pointer-events: none;
+    border-radius: 2px;
+}
+.sheets-tbl tr:last-child td { border-bottom: none; }
+.sheets-tbl tr:hover td { background: #f0f8ff; }
+
+/* Cell editor overlay */
+.cell-editor {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    background: #fff;
+    border: 2px solid var(--accent);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    padding: 2px 4px;
+    box-shadow: 0 4px 12px rgba(1, 160, 255, .25);
+}
+.cell-editor input,
+.cell-editor select {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 12.5px;
+    padding: 2px 4px;
+    background: transparent;
+}
+.cell-editor select {
+    appearance: none;
+    background: #f7fbff;
+    padding-right: 20px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23666' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+}
+.cell-editor .cell-actions {
+    display: flex;
+    gap: 2px;
+    margin-left: 4px;
+}
+.cell-editor .cell-actions button {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 0 2px;
+}
+.cell-editor .cell-actions .save-btn { color: var(--accent); font-weight: 700; }
+.cell-editor .cell-actions .cancel-btn { color: var(--muted); }
+
+/* Dropdown arrow indicator */
+.has-dropdown::after {
+    content: '▼';
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 8px;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+/* Tag styles for status cells */
+.sheets-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
 </style>
 
 <div class="portal-topbar" style="padding-bottom:6px">
@@ -31,73 +195,87 @@
     {% endfor %}
 </div>
 
-<div class="panel" style="margin:0">
-    <div class="panel-body tbl-scroll" style="padding:0">
-        {% if rows %}
-        <table class="tbl rfq-tbl">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>RFQ ID</th>
-                    <th>CLIENT NAME</th>
-                    <th>JOB CODE</th>
-                    <th>JOB TITLE</th>
-                    <th style="text-align:right">AMOUNT</th>
-                    <th>LOCATION</th>
-                    <th>STATE</th>
-                    <th>DATE</th>
-                    <th>JOB STATUS</th>
-                    <th>LEVEL</th>
-                    <th>INTRODUCER</th>
-                    <th>SOURCE</th>
-                    <th>OPEN BY</th>
-                    <th style="text-align:center">MOVE</th>
-                    <th style="text-align:center">ACT</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in rows %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td><a href="{{ url_for('rfq_detail', eid=r.id) }}" style="font-weight:700;color:var(--accent-2)">{{ r.rfq_id }}</a></td>
-                    <td class="editable" onclick="inlineEdit(this,{{ r.id }},'client_name','text','{{ r.client_name|e }}')">{{ r.client_name }}</td>
-                    <td class="editable" onclick="inlineSelect(this,{{ r.id }},'job_code',{{ lists.job_code|tojson }},'{{ r.job_code }}')">{{ r.job_code }}</td>
-                    <td class="editable" onclick="inlineSelect(this,{{ r.id }},'job_title',{{ lists.job_title|tojson }},'{{ r.job_title }}')">{{ r.job_title }}</td>
-                    <td style="text-align:right" class="editable" onclick="inlineEdit(this,{{ r.id }},'amount','number','{{ r.amount or 0 }}')">RM {{ '{:,.0f}'.format(r.amount or 0) }}</td>
-                    <td class="editable" onclick="inlineEdit(this,{{ r.id }},'location','text','{{ r.location|e }}')">{{ r.location }}</td>
-                    <td class="editable" onclick="inlineEdit(this,{{ r.id }},'state','text','{{ r.state|e }}')">{{ r.state }}</td>
-                    <td class="editable" onclick="inlineEdit(this,{{ r.id }},'date','date','{{ r.date }}')">{{ r.date }}</td>
-                    <td class="editable" onclick="inlineSelect(this,{{ r.id }},'job_status',{{ lists.job_status|tojson }},'{{ r.job_status }}')">
-                        <span class="tag {% if 'NEW' in (r.job_status or '') %}Active{% elif 'LOST' in (r.job_status or '') %}Expired{% elif 'Waiting' in (r.job_status or '') %}Under_Maintenance{% else %}Approved{% endif %}" style="font-size:10px">{{ r.job_status }}</span>
-                    </td>
-                    <td class="editable" onclick="inlineSelect(this,{{ r.id }},'level',{{ lists.level|tojson }},'{{ r.level }}')">
-                        {% if r.level == 'High' %}<span style="color:#f44336;font-weight:700">🔴</span>
-                        {% elif r.level == 'Medium' %}<span style="color:#ff9800">🟡</span>
-                        {% elif r.level == 'Low' %}<span style="color:#4caf50">🟢</span>
-                        {% endif %}{{ r.level }}
-                    </td>
-                    <td class="editable" onclick="inlineSelect(this,{{ r.id }},'introducer',{{ lists.introducer|tojson }},'{{ r.introducer }}')">{{ r.introducer }}</td>
-                    <td class="editable" onclick="inlineSelect(this,{{ r.id }},'source',{{ lists.source|tojson }},'{{ r.source }}')">{{ r.source }}</td>
-                    <td class="editable" onclick="inlineSelect(this,{{ r.id }},'open_by',{{ lists.open_by|tojson }},'{{ r.open_by }}')">{{ r.open_by }}</td>
-                    <td style="text-align:center;white-space:nowrap">
-                        <form method="post" action="{{ url_for('rfq_move', eid=r.id) }}" style="display:inline">
-                            <select name="new_stage" onchange="this.form.submit()" style="font-size:11px;padding:2px 4px;border-radius:4px;border:1px solid var(--line);cursor:pointer;width:65px">
-                                <option value="">→</option>
-                                {% for s in stages %}{% if s != stage %}<option value="{{ s }}">{{ s }}</option>{% endif %}{% endfor %}
-                            </select>
-                        </form>
-                    </td>
-                    <td style="text-align:center;white-space:nowrap">
-                        <a class="btn sm ghost" href="{{ url_for('rfq_edit', eid=r.id) }}" style="padding:2px 6px;font-size:11px">✏️</a>
-                        <button class="btn sm danger" onclick="confirmDel({{ r.id }},'{{ r.rfq_id }}','{{ r.client_name|e }}')" style="padding:2px 6px;font-size:11px">🗑️</button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div class="empty" style="padding:30px">No entries in {{ stage }}. <a href="{{ url_for('rfq_new') }}">Create a new RFQ</a>.</div>
-        {% endif %}
+<div class="sheets-wrap">
+    <div class="sheets-toolbar">
+        <span style="font-weight:600;color:var(--muted);font-size:12px">📊 {{ stage }} Stage</span>
+        <span style="color:var(--muted);font-size:11px;flex:1">Double-click any cell to edit. Dropdown cells show a ▼ arrow.</span>
+        <button class="btn-sm" onclick="exportSheetsCSV()">📥 Export CSV</button>
+    </div>
+    <div class="sheets-grid">
+        <!-- Row numbers -->
+        <div class="sheets-row-header">
+            {% for r in rows %}
+            <div>{{ loop.index }}</div>
+            {% endfor %}
+        </div>
+        <!-- Table -->
+        <div class="sheets-table-wrap">
+            {% if rows %}
+            <table class="sheets-tbl" id="rfqSheetsTbl">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-col="rfq_id" data-type="text">RFQ ID</th>
+                        <th class="sortable" data-col="client_name" data-type="text">CLIENT NAME</th>
+                        <th class="has-dropdown" data-col="job_code">JOB CODE</th>
+                        <th class="has-dropdown" data-col="job_title">JOB TITLE</th>
+                        <th class="sortable" data-col="amount" data-type="number" style="text-align:right">AMOUNT</th>
+                        <th class="sortable" data-col="location" data-type="text">LOCATION</th>
+                        <th class="sortable" data-col="state" data-type="text">STATE</th>
+                        <th class="sortable" data-col="date" data-type="date">DATE</th>
+                        <th class="has-dropdown" data-col="job_status">JOB STATUS</th>
+                        <th class="has-dropdown" data-col="level">LEVEL</th>
+                        <th class="has-dropdown" data-col="introducer">INTRODUCER</th>
+                        <th class="has-dropdown" data-col="source">SOURCE</th>
+                        <th class="has-dropdown" data-col="open_by">OPEN BY</th>
+                        <th style="text-align:center">MOVE</th>
+                        <th style="text-align:center">ACT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rows %}
+                    <tr data-id="{{ r.id }}" data-stage="{{ r.stage }}">
+                        <td class="cell-rfq-id" data-field="rfq_id" data-type="text" data-id="{{ r.id }}">
+                            <a href="{{ url_for('rfq_detail', eid=r.id) }}" style="font-weight:700;color:var(--accent-2);display:block;padding:0 8px">{{ r.rfq_id }}</a>
+                        </td>
+                        <td class="editable" data-field="client_name" data-type="text" data-id="{{ r.id }}">{{ r.client_name }}</td>
+                        <td class="editable dropdown-cell" data-field="job_code" data-id="{{ r.id }}" data-options="{{ lists.job_code|tojson }}">{{ r.job_code }}</td>
+                        <td class="editable dropdown-cell" data-field="job_title" data-id="{{ r.id }}" data-options="{{ lists.job_title|tojson }}">{{ r.job_title }}</td>
+                        <td class="editable" data-field="amount" data-type="number" data-id="{{ r.id }}" style="text-align:right">RM {{ '{:,.0f}'.format(r.amount or 0) }}</td>
+                        <td class="editable" data-field="location" data-type="text" data-id="{{ r.id }}">{{ r.location }}</td>
+                        <td class="editable" data-field="state" data-type="text" data-id="{{ r.id }}">{{ r.state }}</td>
+                        <td class="editable" data-field="date" data-type="date" data-id="{{ r.id }}">{{ r.date }}</td>
+                        <td class="editable dropdown-cell" data-field="job_status" data-id="{{ r.id }}" data-options="{{ lists.job_status|tojson }}">
+                            <span class="sheets-tag {% if 'NEW' in (r.job_status or '') %}tag-active{% elif 'LOST' in (r.job_status or '') %}tag-expired{% elif 'Waiting' in (r.job_status or '') %}tag-warn{% else %}tag-ok{% endif %}" style="font-size:10px">{{ r.job_status }}</span>
+                        </td>
+                        <td class="editable dropdown-cell" data-field="level" data-id="{{ r.id }}" data-options="{{ lists.level|tojson }}">
+                            {% if r.level == 'High' %}<span style="color:#f44336;font-weight:700">🔴</span>
+                            {% elif r.level == 'Medium' %}<span style="color:#ff9800">🟡</span>
+                            {% elif r.level == 'Low' %}<span style="color:#4caf50">🟢</span>
+                            {% endif %}{{ r.level }}
+                        </td>
+                        <td class="editable dropdown-cell" data-field="introducer" data-id="{{ r.id }}" data-options="{{ lists.introducer|tojson }}">{{ r.introducer }}</td>
+                        <td class="editable dropdown-cell" data-field="source" data-id="{{ r.id }}" data-options="{{ lists.source|tojson }}">{{ r.source }}</td>
+                        <td class="editable dropdown-cell" data-field="open_by" data-id="{{ r.id }}" data-options="{{ lists.open_by|tojson }}">{{ r.open_by }}</td>
+                        <td style="text-align:center;white-space:nowrap">
+                            <form method="post" action="{{ url_for('rfq_move', eid=r.id) }}" style="display:inline">
+                                <select name="new_stage" onchange="this.form.submit()" style="font-size:11px;padding:2px 4px;border-radius:4px;border:1px solid var(--line);cursor:pointer;width:65px">
+                                    <option value="">→</option>
+                                    {% for s in stages %}{% if s != stage %}<option value="{{ s }}">{{ s }}</option>{% endif %}{% endfor %}
+                                </select>
+                            </form>
+                        </td>
+                        <td style="text-align:center;white-space:nowrap">
+                            <a class="btn sm ghost" href="{{ url_for('rfq_edit', eid=r.id) }}" style="padding:2px 6px;font-size:11px">✏️</a>
+                            <button class="btn sm danger" onclick="confirmDel({{ r.id }},'{{ r.rfq_id }}','{{ r.client_name|e }}')" style="padding:2px 6px;font-size:11px">🗑️</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty" style="padding:30px">No entries in {{ stage }}. <a href="{{ url_for('rfq_new') }}">Create a new RFQ</a>.</div>
+            {% endif %}
+        </div>
     </div>
 </div>
 
@@ -121,30 +299,201 @@ function confirmDel(id, rfqId, client) {
     document.getElementById('delModal').style.display = 'flex';
 }
 
-// Inline editing
-function inlineEdit(td, id, field, type, val) {
-    if (td.querySelector('.inline-form')) return; // already editing
-    var orig = td.innerHTML;
-    td.innerHTML = '<form class="inline-form" method="post" action="/portal/rfq/'+id+'/inline-update">' +
-        '<input type="hidden" name="field" value="'+field+'">' +
-        '<input type="'+type+'" name="value" value="'+val+'" autofocus style="width:'+(type==='date'?'130px':'90px')+'">' +
-        '<button type="submit" class="save">✓</button>' +
-        '<button type="button" class="cancel" onclick="this.closest(\'td\').innerHTML=window._orig">✕</button></form>';
-    window._orig = orig;
-    td.querySelector('input[name=value]').focus();
+// ── Google Sheets-style double-click editing ──
+let currentEditor = null;
+
+function closeEditor() {
+    if (currentEditor) {
+        const td = currentEditor.td;
+        const editor = currentEditor.editor;
+        const cancelBtn = currentEditor.cancelBtn;
+        // Restore original content
+        td.innerHTML = currentEditor.origHtml;
+        td.style.position = '';
+        editor.remove();
+        currentEditor = null;
+    }
 }
 
-function inlineSelect(td, id, field, options, current) {
-    if (td.querySelector('.inline-form')) return;
-    var orig = td.innerHTML;
-    var opts = '<option value="">—</option>';
-    options.forEach(function(o) { opts += '<option value="'+o+'"'+(o===current?' selected':'')+'>'+o+'</option>'; });
-    td.innerHTML = '<form class="inline-form" method="post" action="/portal/rfq/'+id+'/inline-update">' +
-        '<input type="hidden" name="field" value="'+field+'">' +
-        '<select name="value" onchange="this.form.submit()" style="min-width:80px">'+opts+'</select>' +
-        '<button type="button" class="cancel" onclick="this.closest(\'td\').innerHTML=window._orig">✕</button></form>';
-    window._orig = orig;
-    td.querySelector('select').focus();
+function saveCell(td, id, field, value) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/portal/rfq/' + id + '/inline-update';
+    form.style.display = 'none';
+    form.innerHTML =
+        '<input type="hidden" name="field" value="' + field + '">' +
+        '<input type="hidden" name="value" value="' + value + '">';
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function startEdit(td, isDropdown) {
+    if (currentEditor) closeEditor();
+
+    const id = td.getAttribute('data-id');
+    const field = td.getAttribute('data-field');
+    const type = td.getAttribute('data-type') || 'text';
+    const currentValue = td.getAttribute('data-type') === 'date' ? td.getAttribute('data-date-val') : td.textContent.trim();
+    const origHtml = td.innerHTML;
+
+    td.style.position = 'relative';
+
+    const editor = document.createElement('div');
+    editor.className = 'cell-editor';
+
+    let input;
+    if (isDropdown) {
+        const options = JSON.parse(td.getAttribute('data-options') || '[]');
+        input = document.createElement('select');
+        const placeholderOpt = document.createElement('option');
+        placeholderOpt.value = '';
+        placeholderOpt.textContent = '—';
+        input.appendChild(placeholderOpt);
+        options.forEach(function(o) {
+            const opt = document.createElement('option');
+            opt.value = o;
+            opt.textContent = o;
+            if (o === currentValue) opt.selected = true;
+            input.appendChild(opt);
+        });
+    } else {
+        input = document.createElement('input');
+        input.type = type;
+        input.value = currentValue;
+        if (type === 'number') input.step = '0.01';
+    }
+
+    editor.appendChild(input);
+
+    const actions = document.createElement('div');
+    actions.className = 'cell-actions';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'save-btn';
+    saveBtn.innerHTML = '✓';
+    saveBtn.title = 'Save (Enter)';
+    saveBtn.onclick = function() {
+        const val = isDropdown ? input.value : input.value;
+        if (val === '') return;
+        td.innerHTML = isDropdown ? val : (type === 'number' ? 'RM ' + Number(val).toLocaleString('en-US', {maximumFractionDigits:0}) : val);
+        saveCell(td, id, field, val);
+        editor.remove();
+        currentEditor = null;
+    };
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'cancel-btn';
+    cancelBtn.innerHTML = '✕';
+    cancelBtn.title = 'Cancel (Esc)';
+    cancelBtn.onclick = function() {
+        closeEditor();
+    };
+
+    actions.appendChild(saveBtn);
+    actions.appendChild(cancelBtn);
+    editor.appendChild(actions);
+
+    td.appendChild(editor);
+    input.focus();
+    if (input.setSelectionRange) input.setSelectionRange(0, input.value.length);
+
+    currentEditor = { td, editor, origHtml, cancelBtn };
+
+    // Keyboard handling
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            saveBtn.click();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            cancelBtn.click();
+        }
+    });
+}
+
+// Double-click to edit
+document.querySelectorAll('.sheets-tbl td.editable').forEach(function(td) {
+    td.addEventListener('dblclick', function(e) {
+        e.stopPropagation();
+        const isDropdown = td.classList.contains('dropdown-cell');
+        startEdit(td, isDropdown);
+    });
+});
+
+// Click outside to close editor
+document.addEventListener('click', function(e) {
+    if (currentEditor && !currentEditor.editor.contains(e.target) && !currentEditor.td.contains(e.target)) {
+        closeEditor();
+    }
+});
+
+// Close editor on Escape globally
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && currentEditor) {
+        closeEditor();
+    }
+});
+
+// ── Column sorting ──
+document.querySelectorAll('.sheets-tbl th.sortable').forEach(function(th) {
+    th.addEventListener('click', function() {
+        const col = th.getAttribute('data-col');
+        const type = th.getAttribute('data-type');
+        const tbody = th.closest('table').querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const asc = !th.classList.contains('sorted-asc');
+
+        rows.sort(function(a, b) {
+            const aText = a.querySelector('[data-field="' + col + '"]')?.textContent.trim() || '';
+            const bText = b.querySelector('[data-field="' + col + '"]')?.textContent.trim() || '';
+            let aVal = aText, bVal = bText;
+            if (type === 'number') {
+                aVal = parseFloat(aText.replace(/[^0-9.-]/g, '')) || 0;
+                bVal = parseFloat(bText.replace(/[^0-9.-]/g, '')) || 0;
+            } else if (type === 'date') {
+                aVal = new Date(aText);
+                bVal = new Date(bText);
+            }
+            if (aVal < bVal) return asc ? -1 : 1;
+            if (aVal > bVal) return asc ? 1 : -1;
+            return 0;
+        });
+
+        // Update sort indicators
+        document.querySelectorAll('.sheets-tbl th.sortable').forEach(t => {
+            t.classList.remove('sorted-asc', 'sorted-desc');
+        });
+        th.classList.add(asc ? 'sorted-asc' : 'sorted-desc');
+
+        rows.forEach(r => tbody.appendChild(r));
+    });
+});
+
+// ── CSV Export ──
+function exportSheetsCSV() {
+    const tbl = document.getElementById('rfqSheetsTbl');
+    if (!tbl) return;
+    const rows = tbl.querySelectorAll('tbody tr');
+    const csv = [];
+    const headers = [];
+    tbl.querySelectorAll('thead th').forEach(th => headers.push(th.textContent.trim()));
+    csv.push(headers.join(','));
+    rows.forEach(tr => {
+        const cells = tr.querySelectorAll('td');
+        const vals = [];
+        cells.forEach(td => {
+            let txt = td.textContent.trim().replace(/"/g, '""');
+            vals.push('"' + txt + '"');
+        });
+        csv.push(vals.join(','));
+    });
+    const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'rfq_{{ stage }}.csv';
+    a.click();
+    URL.revokeObjectURL(url);
 }
 </script>
 {% endblock %}

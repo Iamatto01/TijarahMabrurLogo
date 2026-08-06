@@ -572,6 +572,39 @@ table.tbl tr:hover td { background: rgba(1, 160, 255, .04); }
 .rfq-tbl tr:hover td { background: var(--bg-2); }
 .tbl-scroll { overflow-x: auto; max-height: 75vh; overflow-y: auto; }
 
+/* ── Google Sheets-style RFQ List ── */
+.sheets-wrap { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.sheets-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #f7f9fc; border-bottom: 1px solid var(--line); font-size: 12px; }
+.sheets-toolbar .btn-sm { padding: 4px 10px; font-size: 12px; border-radius: 4px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
+.sheets-toolbar .btn-sm:hover { background: var(--bg-2); }
+.sheets-grid { display: grid; grid-template-columns: 34px 1fr; height: calc(100vh - 280px); max-height: calc(100vh - 280px); }
+.sheets-row-header { background: #f0f4f8; border-right: 1px solid var(--line); font-size: 11px; color: var(--muted); text-align: center; user-select: none; }
+.sheets-row-header div { padding: 6px 4px; border-bottom: 1px solid var(--line); height: 28px; line-height: 28px; }
+.sheets-row-header div:last-child { border-bottom: none; }
+.sheets-table-wrap { overflow: auto; flex: 1; }
+.sheets-tbl { border-collapse: collapse; width: 100%; font-size: 12.5px; table-layout: fixed; }
+.sheets-tbl th { background: #f7fbff; border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left; font-size: 10px; letter-spacing: .4px; text-transform: uppercase; color: var(--muted); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: sticky; top: 0; z-index: 3; cursor: pointer; user-select: none; }
+.sheets-tbl th.sortable:hover { background: #e8f1fa; }
+.sheets-tbl th.sortable.sorted-asc::after { content: ' ↑'; }
+.sheets-tbl th.sortable.sorted-desc::after { content: ' ↓'; }
+.sheets-tbl td { padding: 0; border-bottom: 1px solid var(--line); height: 28px; vertical-align: middle; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: cell; position: relative; }
+.sheets-tbl td.editable:hover { background: #e3f2fd; }
+.sheets-tbl td.editable:hover::before { content: ''; position: absolute; inset: 0; border: 1px dashed var(--accent); pointer-events: none; border-radius: 2px; }
+.sheets-tbl tr:last-child td { border-bottom: none; }
+.sheets-tbl tr:hover td { background: #f0f8ff; }
+.cell-editor { position: absolute; inset: 0; z-index: 10; background: #fff; border: 2px solid var(--accent); border-radius: 3px; display: flex; align-items: center; padding: 2px 4px; box-shadow: 0 4px 12px rgba(1, 160, 255, .25); }
+.cell-editor input, .cell-editor select { width: 100%; border: none; outline: none; font-size: 12.5px; padding: 2px 4px; background: transparent; }
+.cell-editor select { appearance: none; background: #f7fbff; padding-right: 20px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23666' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+.cell-actions { display: flex; gap: 2px; margin-left: 4px; }
+.cell-actions button { border: none; background: transparent; cursor: pointer; font-size: 12px; padding: 0 2px; }
+.cell-actions .save-btn { color: var(--accent); font-weight: 700; }
+.cell-actions .cancel-btn { color: var(--muted); }
+.sheets-tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.tag-active { background: rgba(29, 168, 87, .1); color: #127a3d; border: 1px solid var(--ok); }
+.tag-expired { background: rgba(224, 69, 58, .1); color: #b03027; border: 1px solid var(--err); }
+.tag-warn { background: rgba(232, 147, 12, .12); color: #a56808; border: 1px solid var(--warn); }
+.tag-ok { background: rgba(1, 160, 255, .1); color: var(--accent-2); border: 1px solid var(--accent); }
+
 /* ── Delete Modal ── */
 .img2-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.45); z-index: 9999; align-items: center; justify-content: center; }
 
