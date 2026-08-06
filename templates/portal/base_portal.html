@@ -10,35 +10,40 @@
 </head>
 <body>
 <div class="portal">
-    <aside class="sidebar">
-        <a class="brand" href="{{ url_for('dashboard') }}" style="text-decoration:none">
-            {% if tenant_company and tenant_company.logo_filename %}
-                <img src="{{ url_for('serve_logo', filename=tenant_company.logo_filename) }}" alt="logo" class="brand-logo" style="height:40px;max-width:150px;object-fit:contain;background:#fff;border-radius:8px;padding:4px">
-            {% else %}
-                <img src="{{ url_for('static', filename='img/main-logo.png') }}" alt="Tijarah Mabrur" class="brand-logo">
-            {% endif %}
-            <span>{{ tenant_company.name if tenant_company else 'TIJARAH MABRUR' }}<small>CLIENT PORTAL</small></span>
-        </a>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-head">
+            <a class="brand" href="{{ url_for('dashboard') }}" style="text-decoration:none">
+                {% if tenant_company and tenant_company.logo_filename %}
+                    <img src="{{ url_for('serve_logo', filename=tenant_company.logo_filename) }}" alt="logo" class="brand-logo">
+                {% else %}
+                    <img src="{{ url_for('static', filename='img/main-logo.png') }}" alt="Tijarah Mabrur" class="brand-logo">
+                {% endif %}
+                <span class="brand-text">{{ tenant_company.name if tenant_company else 'TIJARAH MABRUR' }}<small>CLIENT PORTAL</small></span>
+            </a>
+            <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
         <nav>
-            <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}">📊 Dashboard</a>
-            <a href="{{ url_for('machinery_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('machinery') }}">⚙️ Machinery</a>
-            <a href="{{ url_for('reports_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('report') }}">📄 Reports</a>
-            <a href="{{ url_for('pdf_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('pdf') }}">📝 PDF Forms</a>
+            <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}"><span class="nav-text">📊 Dashboard</span></a>
+            <a href="{{ url_for('machinery_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('machinery') }}"><span class="nav-text">⚙️ Machinery</span></a>
+            <a href="{{ url_for('reports_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('report') }}"><span class="nav-text">📄 Reports</span></a>
+            <a href="{{ url_for('pdf_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('pdf') }}"><span class="nav-text">📝 PDF Forms</span></a>
             {% if user.role == 'admin' %}
                 <div class="group">Admin</div>
-                <a href="{{ url_for('companies_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('compan') }}">🏢 Companies</a>
-                <a href="{{ url_for('clients_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('client') }}">👥 Clients</a>
-                <a href="{{ url_for('db_viewer') }}" class="{{ 'active' if request.endpoint == 'db_viewer' }}">🗄️ Database</a>
+                <a href="{{ url_for('companies_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('compan') }}"><span class="nav-text">🏢 Companies</span></a>
+                <a href="{{ url_for('clients_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('client') }}"><span class="nav-text">👥 Clients</span></a>
+                <a href="{{ url_for('db_viewer') }}" class="{{ 'active' if request.endpoint == 'db_viewer' }}"><span class="nav-text">🗄️ Database</span></a>
                 <div class="group">RFQ Management</div>
-                <a href="{{ url_for('rfq_dashboard') }}" class="{{ 'active' if request.endpoint == 'rfq_dashboard' }}">📋 RFQ Dashboard</a>
-                <a href="{{ url_for('rfq_stage_list', stage='RFQ') }}" class="{{ 'active' if request.endpoint == 'rfq_stage_list' }}">📑 RFQ Stages</a>
-                <a href="{{ url_for('rfq_customers_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('rfq_customer') }}">👤 Customers</a>
-                <a href="{{ url_for('rfq_lists_manage') }}" class="{{ 'active' if request.endpoint == 'rfq_lists_manage' }}">📝 Lists</a>
+                <a href="{{ url_for('rfq_dashboard') }}" class="{{ 'active' if request.endpoint == 'rfq_dashboard' }}"><span class="nav-text">📋 RFQ Dashboard</span></a>
+                <a href="{{ url_for('rfq_stage_list', stage='RFQ') }}" class="{{ 'active' if request.endpoint == 'rfq_stage_list' }}"><span class="nav-text">📑 RFQ Stages</span></a>
+                <a href="{{ url_for('rfq_customers_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('rfq_customer') }}"><span class="nav-text">👤 Customers</span></a>
+                <a href="{{ url_for('rfq_lists_manage') }}" class="{{ 'active' if request.endpoint == 'rfq_lists_manage' }}"><span class="nav-text">📝 Lists</span></a>
             {% elif user.company_id %}
-                <a href="{{ url_for('company_profile') }}" class="{{ 'active' if request.endpoint == 'company_profile' }}">🏢 My Company</a>
+                <a href="{{ url_for('company_profile') }}" class="{{ 'active' if request.endpoint == 'company_profile' }}"><span class="nav-text">🏢 My Company</span></a>
             {% endif %}
             <div class="group">Account</div>
-            <a href="{{ url_for('logout') }}">🚪 Logout</a>
+            <a href="{{ url_for('logout') }}"><span class="nav-text">🚪 Logout</span></a>
         </nav>
     </aside>
     <main class="portal-main">
@@ -50,5 +55,60 @@
         {% block content %}{% endblock %}
     </main>
 </div>
+<script>
+// Sidebar collapse toggle
+const sidebar = document.getElementById('sidebar');
+const portal = document.querySelector('.portal');
+const toggleBtn = document.getElementById('sidebarToggle');
+const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+
+function setCollapsed(collapsed) {
+    sidebar.classList.toggle('collapsed', collapsed);
+    portal.classList.toggle('sidebar-collapsed', collapsed);
+    localStorage.setItem('sidebarCollapsed', collapsed);
+}
+
+if (isCollapsed) setCollapsed(true);
+
+toggleBtn.addEventListener('click', function() {
+    const collapsed = !sidebar.classList.contains('collapsed');
+    setCollapsed(collapsed);
+});
+
+// Mobile menu toggle
+function setupMobileMenu() {
+    if (window.innerWidth <= 768) {
+        // Create overlay if not exists
+        let overlay = document.querySelector('.sidebar-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'sidebar-overlay';
+            document.body.appendChild(overlay);
+        }
+
+        // Create mobile menu button if not exists
+        let mobileBtn = document.querySelector('.mobile-menu-btn');
+        if (!mobileBtn) {
+            mobileBtn = document.createElement('button');
+            mobileBtn.className = 'mobile-menu-btn';
+            mobileBtn.innerHTML = '☰ Menu';
+            mobileBtn.onclick = function() {
+                sidebar.classList.add('open');
+                overlay.classList.add('active');
+            };
+            document.querySelector('.portal-main').prepend(mobileBtn);
+        }
+
+        // Close sidebar when clicking overlay
+        overlay.onclick = function() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        };
+    }
+}
+
+setupMobileMenu();
+window.addEventListener('resize', setupMobileMenu);
+</script>
 </body>
 </html>

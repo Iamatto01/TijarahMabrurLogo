@@ -235,17 +235,49 @@ a.link:hover { background: rgba(1, 160, 255, .08); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
 /* ---------- portal layout ---------- */
-.portal { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
-.sidebar { background: #0d2233; border-right: 1px solid #14405f; padding: 24px 16px; }
-.sidebar .brand { margin-bottom: 34px; padding: 0 8px; color: #fff; }
-.sidebar .brand span small { color: #7c9ab3; }
+.portal { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; transition: grid-template-columns .25s ease; }
+.portal.sidebar-collapsed { grid-template-columns: 60px 1fr; }
+.sidebar {
+    background: #0d2233; border-right: 1px solid #14405f; padding: 20px 16px;
+    transition: all .25s ease; position: relative;
+}
+.sidebar.collapsed { width: 60px; padding: 20px 8px; }
+.sidebar .brand {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 34px;
+    padding: 0 8px; color: #fff;
+}
+.sidebar .brand-logo { height: 36px; width: 36px; }
+.sidebar .brand-text { display: inline; }
+.sidebar .brand-text small { color: #7c9ab3; display: block; font-size: 10px; }
+.sidebar.collapsed .brand-text { display: none; }
+.sidebar-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+}
+.sidebar-toggle {
+    display: none;
+    flex-direction: column; gap: 3px; width: 24px; height: 20px;
+    background: transparent; border: none; cursor: pointer; padding: 0;
+}
+.sidebar-toggle span { display: block; width: 100%; height: 2px; background: #5b7c96; border-radius: 1px; transition: .2s; }
+.sidebar.collapsed .sidebar-toggle { display: flex; }
 .sidebar nav a {
     display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px;
-    color: #9db8cc; font-size: 14px; margin-bottom: 4px;
+    color: #9db8cc; font-size: 14px; margin-bottom: 4px; white-space: nowrap;
+    transition: all .2s ease;
 }
+.sidebar.collapsed nav a { justify-content: center; padding: 10px 0; }
+.sidebar.collapsed nav a span { display: none; }
+.sidebar.collapsed nav a .nav-text { display: none; }
 .sidebar nav a:hover, .sidebar nav a.active { background: #16405f; color: #5fc4ff; text-decoration: none; }
-.sidebar nav .group { font-size: 11px; color: #5b7c96; letter-spacing: 2px; text-transform: uppercase; margin: 22px 14px 8px; }
-.portal-main { padding: 32px 40px; }
+.sidebar nav .group { font-size: 11px; color: #5b7c96; letter-spacing: 2px; text-transform: uppercase; margin: 22px 14px 8px; white-space: nowrap; }
+.sidebar.collapsed nav .group { text-align: center; margin: 22px 0 8px; }
+.sidebar-overlay {
+    display: none;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,.5); z-index: 999;
+}
+.portal-main { padding: 32px 40px; transition: padding .25s ease; }
 .portal-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
 .portal-topbar h1 { margin: 0; font-size: 26px; }
 .portal-topbar .who { color: var(--muted); font-size: 13.5px; }
@@ -329,7 +361,19 @@ table.tbl tr:hover td { background: rgba(1, 160, 255, .04); }
     .grid.cols-3, .grid.cols-4, .grid.cols-2, .stat-cards { grid-template-columns: 1fr; }
     .site-footer .cols { grid-template-columns: 1fr; }
     .portal { grid-template-columns: 1fr; }
-    .sidebar { display: flex; overflow-x: auto; gap: 6px; }
+    .sidebar {
+        display: flex; overflow-x: auto; gap: 6px; position: fixed; top: 0; left: -260px;
+        height: 100vh; z-index: 1000; transition: left .3s ease; width: 260px; padding: 20px;
+    }
+    .sidebar.open { left: 0; }
+    .sidebar-overlay.active { display: block; }
+    .sidebar .brand { margin-bottom: 20px; }
+    .sidebar-toggle { display: none; }
+    .mobile-menu-btn {
+        display: inline-block; margin-bottom: 16px; padding: 8px 16px;
+        background: var(--accent); color: #fff; border: none; border-radius: 6px;
+        font-size: 16px; cursor: pointer;
+    }
     .hero h1 { font-size: 38px; }
     .nav { gap: 14px; }
     .hero-v2 { padding: 100px 0 80px; }
@@ -337,6 +381,8 @@ table.tbl tr:hover td { background: rgba(1, 160, 255, .04); }
     .about-split { grid-template-columns: 1fr; }
     .cta-band h2 { font-size: 28px; }
     .card.img-card .card-img { height: 170px; }
+    .portal-main { padding: 20px; }
+    .portal-topbar { flex-direction: column; gap: 12px; align-items: flex-start; }
 }
 
 /* ---------- machinery detail ---------- */
