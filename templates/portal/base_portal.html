@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Portal | Tijarah Mabrur{% endblock %}</title>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">
-    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon-blue.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='img/favicon-blue.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -14,7 +14,7 @@
         <span></span><span></span><span></span>
     </button>
     <a class="mobile-brand" href="{{ url_for('dashboard') }}" style="text-decoration:none">
-        <img src="{{ url_for('static', filename='img/main-logo.png') }}" alt="Tijarah Mabrur" class="mobile-logo">
+        <img src="{{ url_for('static', filename='img/favicon-blue.png') }}" alt="Tijarah Mabrur" class="mobile-logo">
         <span class="mobile-title">{{ tenant_company.name if tenant_company else 'TIJARAH MABRUR' }}</span>
     </a>
 </div>
@@ -27,13 +27,10 @@
                 {% if tenant_company and tenant_company.logo_filename %}
                     <img src="{{ url_for('serve_logo', filename=tenant_company.logo_filename) }}" alt="logo" class="brand-logo">
                 {% else %}
-                    <img src="{{ url_for('static', filename='img/main-logo.png') }}" alt="Tijarah Mabrur" class="brand-logo">
+                    <img src="{{ url_for('static', filename='img/favicon-blue.png') }}" alt="Tijarah Mabrur" class="brand-logo">
                 {% endif %}
                 <span class="brand-text">{{ tenant_company.name if tenant_company else 'TIJARAH MABRUR' }}<small>CLIENT PORTAL</small></span>
             </a>
-            <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
-                <span></span><span></span><span></span>
-            </button>
             <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close menu">✕</button>
         </div>
         <nav>
