@@ -1464,8 +1464,8 @@ def rfq_new():
                     contact_number, email, person_in_charge, map_link, notes,
                     machinery_pmt, machinery_pma, machinery_pmd, machinery_general, machinery_other,
                     issue_notes, progress_notes, terms_conditions, remark_text, remark_image,
-                    created_at, updated_at)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    cost_subcon_json, cost_company_json, created_at, updated_at)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (rfq_id, f.get("client_name","").strip(), f.get("job_code",""), f.get("job_title",""), float(f.get("amount",0) or 0),
                  f.get("location","").strip(), f.get("state","").strip(), f.get("date",""),
                  f.get("job_status","NEW TASK"), f.get("level",""), f.get("introducer",""), f.get("source",""), f.get("open_by",""),
@@ -1478,6 +1478,7 @@ def rfq_new():
                  int(f.get("machinery_general",0) or 0), int(f.get("machinery_other",0) or 0),
                  f.get("issue_notes","").strip(), f.get("progress_notes","").strip(), f.get("terms_conditions","").strip(),
                  f.get("remark_text","").strip(), remark_img,
+                 f.get("cost_subcon_json", "[]"), f.get("cost_company_json", "[]"),
                  now, now))
         # Save quote items
         items_desc = request.form.getlist("item_desc[]")
@@ -1538,7 +1539,7 @@ def rfq_edit(eid):
                     contact_number=?, email=?, person_in_charge=?, map_link=?, notes=?,
                     machinery_pmt=?, machinery_pma=?, machinery_pmd=?, machinery_general=?, machinery_other=?,
                     issue_notes=?, progress_notes=?, terms_conditions=?, remark_text=?, remark_image=?,
-                    updated_at=? WHERE id=?""",
+                    cost_subcon_json=?, cost_company_json=?, updated_at=? WHERE id=?""",
                 (f.get("client_name","").strip(), f.get("job_code",""), f.get("job_title",""), float(f.get("amount",0) or 0),
                  f.get("location","").strip(), f.get("state","").strip(), f.get("date",""),
                  f.get("job_status",""), f.get("level",""), f.get("introducer",""), f.get("source",""), f.get("open_by",""),
@@ -1551,6 +1552,7 @@ def rfq_edit(eid):
                  int(f.get("machinery_general",0) or 0), int(f.get("machinery_other",0) or 0),
                  f.get("issue_notes","").strip(), f.get("progress_notes","").strip(), f.get("terms_conditions","").strip(),
                  f.get("remark_text","").strip(), remark_img,
+                 f.get("cost_subcon_json", "[]"), f.get("cost_company_json", "[]"),
                  now, eid))
         # Update quote items
         execute("DELETE FROM rfq_items WHERE rfq_entry_id = ?", (eid,))

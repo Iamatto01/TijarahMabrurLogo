@@ -1,6 +1,61 @@
 {% extends "portal/base_portal.html" %}
 {% block title %}{{ 'Edit' if e else 'New' }} RFQ | Portal{% endblock %}
 {% block content %}
+<style>
+/* SPREADSHEET AESTHETIC */
+:root {
+    --ss-border: #999;
+    --ss-bg: #f3f3f3;
+    --ss-cell: #fff;
+    --ss-hdr: #444;
+    --ss-hdr-txt: #fff;
+    --ss-blue: #01a0ff;
+    --ss-yellow: #fff3e0;
+    --ss-green: #4caf50;
+    --ss-red: #ffcdd2;
+}
+body { background: #e0e0e0; }
+.ss-wrap {
+    max-width: 1300px;
+    margin: 0 auto;
+    background: var(--ss-bg);
+    padding: 15px;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    color: #000;
+}
+.ss-grid { display: grid; gap: 4px; }
+.ss-row { display: flex; gap: 2px; margin-bottom:2px; }
+.ss-col { display: flex; flex-direction: column; gap: 2px; }
+.ss-label {
+    background: var(--ss-hdr); color: var(--ss-hdr-txt);
+    font-weight: bold; padding: 4px 6px; display: flex; align-items: center; border: 1px solid var(--ss-border);
+}
+.ss-input {
+    background: var(--ss-cell); border: 1px solid var(--ss-border);
+    padding: 4px 6px; width: 100%; box-sizing: border-box; font-size: 11px; outline: none; color: #000;
+}
+.ss-input:focus { border-color: var(--ss-blue); }
+select.ss-input { padding: 3px 4px; }
+textarea.ss-input { resize: vertical; min-height: 80px; }
+.ss-table {
+    width: 100%; border-collapse: collapse; margin-bottom: 10px; background: var(--ss-cell);
+}
+.ss-table th, .ss-table td { border: 1px solid var(--ss-border); padding: 3px 4px; }
+.ss-table th { font-weight: bold; text-align: center; }
+.ss-table th.q-hdr { background: #ffcdd2; }
+.ss-table th.c-hdr { background: #c8e6c9; }
+.ss-table th.c2-hdr { background: #bbdefb; }
+.ss-table input { width: 100%; border: none; outline: none; background: transparent; font-size: 11px; }
+.ss-table input.num { text-align: right; }
+.readonly { background: #f9f9f9; text-align: right; font-weight: bold; }
+.text-right { text-align: right; }
+.flex-1 { flex: 1; }
+.w-50 { width: 50px; }
+.w-80 { width: 80px; }
+.w-120 { width: 120px; }
+</style>
+
 <div class="portal-topbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
     <div style="display:flex;align-items:center;gap:12px">
         <a class="btn ghost sm" href="{{ url_for('rfq_stage_list', stage=e.stage if e else 'RFQ') }}">Back</a>
@@ -8,494 +63,521 @@
     </div>
 </div>
 
-<form method="post" enctype="multipart/form-data" style="max-width:1100px">
-    <!-- 1. GENERAL INFORMATION -->
-    <div class="panel">
-        <div class="panel-head"><h3>1. RFQ Information</h3></div>
-        <div class="panel-body">
-            <div class="form-row">
-                <div class="field">
-                    <label>Client Name *</label>
-                    <input type="text" name="client_name" required value="{{ e.client_name if e else '' }}" list="cust_list" placeholder="Type or select customer">
+<form method="post" enctype="multipart/form-data" id="rfqForm" onsubmit="preSubmit()">
+<div class="ss-wrap">
+    
+    <!-- TOP CONTROLS -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:24px;font-weight:bold;display:flex;align-items:center;gap:10px">
+            RFQ
+            <button type="submit" class="btn primary sm" style="border-radius:0;margin-left:20px">Save Changes</button>
+        </div>
+        <div style="color:green;font-weight:bold">
+            {% if e %}✅ Saved: {{ e.updated_at[:16] }}{% else %}✨ New RFQ{% endif %}
+        </div>
+    </div>
+
+    <!-- MAIN GRID: Left details, Right Summary -->
+    <div style="display:flex;gap:10px;margin-bottom:10px">
+        <!-- LEFT -->
+        <div style="flex:2;display:flex;flex-direction:column;gap:2px">
+            <div class="ss-row">
+                <div class="ss-label w-120">Client Name</div>
+                <div class="flex-1">
+                    <input type="text" name="client_name" class="ss-input" required value="{{ e.client_name if e else '' }}" list="cust_list">
                     <datalist id="cust_list">
                         {% for c in customers %}<option value="{{ c.company_name or c.name }}">{% endfor %}
                     </datalist>
                 </div>
-                <div class="field">
-                    <label>Job Code</label>
-                    <select name="job_code">
-                        <option value="">—</option>
+            </div>
+            <div class="ss-row">
+                <div class="ss-label w-120">Job Code</div>
+                <div class="flex-1">
+                    <select name="job_code" class="ss-input">
+                        <option value=""></option>
                         {% for v in lists.job_code %}<option value="{{ v }}" {{ 'selected' if e and e.job_code == v }}>{{ v }}</option>{% endfor %}
                     </select>
                 </div>
-                <div class="field">
-                    <label>Job Title</label>
-                    <select name="job_title">
-                        <option value="">—</option>
+                <div class="ss-label w-80">Job Title</div>
+                <div class="flex-1">
+                    <select name="job_title" class="ss-input">
+                        <option value=""></option>
                         {% for v in lists.job_title %}<option value="{{ v }}" {{ 'selected' if e and e.job_title == v }}>{{ v }}</option>{% endfor %}
                     </select>
                 </div>
             </div>
-            <div class="form-row">
-                <div class="field">
-                    <label>Location</label>
-                    <input type="text" name="location" value="{{ e.location if e else '' }}" placeholder="e.g. Shah Alam">
-                </div>
-                <div class="field">
-                    <label>State</label>
-                    <input type="text" name="state" value="{{ e.state if e else '' }}" placeholder="e.g. Selangor">
-                </div>
-                <div class="field">
-                    <label>Date</label>
-                    <input type="date" name="date" value="{{ e.date if e else '' }}">
-                    {% if e and e.date %}<div style="font-size:11px;color:var(--accent-2);margin-top:2px">Format: {{ e.date|fmt_date }}</div>{% endif %}
-                </div>
+            <div class="ss-row">
+                <div class="ss-label w-120">Location</div>
+                <div class="flex-1"><input type="text" name="location" class="ss-input" value="{{ e.location if e else '' }}"></div>
+                <div class="ss-label w-80">State</div>
+                <div class="flex-1"><input type="text" name="state" class="ss-input" value="{{ e.state if e else '' }}"></div>
             </div>
-            <div class="form-row">
-                <div class="field">
-                    <label>Person In Charge</label>
-                    <input type="text" name="person_in_charge" value="{{ e.person_in_charge if e else '' }}">
-                </div>
-                <div class="field">
-                    <label>Contact Number</label>
-                    <input type="text" name="contact_number" value="{{ e.contact_number if e else '' }}">
-                </div>
-                <div class="field">
-                    <label>Email</label>
-                    <input type="email" name="email" value="{{ e.email if e else '' }}">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="field">
-                    <label>Job Status</label>
-                    <select name="job_status">
-                        {% for v in lists.job_status %}<option value="{{ v }}" {{ 'selected' if e and e.job_status == v }}>{{ v }}</option>{% endfor %}
-                    </select>
-                </div>
-                <div class="field">
-                    <label>Level / Priority</label>
-                    <select name="level">
-                        <option value="">—</option>
-                        {% for v in lists.level %}<option value="{{ v }}" {{ 'selected' if e and e.level == v }}>{{ v }}</option>{% endfor %}
-                    </select>
-                </div>
-                <div class="field">
-                    <label>Open By</label>
-                    <select name="open_by">
-                        <option value="">—</option>
-                        {% for v in lists.open_by %}<option value="{{ v }}" {{ 'selected' if e and e.open_by == v }}>{{ v }}</option>{% endfor %}
-                    </select>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="field">
-                    <label>Introducer</label>
-                    <select name="introducer">
-                        <option value="">—</option>
+            <div class="ss-row">
+                <div class="ss-label w-120">Person In Charge</div>
+                <div class="flex-1"><input type="text" name="person_in_charge" class="ss-input" value="{{ e.person_in_charge if e else '' }}"></div>
+                <div class="ss-label w-80">Introducer</div>
+                <div class="flex-1">
+                    <select name="introducer" class="ss-input">
+                        <option value=""></option>
                         {% for v in lists.introducer %}<option value="{{ v }}" {{ 'selected' if e and e.introducer == v }}>{{ v }}</option>{% endfor %}
                     </select>
                 </div>
-                <div class="field">
-                    <label>Source / Maincon</label>
-                    <select name="source">
-                        <option value="">—</option>
+            </div>
+            <div class="ss-row">
+                <div class="ss-label w-120">Contact Number</div>
+                <div class="flex-1"><input type="text" name="contact_number" class="ss-input" value="{{ e.contact_number if e else '' }}"></div>
+                <div class="ss-label w-80">Source</div>
+                <div class="flex-1">
+                    <select name="source" class="ss-input">
+                        <option value=""></option>
                         {% for v in lists.source %}<option value="{{ v }}" {{ 'selected' if e and e.source == v }}>{{ v }}</option>{% endfor %}
                     </select>
                 </div>
-                <div class="field">
-                    <label>Map / Location Link</label>
-                    <input type="url" name="map_link" value="{{ e.map_link if e else '' }}" placeholder="https://maps.google.com/...">
+            </div>
+            <div class="ss-row">
+                <div class="ss-label w-120">Email</div>
+                <div class="flex-1"><input type="text" name="email" class="ss-input" value="{{ e.email if e else '' }}"></div>
+                <div class="ss-label w-80">Date</div>
+                <div class="flex-1"><input type="date" name="date" class="ss-input" value="{{ e.date if e else '' }}"></div>
+            </div>
+            <div class="ss-row">
+                <div class="ss-label w-120">Job Status</div>
+                <div class="flex-1">
+                    <select name="job_status" class="ss-input" style="background:var(--ss-yellow)">
+                        <option value=""></option>
+                        {% for v in lists.job_status %}<option value="{{ v }}" {{ 'selected' if e and e.job_status == v }}>{{ v }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="ss-label w-80">Open by</div>
+                <div class="flex-1">
+                    <select name="open_by" class="ss-input">
+                        <option value=""></option>
+                        {% for v in open_by_people %}<option value="{{ v }}" {{ 'selected' if e and e.open_by == v }}>{{ v }}</option>{% endfor %}
+                    </select>
                 </div>
             </div>
-            <div class="field">
-                <label>Notes</label>
-                <textarea name="notes" rows="2" style="width:100%">{{ e.notes if e else '' }}</textarea>
+            <div class="ss-row">
+                <div class="ss-label w-120">Level / Priority</div>
+                <div class="flex-1">
+                    <select name="level" class="ss-input" style="background:var(--ss-yellow)">
+                        <option value=""></option>
+                        {% for v in lists.level %}<option value="{{ v }}" {{ 'selected' if e and e.level == v }}>{{ v }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="ss-label w-80">Folder (Auto)</div>
+                <div class="flex-1"><input type="text" class="ss-input readonly" readonly value="{{ e.rfq_id if e else 'RFQ-YYXXX' }}"></div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Logo & Summary -->
+        <div style="flex:1;display:flex;flex-direction:column;align-items:flex-end">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" style="max-height:60px;margin-bottom:10px" alt="Tijarah Mabrur">
+            <div style="width:100%;max-width:320px">
+                <div class="ss-label" style="justify-content:center;font-size:12px">QUOTE & COST SUMMARY</div>
+                <table class="ss-table" style="margin:0">
+                    <tr>
+                        <td style="background:var(--ss-hdr);color:var(--ss-hdr-txt);font-weight:bold">TOTAL QUOTE</td>
+                        <td class="readonly" style="width:100px" id="lbl_total_quote">RM 0.00</td>
+                    </tr>
+                    <tr>
+                        <td style="background:var(--ss-hdr);color:var(--ss-hdr-txt);font-weight:bold">TOTAL COST</td>
+                        <td class="readonly" id="lbl_total_cost">RM 0.00</td>
+                    </tr>
+                    <tr>
+                        <td style="background:var(--ss-blue);color:#fff;font-weight:bold">DEPOSIT <input type="number" name="deposit_pct" id="inp_deposit_pct" class="ss-input num" style="width:40px;display:inline-block;padding:1px;background:#fff;color:#000" value="{{ e.deposit_pct if e else 0 }}"> %</td>
+                        <td class="readonly" id="lbl_deposit_amt">RM 0.00</td>
+                    </tr>
+                    <tr>
+                        <td style="background:var(--ss-blue);color:#fff;font-weight:bold">BALANCE <span id="lbl_balance_pct">100%</span></td>
+                        <td class="readonly" id="lbl_balance_amt">RM 0.00</td>
+                    </tr>
+                    <tr>
+                        <td style="background:var(--ss-hdr);color:var(--ss-hdr-txt);font-weight:bold">TOTAL COMMISSION</td>
+                        <td class="readonly" id="lbl_total_comm">RM 0.00</td>
+                    </tr>
+                    <tr>
+                        <td style="background:var(--ss-hdr);color:var(--ss-hdr-txt);font-weight:bold">COMPANY NET PROFIT</td>
+                        <td class="readonly" id="lbl_net_profit" style="background:#fff">RM 0.00</td>
+                    </tr>
+                </table>
+                <input type="hidden" name="amount" id="hid_total_quote" value="{{ e.amount if e else 0 }}">
+                <input type="hidden" name="total_cost" id="hid_total_cost" value="{{ e.total_cost if e else 0 }}">
+                <input type="hidden" name="commission" id="hid_total_comm" value="{{ e.commission if e else 0 }}">
+                <input type="hidden" name="net_profit" id="hid_net_profit" value="{{ e.net_profit if e else 0 }}">
+                <input type="hidden" name="gross_profit" id="hid_gross_profit" value="{{ e.gross_profit if e else 0 }}">
             </div>
         </div>
     </div>
 
-    <!-- 2. MACHINERY SUMMARY -->
-    <div class="panel">
-        <div class="panel-head"><h3>2. Machinery Summary</h3></div>
-        <div class="panel-body">
-            <div class="form-row">
-                <div class="field">
-                    <label>PMT Unit</label>
-                    <input type="number" name="machinery_pmt" value="{{ e.machinery_pmt if e else 0 }}" min="0" onchange="calcMachineryTotal()">
-                </div>
-                <div class="field">
-                    <label>PMA Unit</label>
-                    <input type="number" name="machinery_pma" value="{{ e.machinery_pma if e else 0 }}" min="0" onchange="calcMachineryTotal()">
-                </div>
-                <div class="field">
-                    <label>PMD Unit</label>
-                    <input type="number" name="machinery_pmd" value="{{ e.machinery_pmd if e else 0 }}" min="0" onchange="calcMachineryTotal()">
-                </div>
-                <div class="field">
-                    <label>General Unit</label>
-                    <input type="number" name="machinery_general" value="{{ e.machinery_general if e else 0 }}" min="0" onchange="calcMachineryTotal()">
-                </div>
-                <div class="field">
-                    <label>Other Unit</label>
-                    <input type="number" name="machinery_other" value="{{ e.machinery_other if e else 0 }}" min="0" onchange="calcMachineryTotal()">
-                </div>
-                <div class="field">
-                    <label>Total Unit</label>
-                    <input type="number" id="machinery_total" readonly value="{{ (e.machinery_pmt + e.machinery_pma + e.machinery_pmd + e.machinery_general + e.machinery_other) if e else 0 }}" style="background:#eee;font-weight:700">
-                </div>
+    <!-- MACHINERY ROW -->
+    <div class="ss-label">MACHINERY</div>
+    <table class="ss-table">
+        <tr>
+            <th>Total Unit</th>
+            <th>PMT</th>
+            <th>PMA</th>
+            <th>PMD</th>
+            <th>General</th>
+            <th>Other</th>
+        </tr>
+        <tr>
+            <td class="readonly" id="lbl_machinery_total" style="text-align:center">0</td>
+            <td><input type="number" name="machinery_pmt" class="num mach-inp" value="{{ e.machinery_pmt if e else 0 }}"></td>
+            <td><input type="number" name="machinery_pma" class="num mach-inp" value="{{ e.machinery_pma if e else 0 }}"></td>
+            <td><input type="number" name="machinery_pmd" class="num mach-inp" value="{{ e.machinery_pmd if e else 0 }}"></td>
+            <td><input type="number" name="machinery_general" class="num mach-inp" value="{{ e.machinery_general if e else 0 }}"></td>
+            <td><input type="number" name="machinery_other" class="num mach-inp" value="{{ e.machinery_other if e else 0 }}"></td>
+        </tr>
+    </table>
+
+    <div style="display:flex;gap:10px;margin-bottom:10px">
+        <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+            <div>
+                <div class="ss-label">ISSUE</div>
+                <textarea name="issue_notes" class="ss-input" style="height:200px">{{ e.issue_notes if e else '' }}</textarea>
+            </div>
+            <div>
+                <div class="ss-label">PROGRESS & UPDATE</div>
+                <textarea name="progress_notes" class="ss-input" style="height:150px">{{ e.progress_notes if e else '' }}</textarea>
+            </div>
+            <div>
+                <div class="ss-label">TERM & CONDITION</div>
+                <textarea name="terms_conditions" class="ss-input" style="height:100px">{{ e.terms_conditions if e else '' }}</textarea>
+            </div>
+            <div>
+                <div class="ss-label">SUMMARY & SOLUTION</div>
+                <textarea name="remark_text" class="ss-input" style="height:150px">{{ e.remark_text if e else '' }}</textarea>
             </div>
         </div>
-    </div>
 
-    <!-- 3. ISSUE, PROGRESS & TERMS -->
-    <div class="panel">
-        <div class="panel-head"><h3>3. Issue, Progress & Terms</h3></div>
-        <div class="panel-body">
-            <div class="form-row">
-                <div class="field">
-                    <label>Issue</label>
-                    <textarea name="issue_notes" rows="3" style="width:100%" placeholder="Describe any issues...">{{ e.issue_notes if e else '' }}</textarea>
-                </div>
-                <div class="field">
-                    <label>Progress & Update</label>
-                    <textarea name="progress_notes" rows="3" style="width:100%" placeholder="Latest progress updates...">{{ e.progress_notes if e else '' }}</textarea>
-                </div>
-            </div>
-            <div class="field" style="margin-top:10px">
-                <label>Terms & Conditions</label>
-                <textarea name="terms_conditions" rows="3" style="width:100%" placeholder="1. Payment terms...&#10;2. Validity...">{{ e.terms_conditions if e else '' }}</textarea>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. SUMMARY & SOLUTION / REMARK (WITH IMAGE) -->
-    <!-- 4. SUMMARY & SOLUTION / REMARK (WITH IMAGE PASTE SUPPORT) -->
-    <div class="panel">
-        <div class="panel-head"><h3>4. Summary & Solution / Remark (Copy-Paste Image 📋)</h3></div>
-        <div class="panel-body">
-            <div class="field">
-                <label>Remark / Solution Description</label>
-                <textarea name="remark_text" rows="3" style="width:100%" placeholder="Add summary, solution, or remark details...">{{ e.remark_text if e else '' }}</textarea>
-            </div>
+        <!-- RIGHT TABLES -->
+        <div style="flex:1.5;display:flex;flex-direction:column;gap:10px">
             
-            <div class="field" style="margin-top:14px">
-                <label>Remark Image — 📋 Copy & Paste Image (Ctrl+V) / Drop Image / Upload</label>
-                <div id="pasteDropArea" tabindex="0" style="border:2px dashed var(--accent);border-radius:10px;padding:22px;text-align:center;background:#f4f9ff;cursor:pointer;transition:.2s;outline:none">
-                    <span style="font-size:28px">📋 📷</span>
-                    <div style="font-weight:700;color:var(--accent-2);margin-top:6px;font-size:14px">Click here & press Ctrl + V to paste copied image directly!</div>
-                    <div style="font-size:12px;color:var(--muted);margin-top:4px">Or drag &amp; drop image file here</div>
-                    <input type="hidden" name="remark_image_base64" id="remark_image_base64" value="">
-                </div>
-            </div>
-
-            <div class="form-row" style="margin-top:12px">
-                <div class="field">
-                    <label>Or Choose File from Computer</label>
-                    <input type="file" name="remark_image_file" id="remark_file_input" accept="image/*" onchange="previewFileImage(this)">
-                </div>
-                <div class="field">
-                    <label>Or Image URL</label>
-                    <input type="url" name="remark_image" id="remark_url_input" value="{{ e.remark_image if e else '' }}" placeholder="https://..." onchange="previewUrlImage(this)">
-                </div>
-            </div>
-
-            <div id="remark_preview_wrap" style="margin-top:14px;{{ 'display:block' if (e and e.remark_image) else 'display:none' }}">
-                <label style="font-size:12px;color:var(--muted);font-weight:600">Image Preview:</label><br>
-                <div style="position:relative;display:inline-block;margin-top:6px">
-                    {% if e and e.remark_image %}
-                        {% if e.remark_image.startswith('http') or e.remark_image.startswith('data:') %}
-                        <img id="remark_preview" src="{{ e.remark_image }}" style="max-height:260px;border-radius:10px;border:1px solid var(--line);box-shadow:var(--shadow)">
-                        {% else %}
-                        <img id="remark_preview" src="{{ url_for('serve_rfq_img', filename=e.remark_image) }}" style="max-height:260px;border-radius:10px;border:1px solid var(--line);box-shadow:var(--shadow)">
-                        {% endif %}
-                    {% else %}
-                        <img id="remark_preview" src="" style="max-height:260px;border-radius:10px;border:1px solid var(--line);box-shadow:var(--shadow)">
-                    {% endif %}
-                    <button type="button" onclick="clearRemarkImg()" title="Remove image" style="position:absolute;top:8px;right:8px;background:rgba(224,69,58,0.9);color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-weight:800;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,0.2)">✕</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 5. QUOTE ITEMS -->
-    <div class="panel">
-        <div class="panel-head"><h3>5. Quote Items</h3></div>
-        <div class="panel-body">
-            <table class="tbl" id="quoteTable">
-                <thead>
-                    <tr><th style="width:40px">NO</th><th>ITEM DESCRIPTION</th><th style="width:80px">QTY</th><th style="width:120px">PRICE (RM)</th><th style="width:80px">DAY</th><th style="width:130px">AMOUNT (RM)</th><th style="width:50px"></th></tr>
-                </thead>
-                <tbody id="quoteBody">
-                    {% if e and items %}
-                    {% for it in items %}
-                    <tr>
-                        <td>{{ loop.index }}</td>
-                        <td><input type="text" name="item_desc[]" value="{{ it.description }}" style="width:100%"></td>
-                        <td><input type="number" name="item_qty[]" value="{{ it.qty }}" min="1" style="width:100%" onchange="calcRow(this)"></td>
-                        <td><input type="number" name="item_price[]" value="{{ it.unit_price }}" step="0.01" style="width:100%" onchange="calcRow(this)"></td>
-                        <td><input type="number" name="item_days[]" value="{{ it.days }}" min="1" style="width:100%" onchange="calcRow(this)"></td>
-                        <td class="row-amount" style="text-align:right;font-weight:600">{{ '{:,.2f}'.format(it.amount or 0) }}</td>
-                        <td><button type="button" class="btn sm danger" onclick="this.closest('tr').remove();renum()">✕</button></td>
-                    </tr>
-                    {% endfor %}
-                    {% else %}
-                    <tr>
-                        <td>1</td>
-                        <td><input type="text" name="item_desc[]" style="width:100%" placeholder="Description"></td>
-                        <td><input type="number" name="item_qty[]" value="1" min="1" style="width:100%" onchange="calcRow(this)"></td>
-                        <td><input type="number" name="item_price[]" value="0" step="0.01" style="width:100%" onchange="calcRow(this)"></td>
-                        <td><input type="number" name="item_days[]" value="1" min="1" style="width:100%" onchange="calcRow(this)"></td>
-                        <td class="row-amount" style="text-align:right;font-weight:600">0.00</td>
-                        <td><button type="button" class="btn sm danger" onclick="this.closest('tr').remove();renum()">✕</button></td>
-                    </tr>
-                    {% endif %}
-                </tbody>
-            </table>
-            <button type="button" class="btn ghost sm" onclick="addRow()" style="margin-top:10px">+ Add Item</button>
-        </div>
-    </div>
-
-    <!-- 6. QUOTE & COST SUMMARY -->
-    <div class="panel">
-        <div class="panel-head"><h3>6. Quote & Cost Summary</h3></div>
-        <div class="panel-body">
-            <div class="form-row">
-                <div class="field">
-                    <label>Total Amount / Quote (RM)</label>
-                    <input type="number" name="amount" id="fld_amount" step="0.01" value="{{ e.amount if e else 0 }}" onchange="recalcSummary()">
-                </div>
-                <div class="field">
-                    <label>Total Cost (RM)</label>
-                    <input type="number" name="total_cost" id="fld_cost" step="0.01" value="{{ e.total_cost if e else 0 }}" onchange="recalcSummary()">
-                </div>
-                <div class="field">
-                    <label>Deposit %</label>
-                    <input type="number" name="deposit_pct" id="fld_deposit" step="0.01" value="{{ e.deposit_pct if e else 0 }}" onchange="recalcSummary()">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 7. COMMISSION BREAKDOWN -->
-    <div class="panel">
-        <div class="panel-head"><h3>7. Commission Breakdown</h3></div>
-        <div class="panel-body">
-            <!-- Introducer Commission -->
-            <div style="background:#f8fbff;border-radius:8px;padding:14px;margin-bottom:14px;border-left:4px solid #01a0ff">
-                <h4 style="margin:0 0 8px;font-size:14px;color:#0077c8">🤝 Introducer Commission</h4>
-                <div class="form-row">
-                    <div class="field">
-                        <label>Introducer</label>
-                        <input type="text" value="{{ e.introducer if e else '' }}" disabled style="background:#eee">
-                    </div>
-                    <div class="field">
-                        <label>Commission %</label>
-                        <input type="number" name="introducer_comm_pct" id="fld_intro_pct" step="0.01" value="{{ e.introducer_comm_pct if e else 0 }}" onchange="recalcSummary()">
-                    </div>
-                    <div class="field">
-                        <label>Commission Amount (RM)</label>
-                        <input type="number" name="introducer_comm_amt" id="fld_intro_amt" step="0.01" value="{{ e.introducer_comm_amt if e else 0 }}">
-                    </div>
-                </div>
-            </div>
-            <!-- Manager / Sales Commission -->
-            <div style="background:#f8fff8;border-radius:8px;padding:14px;margin-bottom:14px;border-left:4px solid #4caf50">
-                <h4 style="margin:0 0 8px;font-size:14px;color:#2e7d32">👔 Manager / Sales Commission</h4>
-                <div class="form-row">
-                    <div class="field">
-                        <label>Commission %</label>
-                        <input type="number" name="manager_comm_pct" id="fld_mgr_pct" step="0.01" value="{{ e.manager_comm_pct if e else 0 }}" onchange="recalcSummary()">
-                    </div>
-                    <div class="field">
-                        <label>Commission Amount (RM)</label>
-                        <input type="number" name="manager_comm_amt" id="fld_mgr_amt" step="0.01" value="{{ e.manager_comm_amt if e else 0 }}">
-                    </div>
-                </div>
-            </div>
-            <!-- Teamwork Commission -->
-            <div style="background:#fdf8ff;border-radius:8px;padding:14px;border-left:4px solid #9c27b0">
-                <h4 style="margin:0 0 8px;font-size:14px;color:#7b1fa2">👥 Teamwork Commission</h4>
-                <table class="tbl" style="font-size:13px" id="tcTable">
-                    <thead><tr><th>Person Name</th><th style="width:100px">%</th><th style="width:140px">Amount (RM)</th><th style="width:50px"></th></tr></thead>
-                    <tbody id="tcBody">
-                        {% if team_comms %}
-                        {% for tc in team_comms %}
-                        <tr>
-                            <td>
-                                <select name="tc_name[]" style="width:100%">
-                                    <option value="">— Select —</option>
-                                    {% for p in open_by_people %}<option value="{{ p }}" {{ 'selected' if tc.person_name == p }}>{{ p }}</option>{% endfor %}
-                                </select>
-                            </td>
-                            <td><input type="number" name="tc_pct[]" step="0.01" value="{{ tc.percentage }}" style="width:100%" onchange="calcTcRow(this)"></td>
-                            <td><input type="number" name="tc_amt[]" step="0.01" value="{{ tc.amount }}" style="width:100%"></td>
-                            <td><button type="button" class="btn sm danger" onclick="this.closest('tr').remove()">✕</button></td>
+            <!-- QUOTE TABLE -->
+            <div>
+                <div class="ss-label">QUOTE</div>
+                <table class="ss-table" id="quoteTbl">
+                    <tr><th class="w-50 q-hdr">NO</th><th class="q-hdr">ITEM</th><th class="w-50 q-hdr">QTY</th><th class="w-80 q-hdr">PRICE</th><th class="w-50 q-hdr">DAY</th><th class="w-80 q-hdr">AMOUNT</th></tr>
+                    {% if items %}
+                        {% for i in items %}
+                        <tr class="q-row">
+                            <td class="readonly">{{ loop.index }}</td>
+                            <td><input type="text" name="item_desc[]" value="{{ i.description }}"></td>
+                            <td><input type="number" name="item_qty[]" class="num q-qty" value="{{ i.qty }}"></td>
+                            <td><input type="number" name="item_price[]" step="0.01" class="num q-price" value="{{ i.unit_price }}"></td>
+                            <td><input type="number" name="item_days[]" class="num q-days" value="{{ i.days }}"></td>
+                            <td class="readonly q-amt">0.00</td>
                         </tr>
                         {% endfor %}
-                        {% endif %}
-                    </tbody>
+                    {% endif %}
+                    <!-- Always pad up to 20 rows total -->
+                    {% for i in range((items|length if items else 0) + 1, 21) %}
+                    <tr class="q-row">
+                        <td class="readonly">{{ i }}</td>
+                        <td><input type="text" name="item_desc[]"></td>
+                        <td><input type="number" name="item_qty[]" class="num q-qty" value="1"></td>
+                        <td><input type="number" name="item_price[]" step="0.01" class="num q-price" value="0.00"></td>
+                        <td><input type="number" name="item_days[]" class="num q-days" value="1"></td>
+                        <td class="readonly q-amt">0.00</td>
+                    </tr>
+                    {% endfor %}
                 </table>
-                <button type="button" class="btn ghost sm" onclick="addTcRow()" style="margin-top:10px">+ Add Person</button>
             </div>
-        </div>
-    </div>
 
-    <!-- 8. PROFIT SUMMARY -->
-    <div class="panel">
-        <div class="panel-head"><h3>8. Profit Summary</h3></div>
-        <div class="panel-body">
-            <div class="form-row">
-                <div class="field">
-                    <label>Gross Profit (RM)</label>
-                    <input type="number" name="gross_profit" id="fld_gross" step="0.01" value="{{ e.gross_profit if e else 0 }}">
-                </div>
-                <div class="field">
-                    <label>Total Commission (RM)</label>
-                    <input type="number" name="commission" id="fld_total_comm" step="0.01" value="{{ e.commission if e else 0 }}">
-                </div>
-                <div class="field">
-                    <label>Company Net Profit (RM)</label>
-                    <input type="number" name="net_profit" id="fld_net" step="0.01" value="{{ e.net_profit if e else 0 }}" style="font-weight:700;color:#0077c8;font-size:16px">
+            <!-- COST SUBCON TABLE -->
+            <div>
+                <div class="ss-label">COST (Supplier/Subcon)</div>
+                <table class="ss-table" id="csTbl">
+                    <tr><th class="w-50 c-hdr">NO</th><th class="c-hdr">ITEM</th><th class="w-50 c-hdr">QTY</th><th class="w-80 c-hdr">PRICE</th><th class="w-50 c-hdr">DAY</th><th class="w-80 c-hdr">AMOUNT</th></tr>
+                    <!-- Subcon rows dynamically generated via JS based on JSON -->
+                </table>
+                <div style="background:var(--ss-green);color:#fff;font-weight:bold;padding:4px;text-align:right">
+                    TOTAL COST (Supplier/Subcon): RM <span id="lbl_cs_total">0.00</span>
                 </div>
             </div>
+
+            <!-- COST COMPANY TABLE -->
+            <div>
+                <div class="ss-label">COST (Company)</div>
+                <table class="ss-table" id="ccTbl">
+                    <tr><th class="w-50 c2-hdr">NO</th><th class="c2-hdr">ITEM</th><th class="w-50 c2-hdr">QTY</th><th class="w-80 c2-hdr">PRICE</th><th class="w-50 c2-hdr">DAY</th><th class="w-80 c2-hdr">AMOUNT</th></tr>
+                    <!-- Company rows dynamically generated via JS -->
+                </table>
+                <div style="background:var(--ss-blue);color:#fff;font-weight:bold;padding:4px;text-align:right">
+                    TOTAL COST (Company): RM <span id="lbl_cc_total">0.00</span>
+                </div>
+            </div>
+
+            <!-- SUMMARY BOARD -->
+            <div style="margin-top:20px;border:2px solid var(--ss-border);background:#fff">
+                <div class="ss-label" style="background:#ddd;color:#000">SUMMARY</div>
+                <table class="ss-table" style="margin:0;border:none">
+                    <tr>
+                        <td style="font-weight:bold">Total Quote</td>
+                        <td class="readonly w-120" id="s_tq">RM 0.00</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:bold">(-) Total Cost</td>
+                        <td class="readonly" id="s_tc">RM 0.00</td>
+                    </tr>
+                    <tr>
+                        <td style="background:var(--ss-hdr);color:var(--ss-hdr-txt);font-weight:bold">GROSS MARGIN (+/-)</td>
+                        <td class="readonly" id="s_gm" style="background:var(--ss-hdr);color:var(--ss-hdr-txt)">RM 0.00</td>
+                    </tr>
+                    <tr>
+                        <td style="display:flex;align-items:center;border:none;gap:10px">
+                            <span>(-) Introducer Commission</span>
+                            <input type="number" name="introducer_comm_pct" id="inp_icp" class="ss-input num" style="width:50px" value="{{ e.introducer_comm_pct if e else 0 }}"> %
+                        </td>
+                        <td class="readonly" id="s_ic">RM 0.00</td>
+                    </tr>
+                    <tr>
+                        <td style="display:flex;align-items:center;border:none;gap:10px">
+                            <span>(-) Personal Sales Commission</span>
+                            <input type="number" name="manager_comm_pct" id="inp_pcp" class="ss-input num" style="width:50px" value="{{ e.manager_comm_pct if e else 0 }}"> %
+                        </td>
+                        <td class="readonly" id="s_pc">RM 0.00</td>
+                    </tr>
+                    <tr>
+                        <td style="background:var(--ss-hdr);color:var(--ss-hdr-txt);font-weight:bold">COMPANY GROSS PROFIT</td>
+                        <td class="readonly" id="s_cgp" style="background:var(--ss-hdr);color:var(--ss-hdr-txt)">RM 0.00</td>
+                    </tr>
+                </table>
+                
+                <div class="ss-label" style="background:#eee;color:#000;border-top:2px solid var(--ss-border);border-bottom:none">(-) Teamwork Commission</div>
+                <table class="ss-table" id="tcTbl" style="margin:0;border:none">
+                    <tr>
+                        <td style="width:30px" class="readonly">#</td>
+                        <td><input type="text" placeholder="Name" class="tc-name"></td>
+                        <td class="w-80"><input type="number" step="0.01" placeholder="Amt" class="num tc-amt"></td>
+                    </tr>
+                </table>
+
+                <table class="ss-table" style="margin:0;border-top:2px solid var(--ss-border)">
+                    <tr>
+                        <td style="background:var(--ss-hdr);color:var(--ss-hdr-txt);font-weight:bold">TOTAL COMMISSION</td>
+                        <td class="readonly w-120" id="s_tcomm" style="background:var(--ss-hdr);color:var(--ss-hdr-txt)">RM 0.00</td>
+                    </tr>
+                    <tr>
+                        <td style="background:var(--ss-hdr);color:var(--ss-hdr-txt);font-weight:bold">COMPANY NET PROFIT</td>
+                        <td class="readonly" id="s_np" style="background:var(--ss-hdr);color:var(--ss-hdr-txt)">RM 0.00</td>
+                    </tr>
+                </table>
+            </div>
+            
         </div>
     </div>
-
-    <button class="btn" type="submit" style="margin-bottom:40px">{{ '💾 Update RFQ' if e else '✅ Create RFQ' }}</button>
+    
+    <input type="hidden" name="cost_subcon_json" id="hid_cs_json">
+    <input type="hidden" name="cost_company_json" id="hid_cc_json">
+    <!-- Team commissions -->
+    <div id="tc_container"></div>
+</div>
 </form>
 
 <script>
-var tcPeople = {{ open_by_people|tojson }};
-function calcMachineryTotal() {
-    var pmt = parseInt(document.querySelector('[name="machinery_pmt"]').value) || 0;
-    var pma = parseInt(document.querySelector('[name="machinery_pma"]').value) || 0;
-    var pmd = parseInt(document.querySelector('[name="machinery_pmd"]').value) || 0;
-    var gen = parseInt(document.querySelector('[name="machinery_general"]').value) || 0;
-    var oth = parseInt(document.querySelector('[name="machinery_other"]').value) || 0;
-    document.getElementById('machinery_total').value = pmt + pma + pmd + gen + oth;
+// Load JSON data
+let csData = JSON.parse('{{ e.cost_subcon_json|safe if e and e.cost_subcon_json else "[]" }}');
+let ccData = JSON.parse('{{ e.cost_company_json|safe if e and e.cost_company_json else "[]" }}');
+// Convert tc to json for js rendering
+let tcData = [
+    {% for tc in team_comms %}{ name: "{{ tc.person_name }}", amt: {{ tc.amount }} },{% endfor %}
+];
+
+function padArray(arr, len) {
+    while(arr.length < len) arr.push({ desc: '', qty: 1, price: 0, days: 1 });
+    return arr;
 }
-function addRow() {
-    var tbody = document.getElementById('quoteBody');
-    var n = tbody.rows.length + 1;
-    var tr = document.createElement('tr');
-    tr.innerHTML = '<td>'+n+'</td><td><input type="text" name="item_desc[]" style="width:100%"></td><td><input type="number" name="item_qty[]" value="1" min="1" style="width:100%" onchange="calcRow(this)"></td><td><input type="number" name="item_price[]" value="0" step="0.01" style="width:100%" onchange="calcRow(this)"></td><td><input type="number" name="item_days[]" value="1" min="1" style="width:100%" onchange="calcRow(this)"></td><td class="row-amount" style="text-align:right;font-weight:600">0.00</td><td><button type="button" class="btn sm danger" onclick="this.closest(\'tr\').remove();renum()">✕</button></td>';
-    tbody.appendChild(tr);
-}
-function renum() {
-    var rows = document.getElementById('quoteBody').rows;
-    for (var i = 0; i < rows.length; i++) rows[i].cells[0].innerText = i + 1;
-}
-function calcRow(el) {
-    var tr = el.closest('tr');
-    var qty = parseFloat(tr.querySelector('[name="item_qty[]"]').value) || 0;
-    var price = parseFloat(tr.querySelector('[name="item_price[]"]').value) || 0;
-    var days = parseFloat(tr.querySelector('[name="item_days[]"]').value) || 1;
-    tr.querySelector('.row-amount').innerText = (qty * price * days).toFixed(2);
-    recalcSummary();
-}
-function addTcRow() {
-    var tbody = document.getElementById('tcBody');
-    var tr = document.createElement('tr');
-    var opts = '<option value="">— Select —</option>';
-    tcPeople.forEach(function(p) { opts += '<option value="'+p+'">'+p+'</option>'; });
-    tr.innerHTML = '<td><select name="tc_name[]" style="width:100%">'+opts+'</select></td><td><input type="number" name="tc_pct[]" step="0.01" value="0" style="width:100%" onchange="calcTcRow(this)"></td><td><input type="number" name="tc_amt[]" step="0.01" value="0" style="width:100%"></td><td><button type="button" class="btn sm danger" onclick="this.closest(\'tr\').remove()">✕</button></td>';
-    tbody.appendChild(tr);
-}
-function calcTcRow(el) {
-    var tr = el.closest('tr');
-    var pct = parseFloat(tr.querySelector('[name="tc_pct[]"]').value) || 0;
-    var grossProfit = parseFloat(document.getElementById('fld_gross').value) || 0;
-    tr.querySelector('[name="tc_amt[]"]').value = (grossProfit * pct / 100).toFixed(2);
-    recalcSummary();
-}
-function recalcSummary() {
-    // Sum quote table items if amount not set manually
-    var itemsSum = 0;
-    document.querySelectorAll('.row-amount').forEach(function(td) { itemsSum += parseFloat(td.innerText) || 0; });
-    var amountInp = document.getElementById('fld_amount');
-    if (itemsSum > 0) { amountInp.value = itemsSum.toFixed(2); }
-    var amount = parseFloat(amountInp.value) || 0;
-    var cost = parseFloat(document.getElementById('fld_cost').value) || 0;
-    var gross = amount - cost;
-    document.getElementById('fld_gross').value = gross.toFixed(2);
-    var introPct = parseFloat(document.getElementById('fld_intro_pct').value) || 0;
-    document.getElementById('fld_intro_amt').value = (gross * introPct / 100).toFixed(2);
-    var mgrPct = parseFloat(document.getElementById('fld_mgr_pct').value) || 0;
-    document.getElementById('fld_mgr_amt').value = (gross * mgrPct / 100).toFixed(2);
-    var introAmt = parseFloat(document.getElementById('fld_intro_amt').value) || 0;
-    var mgrAmt = parseFloat(document.getElementById('fld_mgr_amt').value) || 0;
-    var tcTotal = 0;
-    document.querySelectorAll('[name="tc_amt[]"]').forEach(function(inp) { tcTotal += parseFloat(inp.value) || 0; });
-    document.getElementById('fld_total_comm').value = (introAmt + mgrAmt + tcTotal).toFixed(2);
-    document.getElementById('fld_net').value = (gross - introAmt - mgrAmt - tcTotal).toFixed(2);
+function padTc(arr, len) {
+    while(arr.length < len) arr.push({ name: '', amt: 0 });
+    return arr;
 }
 
-// ── Image Clipboard Paste & Drag-and-Drop Handler ──
-const pasteArea = document.getElementById('pasteDropArea');
-const b64Input = document.getElementById('remark_image_base64');
-const previewImg = document.getElementById('remark_preview');
-const previewWrap = document.getElementById('remark_preview_wrap');
+csData = padArray(csData, 10);
+ccData = padArray(ccData, 5);
+tcData = padTc(tcData, 5);
 
-function handleImageBlob(blob) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        b64Input.value = e.target.result;
-        previewImg.src = e.target.result;
-        previewWrap.style.display = 'block';
-    };
-    reader.readAsDataURL(blob);
-}
-
-// Global Paste Event Listener (Ctrl+V anywhere in form)
-document.addEventListener('paste', function(e) {
-    if (!e.clipboardData || !e.clipboardData.items) return;
-    const items = e.clipboardData.items;
-    for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-            const blob = items[i].getAsFile();
-            handleImageBlob(blob);
-            break;
-        }
-    }
-});
-
-// Drag and Drop Zone Listener
-if (pasteArea) {
-    pasteArea.addEventListener('dragover', function(e) { e.preventDefault(); pasteArea.style.background = '#e3f2fd'; });
-    pasteArea.addEventListener('dragleave', function(e) { e.preventDefault(); pasteArea.style.background = '#f4f9ff'; });
-    pasteArea.addEventListener('drop', function(e) {
-        e.preventDefault();
-        pasteArea.style.background = '#f4f9ff';
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            const file = e.dataTransfer.files[0];
-            if (file.type.indexOf('image') !== -1) {
-                handleImageBlob(file);
-            }
-        }
+function renderCostTable(tblId, dataArr) {
+    const tbl = document.getElementById(tblId);
+    // keep header
+    while(tbl.rows.length > 1) tbl.deleteRow(1);
+    dataArr.forEach((row, i) => {
+        const tr = tbl.insertRow();
+        tr.className = 'c-row';
+        tr.innerHTML = `
+            <td class="readonly">${i+1}</td>
+            <td><input type="text" class="c-desc" value="${row.desc}"></td>
+            <td><input type="number" class="num c-qty" value="${row.qty}"></td>
+            <td><input type="number" step="0.01" class="num c-price" value="${row.price}"></td>
+            <td><input type="number" class="num c-days" value="${row.days}"></td>
+            <td class="readonly c-amt">0.00</td>
+        `;
     });
 }
 
-function previewFileImage(input) {
-    if (input.files && input.files[0]) {
-        handleImageBlob(input.files[0]);
-    }
+function renderTcTable() {
+    const tbl = document.getElementById('tcTbl');
+    while(tbl.rows.length > 0) tbl.deleteRow(0);
+    tcData.forEach((row, i) => {
+        const tr = tbl.insertRow();
+        tr.className = 'tc-row';
+        tr.innerHTML = `
+            <td class="readonly" style="width:30px">${i+1}</td>
+            <td><input type="text" class="tc-name" value="${row.name}"></td>
+            <td class="w-80"><input type="number" step="0.01" class="num tc-amt" value="${row.amt}"></td>
+        `;
+    });
 }
 
-function previewUrlImage(input) {
-    if (input.value.trim()) {
-        previewImg.src = input.value.trim();
-        previewWrap.style.display = 'block';
-    }
+renderCostTable('csTbl', csData);
+renderCostTable('ccTbl', ccData);
+renderTcTable();
+
+function fmt(num) {
+    return Number(num).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
-function clearRemarkImg() {
-    b64Input.value = '';
-    previewImg.src = '';
-    previewWrap.style.display = 'none';
-    const fileInp = document.getElementById('remark_file_input');
-    if (fileInp) fileInp.value = '';
-    const urlInp = document.getElementById('remark_url_input');
-    if (urlInp) urlInp.value = '';
+function calcAll() {
+    // Machinery
+    let tMach = 0;
+    document.querySelectorAll('.mach-inp').forEach(inp => { tMach += (parseFloat(inp.value)||0); });
+    document.getElementById('lbl_machinery_total').innerText = tMach;
+
+    // Quote
+    let tq = 0;
+    document.querySelectorAll('.q-row').forEach(row => {
+        const q = parseFloat(row.querySelector('.q-qty').value)||0;
+        const p = parseFloat(row.querySelector('.q-price').value)||0;
+        const d = parseFloat(row.querySelector('.q-days').value)||0;
+        const amt = q*p*d;
+        tq += amt;
+        row.querySelector('.q-amt').innerText = fmt(amt);
+    });
+
+    // Cost Subcon
+    let tcs = 0;
+    document.getElementById('csTbl').querySelectorAll('.c-row').forEach(row => {
+        const q = parseFloat(row.querySelector('.c-qty').value)||0;
+        const p = parseFloat(row.querySelector('.c-price').value)||0;
+        const d = parseFloat(row.querySelector('.c-days').value)||0;
+        const amt = q*p*d;
+        tcs += amt;
+        row.querySelector('.c-amt').innerText = fmt(amt);
+    });
+    document.getElementById('lbl_cs_total').innerText = fmt(tcs);
+
+    // Cost Company
+    let tcc = 0;
+    document.getElementById('ccTbl').querySelectorAll('.c-row').forEach(row => {
+        const q = parseFloat(row.querySelector('.c-qty').value)||0;
+        const p = parseFloat(row.querySelector('.c-price').value)||0;
+        const d = parseFloat(row.querySelector('.c-days').value)||0;
+        const amt = q*p*d;
+        tcc += amt;
+        row.querySelector('.c-amt').innerText = fmt(amt);
+    });
+    document.getElementById('lbl_cc_total').innerText = fmt(tcc);
+
+    let tc = tcs + tcc;
+    let gm = tq - tc;
+
+    // Comm
+    const icp = parseFloat(document.getElementById('inp_icp').value)||0;
+    const pcp = parseFloat(document.getElementById('inp_pcp').value)||0;
+    const ica = (icp/100) * gm;
+    const pca = (pcp/100) * gm;
+    
+    let cgp = gm - ica - pca;
+
+    let ttc = 0; // total teamwork comm
+    document.querySelectorAll('.tc-row').forEach(row => {
+        ttc += (parseFloat(row.querySelector('.tc-amt').value)||0);
+    });
+
+    let tcomm = ica + pca + ttc;
+    let np = cgp - ttc;
+
+    // Deposit/Bal
+    const dpct = parseFloat(document.getElementById('inp_deposit_pct').value)||0;
+    const bpct = 100 - dpct;
+    const damt = (dpct/100) * tq;
+    const bamt = tq - damt;
+
+    // Update UI labels
+    document.getElementById('lbl_total_quote').innerText = 'RM ' + fmt(tq);
+    document.getElementById('lbl_total_cost').innerText = 'RM ' + fmt(tc);
+    document.getElementById('lbl_deposit_amt').innerText = 'RM ' + fmt(damt);
+    document.getElementById('lbl_balance_pct').innerText = bpct + '%';
+    document.getElementById('lbl_balance_amt').innerText = 'RM ' + fmt(bamt);
+    document.getElementById('lbl_total_comm').innerText = 'RM ' + fmt(tcomm);
+    document.getElementById('lbl_net_profit').innerText = 'RM ' + fmt(np);
+
+    document.getElementById('s_tq').innerText = 'RM ' + fmt(tq);
+    document.getElementById('s_tc').innerText = 'RM ' + fmt(tc);
+    document.getElementById('s_gm').innerText = 'RM ' + fmt(gm);
+    document.getElementById('s_ic').innerText = 'RM ' + fmt(ica);
+    document.getElementById('s_pc').innerText = 'RM ' + fmt(pca);
+    document.getElementById('s_cgp').innerText = 'RM ' + fmt(cgp);
+    document.getElementById('s_tcomm').innerText = 'RM ' + fmt(tcomm);
+    document.getElementById('s_np').innerText = 'RM ' + fmt(np);
+
+    // Hidden inputs
+    document.getElementById('hid_total_quote').value = tq;
+    document.getElementById('hid_total_cost').value = tc;
+    document.getElementById('hid_total_comm').value = tcomm;
+    document.getElementById('hid_net_profit').value = np;
+    document.getElementById('hid_gross_profit').value = gm;
+}
+
+// Bind events
+document.addEventListener('input', function(e) {
+    if(e.target.tagName === 'INPUT') calcAll();
+});
+calcAll();
+
+function preSubmit() {
+    // Pack Cost Subcon
+    let csd = [];
+    document.getElementById('csTbl').querySelectorAll('.c-row').forEach(row => {
+        let desc = row.querySelector('.c-desc').value.trim();
+        if(desc) {
+            csd.push({
+                desc: desc,
+                qty: parseFloat(row.querySelector('.c-qty').value)||0,
+                price: parseFloat(row.querySelector('.c-price').value)||0,
+                days: parseFloat(row.querySelector('.c-days').value)||0
+            });
+        }
+    });
+    document.getElementById('hid_cs_json').value = JSON.stringify(csd);
+
+    // Pack Cost Company
+    let ccd = [];
+    document.getElementById('ccTbl').querySelectorAll('.c-row').forEach(row => {
+        let desc = row.querySelector('.c-desc').value.trim();
+        if(desc) {
+            ccd.push({
+                desc: desc,
+                qty: parseFloat(row.querySelector('.c-qty').value)||0,
+                price: parseFloat(row.querySelector('.c-price').value)||0,
+                days: parseFloat(row.querySelector('.c-days').value)||0
+            });
+        }
+    });
+    document.getElementById('hid_cc_json').value = JSON.stringify(ccd);
+
+    // Pack Team Comms into hidden inputs
+    const tcCont = document.getElementById('tc_container');
+    tcCont.innerHTML = '';
+    document.querySelectorAll('.tc-row').forEach(row => {
+        let name = row.querySelector('.tc-name').value.trim();
+        let amt = parseFloat(row.querySelector('.tc-amt').value)||0;
+        if(name) {
+            tcCont.innerHTML += `<input type="hidden" name="tc_name[]" value="${name}">`;
+            tcCont.innerHTML += `<input type="hidden" name="tc_amt[]" value="${amt}">`;
+            tcCont.innerHTML += `<input type="hidden" name="tc_pct[]" value="0">`;
+        }
+    });
 }
 </script>
 {% endblock %}
