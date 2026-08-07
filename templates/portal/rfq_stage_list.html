@@ -295,24 +295,24 @@
                             <a href="{{ url_for('rfq_folder', eid=r.id) }}" style="font-weight:700;color:var(--accent-2);display:block;padding:0 8px" title="Open RFQ Folder Explorer">📂 {{ r.rfq_id }}</a>
                         </td>
                         <td class="editable" data-field="client_name" data-type="text" data-id="{{ r.id }}">{{ r.client_name }}</td>
-                        <td class="editable dropdown-cell" data-field="job_code" data-id="{{ r.id }}" data-options="{{ lists.job_code|tojson }}">{{ r.job_code }}</td>
-                        <td class="editable dropdown-cell" data-field="job_title" data-id="{{ r.id }}" data-options="{{ lists.job_title|tojson }}">{{ r.job_title }}</td>
+                        <td class="editable dropdown-cell" data-field="job_code" data-id="{{ r.id }}" data-options='{{ lists.job_code|tojson }}'>{{ r.job_code }}</td>
+                        <td class="editable dropdown-cell" data-field="job_title" data-id="{{ r.id }}" data-options='{{ lists.job_title|tojson }}'>{{ r.job_title }}</td>
                         <td class="editable" data-field="amount" data-type="number" data-id="{{ r.id }}" style="text-align:right">RM {{ '{:,.0f}'.format(r.amount or 0) }}</td>
                         <td class="editable" data-field="location" data-type="text" data-id="{{ r.id }}">{{ r.location }}</td>
                         <td class="editable" data-field="state" data-type="text" data-id="{{ r.id }}">{{ r.state }}</td>
                         <td class="editable" data-field="date" data-type="date" data-id="{{ r.id }}">{{ r.date }}</td>
-                        <td class="editable dropdown-cell" data-field="job_status" data-id="{{ r.id }}" data-options="{{ lists.job_status|tojson }}">
+                        <td class="editable dropdown-cell" data-field="job_status" data-id="{{ r.id }}" data-options='{{ lists.job_status|tojson }}'>
                             <span class="sheets-tag {% if 'NEW' in (r.job_status or '') %}tag-active{% elif 'LOST' in (r.job_status or '') %}tag-expired{% elif 'Waiting' in (r.job_status or '') %}tag-warn{% else %}tag-ok{% endif %}" style="font-size:10px">{{ r.job_status }}</span>
                         </td>
-                        <td class="editable dropdown-cell" data-field="level" data-id="{{ r.id }}" data-options="{{ lists.level|tojson }}">
+                        <td class="editable dropdown-cell" data-field="level" data-id="{{ r.id }}" data-options='{{ lists.level|tojson }}'>
                             {% if r.level == 'High' %}<span style="color:#f44336;font-weight:700">🔴</span>
                             {% elif r.level == 'Medium' %}<span style="color:#ff9800">🟡</span>
                             {% elif r.level == 'Low' %}<span style="color:#4caf50">🟢</span>
                             {% endif %}{{ r.level }}
                         </td>
-                        <td class="editable dropdown-cell" data-field="introducer" data-id="{{ r.id }}" data-options="{{ lists.introducer|tojson }}">{{ r.introducer }}</td>
-                        <td class="editable dropdown-cell" data-field="source" data-id="{{ r.id }}" data-options="{{ lists.source|tojson }}">{{ r.source }}</td>
-                        <td class="editable dropdown-cell" data-field="open_by" data-id="{{ r.id }}" data-options="{{ lists.open_by|tojson }}">{{ r.open_by }}</td>
+                        <td class="editable dropdown-cell" data-field="introducer" data-id="{{ r.id }}" data-options='{{ lists.introducer|tojson }}'>{{ r.introducer }}</td>
+                        <td class="editable dropdown-cell" data-field="source" data-id="{{ r.id }}" data-options='{{ lists.source|tojson }}'>{{ r.source }}</td>
+                        <td class="editable dropdown-cell" data-field="open_by" data-id="{{ r.id }}" data-options='{{ lists.open_by|tojson }}'>{{ r.open_by }}</td>
                         <td style="text-align:center;white-space:nowrap">
                             <form method="post" action="{{ url_for('rfq_move', eid=r.id) }}" style="display:inline">
                                 <select name="new_stage" onchange="this.form.submit()" style="font-size:11px;padding:2px 4px;border-radius:4px;border:1px solid var(--line);cursor:pointer;width:65px">
