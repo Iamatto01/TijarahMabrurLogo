@@ -41,8 +41,7 @@
             {% else %}
                 <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}"><span class="nav-icon">📊</span><span class="nav-text">Dashboard</span></a>
                 <a href="{{ url_for('machinery_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('machinery') }}"><span class="nav-icon">⚙️</span><span class="nav-text">Machinery</span></a>
-                <a href="{{ url_for('reports_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('report') }}"><span class="nav-icon">📄</span><span class="nav-text">Reports</span></a>
-                <a href="{{ url_for('pdf_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('pdf') }}"><span class="nav-icon">📝</span><span class="nav-text">PDF Forms</span></a>
+
                 {% if user and user.role == 'admin' %}
                     <div class="group">Admin</div>
                     <a href="{{ url_for('companies_list') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('compan') }}"><span class="nav-icon">🏢</span><span class="nav-text">Companies</span></a>
