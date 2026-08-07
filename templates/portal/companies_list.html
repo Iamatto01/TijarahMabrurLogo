@@ -16,7 +16,7 @@
                 <tr>
                     <td>
                         {% if c.logo_filename %}
-                            <img src="{{ url_for('serve_logo', filename=c.logo_filename) }}" alt="" style="height:34px;max-width:90px;object-fit:contain;border-radius:6px;background:#fff;border:1px solid var(--line)">
+                            <img src="{{ url_for('serve_logo', filename=c.logo_filename) }}" alt="" style="height:34px;max-width:90px;object-fit:contain;border-radius:6px;background:transparent;border:1px solid var(--line)">
                         {% else %}—{% endif %}
                     </td>
                     <td><b>{{ c.name }}</b>{% if c.phone %}<br><small style="color:var(--muted)">{{ c.phone }}</small>{% endif %}</td>

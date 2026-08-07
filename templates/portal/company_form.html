@@ -31,7 +31,7 @@
                 <label>Company Logo (PNG/JPG/WEBP/GIF)</label>
                 {% if c and c.logo_filename %}
                     <div style="margin-bottom:8px">
-                        <img src="{{ url_for('serve_logo', filename=c.logo_filename) }}" alt="logo" style="height:56px;object-fit:contain;border:1px solid var(--line);border-radius:8px;padding:6px;background:#fff">
+                        <img src="{{ url_for('serve_logo', filename=c.logo_filename) }}" alt="logo" style="height:56px;object-fit:contain;border:1px solid var(--line);border-radius:8px;padding:6px;background:transparent">
                     </div>
                 {% endif %}
                 <input type="file" name="logo" accept=".png,.jpg,.jpeg,.webp,.gif">
