@@ -1,165 +1,175 @@
 {% extends "portal/base_portal.html" %}
 {% block title %}New UT Report | Portal{% endblock %}
 {% block content %}
-<div class="portal-topbar">
+<style>
+.report-container { max-width: 900px; margin: 0 auto 40px; background: #fff; padding: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); font-family: 'Arial', sans-serif; color: #222; }
+.report-header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+.report-header h1 { margin: 0; font-size: 20px; font-weight: bold; text-transform: uppercase; }
+.report-header h2 { margin: 5px 0 0; font-size: 16px; font-weight: normal; }
+.section-title { background: #f4f4f4; border: 1px solid #ccc; font-weight: bold; padding: 5px 10px; margin-top: 15px; font-size: 13px; text-transform: uppercase; }
+.details-grid { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #ccc; border-top: none; }
+.details-grid > div { padding: 8px 10px; font-size: 12px; border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; line-height:2; }
+.details-grid > div:nth-child(even) { border-right: none; }
+.details-grid strong { display: inline-block; width: 140px; }
+.readings-tbl { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+.readings-tbl th, .readings-tbl td { border: 1px solid #ccc; padding: 4px; text-align: center; }
+.readings-tbl th { background: #f4f4f4; font-weight: bold; padding:8px 4px; }
+.conclusion-box { border: 1px solid #ccc; padding: 15px; margin-top: 15px; font-size: 13px; }
+
+/* Inline Input Styles */
+.r-input { 
+    border: none; 
+    border-bottom: 1px dashed #999; 
+    background: transparent; 
+    font-family: inherit; 
+    font-size: 12px; 
+    padding: 2px 4px; 
+    outline: none; 
+    width: calc(100% - 150px);
+    color: #000;
+}
+.r-input:focus { border-bottom: 1px solid #0984e3; background: #f0f8ff; }
+.r-input.short { width: 80px; }
+.r-input.tbl-in { width: 100%; text-align: center; border-bottom: none; }
+.r-input.tbl-in:focus { background: #f0f8ff; }
+select.r-input { -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor:pointer; }
+textarea.r-input { width: 100%; border: none; resize: vertical; line-height: 1.5; margin-top: 5px; min-height: 80px; }
+</style>
+
+<div class="portal-topbar" style="max-width:900px;margin:0 auto">
     <h1>New UTTM Report</h1>
     <a class="btn ghost" href="{{ url_for('machinery_detail', mid=m.id) }}">← Back to Machinery</a>
 </div>
 
-<form method="post" class="report-form" style="max-width:1200px">
-    <div class="panel">
-        <div class="panel-head"><h3>Report Details</h3></div>
-        <div class="panel-body">
-            <div class="form-row">
-                <div class="field">
-                    <label>Report Number *</label>
-                    <input type="text" name="report_no" required placeholder="e.g. TM/UT/07" value="TM/UT/{{ datetime.utcnow().strftime('%y-%m%d') }}">
-                </div>
-                <div class="field">
-                    <label>Client PIC</label>
-                    <input type="text" name="client_pic" value="{{ client.name if client else '' }}">
-                </div>
-                <div class="field">
-                    <label>Designation</label>
-                    <input type="text" name="designation" placeholder="e.g. SHO / Engineer">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="field">
-                    <label>Tested & Measured By</label>
-                    <input type="text" name="tested_by" required value="{{ user.get('name') if user else '' }}">
-                </div>
-                <div class="field">
-                    <label>UTTM Date</label>
-                    <input type="date" name="uttm_date" required value="{{ datetime.utcnow().strftime('%Y-%m-%d') }}">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="field">
-                    <label>Report & Calculation By</label>
-                    <input type="text" name="calculated_by" required value="{{ user.get('name') if user else '' }}">
-                </div>
-                <div class="field">
-                    <label>Report Date</label>
-                    <input type="date" name="report_date" required value="{{ datetime.utcnow().strftime('%Y-%m-%d') }}">
-                </div>
+<form method="post" id="ut-form">
+<div class="report-container">
+    <div class="report-header">
+        <h1>ULTRASONIC THICKNESS TEST MEASUREMENT REPORT (UTTM)</h1>
+        <h2>{{ m.cert_no or m.name }}</h2>
+    </div>
+
+    <div class="details-grid" style="border-top:1px solid #ccc">
+        <div><strong>CLIENT DETAIL</strong><br><br>
+            {{ client.company if client else '' }}<br>
+            {{ client.address if client else '' }}<br><br>
+            <strong>Client PIC:</strong> <input type="text" name="client_pic" class="r-input" value="{{ client.name if client else '' }}"><br>
+            <strong>Designation:</strong> <input type="text" name="designation" class="r-input" placeholder="e.g. SHO / Engineer">
+        </div>
+        <div><strong>REPORT DETAIL</strong><br><br>
+            <strong>Report Number:</strong> <input type="text" name="report_no" required class="r-input" value="TM/UT/{{ datetime.utcnow().strftime('%y-%m%d') }}"><br>
+            <strong>Tested & Measured by:</strong> <input type="text" name="tested_by" required class="r-input" value="{{ user.get('name') if user else '' }}"><br>
+            <strong>UTTM Date:</strong> <input type="date" name="uttm_date" required class="r-input" style="width:130px" value="{{ datetime.utcnow().strftime('%Y-%m-%d') }}"><br>
+            <strong>Report & Calculation by:</strong> <input type="text" name="calculated_by" required class="r-input" value="{{ user.get('name') if user else '' }}"><br>
+            <strong>Report Date:</strong> <input type="date" name="report_date" required class="r-input" style="width:130px" value="{{ datetime.utcnow().strftime('%Y-%m-%d') }}">
+        </div>
+    </div>
+
+    <div class="section-title">EQUIPMENT & INSPECTED ITEM DETAIL</div>
+    <div class="details-grid">
+        <div>
+            <strong>Machinery Name:</strong> {{ m.name }}<br>
+            <strong>Serial Number:</strong> {{ m.serial_no }}<br>
+            <strong>Model:</strong> {{ m.item_name }}<br>
+            <strong>Medium:</strong> {{ m.medium }}<br>
+            <strong>Year Build:</strong> {{ m.year }}<br>
+            <strong>Design Pressure:</strong> {{ m.mawp or '145 psi' }}<br>
+            <strong>Volume:</strong> {{ m.volume }}
+        </div>
+        <div>
+            <strong>Manufacturer:</strong> {{ m.manufacturer }}<br>
+            <strong>Couplant:</strong> Sonagel<br>
+            <strong>Calibration Block:</strong> Step Wedge<br>
+            <strong>Origin:</strong> Local
+        </div>
+    </div>
+
+    <div class="section-title">PROBE & SPECIMEN DETAIL</div>
+    <div class="details-grid">
+        <div>
+            <strong>Probe:</strong> <input type="text" name="probe" class="r-input short" value="HT400A"><br>
+            <strong>Test Range (mm):</strong> <input type="text" name="test_range" class="r-input short" value="40"><br>
+            <strong>Reject Setting:</strong> <input type="text" name="reject_setting" class="r-input short" value="OFF"><br>
+            <strong>UT Set Calibration:</strong> <input type="text" name="ut_set_calibration" class="r-input short" value="Yes"><br>
+            <strong>Calibration Due:</strong> <input type="date" name="calib_due" class="r-input" style="width:130px"><br>
+            <strong>Calibration Validity:</strong> <input type="text" name="calib_validity" class="r-input short" value="Valid">
+        </div>
+        <div>
+            <strong>Circumferences (inch):</strong> <input type="text" name="circumference" class="r-input short"><br>
+            <strong>Outside Dia (inch):</strong> <input type="text" name="outer_dia" class="r-input short"><br>
+            <strong>Radius (inch):</strong> <input type="text" name="radius" class="r-input short"><br>
+            <strong>Design Temp (°C):</strong> <input type="text" name="design_temp" class="r-input short" value="100"><br>
+            <strong>Testing Temp:</strong> <input type="text" name="testing_temp" class="r-input short" value="Ambient"><br>
+            <strong>Surface Condition:</strong> <input type="text" name="surface_condition" class="r-input short" value="Smooth"><br>
+            
+            <div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:5px">
+                <strong>Shell Material:</strong> <input type="text" name="shell_material" class="r-input short" value="Carbon Steel">
+                Grade: <input type="text" name="shell_grade" class="r-input short" value="A 516 Gr. 60" style="width:60px">
+                Val: <input type="text" name="shell_value" class="r-input short" value="20000" style="width:50px"><br>
+                
+                <strong>Head Material:</strong> <input type="text" name="head_material" class="r-input short" value="Carbon Steel">
+                Grade: <input type="text" name="head_grade" class="r-input short" value="A 516 Gr. 60" style="width:60px">
+                Type: <input type="text" name="head_type" class="r-input short" value="Ellipsoidal" style="width:60px">
             </div>
         </div>
     </div>
 
-    <div class="grid cols-2">
-        <div class="panel">
-            <div class="panel-head"><h3>Probe Details</h3></div>
-            <div class="panel-body">
-                <div class="form-row">
-                    <div class="field"><label>Probe</label><input type="text" name="probe" value="HT400A"></div>
-                    <div class="field"><label>Test Range (mm)</label><input type="text" name="test_range" value="40"></div>
-                </div>
-                <div class="form-row">
-                    <div class="field"><label>Reject Setting</label><input type="text" name="reject_setting" value="OFF"></div>
-                    <div class="field"><label>UT Set Calibration</label><input type="text" name="ut_set_calibration" value="Yes"></div>
-                </div>
-                <div class="form-row">
-                    <div class="field"><label>Calibration Due</label><input type="date" name="calib_due"></div>
-                    <div class="field"><label>Calibration Validity</label><input type="text" name="calib_validity" value="Valid"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="panel">
-            <div class="panel-head"><h3>Specimen & Calculation Setup</h3></div>
-            <div class="panel-body">
-                <div class="form-row">
-                    <div class="field"><label>Circumference (inch)</label><input type="text" name="circumference"></div>
-                    <div class="field"><label>Outer Dia (inch)</label><input type="text" name="outer_dia"></div>
-                    <div class="field"><label>Radius (inch)</label><input type="text" name="radius"></div>
-                </div>
-                <div class="form-row">
-                    <div class="field"><label>Design Temp (°C)</label><input type="text" name="design_temp" value="100"></div>
-                    <div class="field"><label>Testing Temp</label><input type="text" name="testing_temp" value="Ambient"></div>
-                    <div class="field"><label>Surface Condition</label><input type="text" name="surface_condition" value="Smooth"></div>
-                </div>
-                <h4 style="margin:10px 0 5px;font-size:13px;color:#666">Shell Info</h4>
-                <div class="form-row">
-                    <div class="field"><label>Material</label><input type="text" name="shell_material" value="Carbon Steel"></div>
-                    <div class="field"><label>Grade</label><input type="text" name="shell_grade" value="A 516 Gr. 60"></div>
-                    <div class="field"><label>Value</label><input type="text" name="shell_value" value="20000"></div>
-                </div>
-                <h4 style="margin:10px 0 5px;font-size:13px;color:#666">Head Info</h4>
-                <div class="form-row">
-                    <div class="field"><label>Material</label><input type="text" name="head_material" value="Carbon Steel"></div>
-                    <div class="field"><label>Grade</label><input type="text" name="head_grade" value="A 516 Gr. 60"></div>
-                    <div class="field"><label>Type</label><input type="text" name="head_type" value="Ellipsoidal"></div>
-                </div>
-            </div>
-        </div>
+    <table class="readings-tbl">
+        <thead>
+            <tr>
+                <th>Point/Orientation</th>
+                <th>0°</th>
+                <th>90°</th>
+                <th>180°</th>
+                <th>270°</th>
+                <th>Min Thickness</th>
+                <th>Req Thickness</th>
+                <th>Remark</th>
+            </tr>
+        </thead>
+        <tbody id="grid-body">
+            {% for i in range(1, 5) %}
+            {% set names = ['Top Head', 'Shell', 'Shell', 'Bottom Head'] %}
+            <tr>
+                <td><input type="text" name="row_{{i}}_name" value="{{ names[i-1] }}" class="r-input tbl-in" style="text-align:left"></td>
+                <td><input type="number" step="0.01" name="row_{{i}}_0" class="reading r-input tbl-in" data-row="{{i}}"></td>
+                <td><input type="number" step="0.01" name="row_{{i}}_90" class="reading r-input tbl-in" data-row="{{i}}"></td>
+                <td><input type="number" step="0.01" name="row_{{i}}_180" class="reading r-input tbl-in" data-row="{{i}}"></td>
+                <td><input type="number" step="0.01" name="row_{{i}}_270" class="reading r-input tbl-in" data-row="{{i}}"></td>
+                <td style="background:#f9f9f9"><input type="number" step="0.01" name="row_{{i}}_min" id="min_{{i}}" class="r-input tbl-in" style="font-weight:bold" readonly></td>
+                <td><input type="number" step="0.01" name="row_{{i}}_req" id="req_{{i}}" class="req-thk r-input tbl-in"></td>
+                <td>
+                    <select name="row_{{i}}_remark" id="rem_{{i}}" class="r-input tbl-in">
+                        <option value=""></option>
+                        <option value="Acceptable">Acceptable</option>
+                        <option value="Unacceptable">Unacceptable</option>
+                        <option value="N/A">N/A</option>
+                    </select>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="section-title">RESULT & CONCLUSION</div>
+    <div class="conclusion-box">
+        <textarea name="conclusion" id="conclusion_text" class="r-input" placeholder="Enter conclusion here... Auto-generated when you fill the grid."></textarea>
     </div>
-
-    <div class="panel">
-        <div class="panel-head"><h3>Thickness Grid (in mm)</h3></div>
-        <div class="panel-body tbl-scroll">
-            <table class="tbl">
-                <thead>
-                    <tr>
-                        <th>Point/Orientation</th>
-                        <th>0°</th>
-                        <th>90°</th>
-                        <th>180°</th>
-                        <th>270°</th>
-                        <th>Min Thickness</th>
-                        <th>Req Thickness</th>
-                        <th>Remark</th>
-                    </tr>
-                </thead>
-                <tbody id="grid-body">
-                    {% for i in range(1, 5) %}
-                    {% set names = ['Top Head', 'Shell', 'Shell', 'Bottom Head'] %}
-                    <tr>
-                        <td><input type="text" name="row_{{i}}_name" value="{{ names[i-1] }}" style="width:120px;padding:6px"></td>
-                        <td><input type="number" step="0.01" name="row_{{i}}_0" class="reading" data-row="{{i}}" style="width:70px;padding:6px"></td>
-                        <td><input type="number" step="0.01" name="row_{{i}}_90" class="reading" data-row="{{i}}" style="width:70px;padding:6px"></td>
-                        <td><input type="number" step="0.01" name="row_{{i}}_180" class="reading" data-row="{{i}}" style="width:70px;padding:6px"></td>
-                        <td><input type="number" step="0.01" name="row_{{i}}_270" class="reading" data-row="{{i}}" style="width:70px;padding:6px"></td>
-                        <td><input type="number" step="0.01" name="row_{{i}}_min" id="min_{{i}}" style="width:80px;padding:6px;background:#f0f0f0" readonly></td>
-                        <td><input type="number" step="0.01" name="row_{{i}}_req" id="req_{{i}}" class="req-thk" style="width:80px;padding:6px"></td>
-                        <td>
-                            <select name="row_{{i}}_remark" id="rem_{{i}}" style="padding:6px;width:120px">
-                                <option value="Acceptable">Acceptable</option>
-                                <option value="Unacceptable">Unacceptable</option>
-                                <option value="N/A">N/A</option>
-                            </select>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <div style="font-size:12px;color:#666;margin-top:10px;">* Minimum thickness is automatically calculated from the 4 readings. If the minimum reading is less than Required Thickness, remark will become Unacceptable.</div>
+    
+    <div class="section-title">CALCULATION OF PRESSURE VESSEL DESIGN</div>
+    <div class="details-grid" style="grid-template-columns:1fr; border-right:1px solid #ccc">
+        <div>
+            <strong>Design Code:</strong> <input type="text" name="design_code" class="r-input" value="ASME Sec VIII Division 1"><br>
+            <strong>Size (OD):</strong> <input type="text" name="size_od" class="r-input"><br>
+            <strong>Design Pressure:</strong> <input type="text" name="design_pressure" class="r-input short" value="{{ m.mawp.split(' ')[0] if m.mawp else '145' }}"> psi<br>
+            <strong>Design Temperature:</strong> <input type="text" name="design_temp_calc" class="r-input short" value="100"> °C<br>
+            <strong>Material:</strong> <input type="text" name="material_calc" class="r-input short" value="Carbon Steel">
         </div>
     </div>
     
-    <div class="panel">
-        <div class="panel-head"><h3>Calculations & Conclusion</h3></div>
-        <div class="panel-body">
-            <div class="form-row">
-                <div class="field"><label>Design Code</label><input type="text" name="design_code" value="ASME Sec VIII Division 1"></div>
-                <div class="field"><label>Size (OD)</label><input type="text" name="size_od"></div>
-                <div class="field"><label>Design Pressure (psi)</label><input type="text" name="design_pressure" value="{{ m.mawp.split(' ')[0] if m.mawp else '145' }}"></div>
-            </div>
-            <div class="form-row">
-                <div class="field"><label>Design Temp</label><input type="text" name="design_temp_calc" value="100"></div>
-                <div class="field"><label>Material</label><input type="text" name="material_calc" value="Carbon Steel"></div>
-            </div>
-            
-            <div class="field" style="margin-top:16px">
-                <label>Conclusion (will be auto-generated but you can edit)</label>
-                <textarea name="conclusion" id="conclusion_text" rows="3" style="padding:10px;font-family:inherit;width:100%"></textarea>
-            </div>
-        </div>
+    <div style="margin-top:30px; text-align:center">
+        <button type="submit" class="btn lg" style="width:200px">Save UTTM Report</button>
     </div>
-
-    <div style="margin-top:20px">
-        <button type="submit" class="btn lg">Save UTTM Report</button>
-    </div>
+</div>
 </form>
 
 <script>
@@ -218,7 +228,8 @@ function updateConclusion() {
         let comp = globalMin >= globalReq ? "higher" : "lower";
         let stat = globalMin >= globalReq ? "Fit for service" : "NOT fit for service";
         
-        conclusionBox.value = `1. Calculation has been made according to UT data obtained on ${dt}.\n2. Based on the calculation data, the minimum current thickness ${globalMin.toFixed(2)} is ${comp} than minimum required thickness ${globalReq.toFixed(2)}.\n3. Therefore, the tank PMT No. {{ m.cert_no }} is ${stat} at designed pressure stated ${pres} psi.`;
+        let d = dt ? new Date(dt).toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'}) : '';
+        conclusionBox.value = `1. Calculation has been made according to UT data obtained on ${d.replace(/ /g, '-')}.\n2. Based on the calculation data, the minimum current thickness ${globalMin.toFixed(2)} is ${comp} than minimum required thickness ${globalReq.toFixed(2)}.\n3. Therefore, the tank PMT No. {{ m.cert_no }} is ${stat} at designed pressure stated ${pres} psi.`;
     }
 }
 </script>
