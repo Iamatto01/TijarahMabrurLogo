@@ -161,10 +161,10 @@ CREATE TABLE IF NOT EXISTS ut_reports (
     report_date TEXT DEFAULT '',
     client_pic TEXT DEFAULT '',
     designation TEXT DEFAULT '',
-    probe_details TEXT DEFAULT '{}',
-    specimen_details TEXT DEFAULT '{}',
+    probe_details TEXT DEFAULT '{{}}',
+    specimen_details TEXT DEFAULT '{{}}',
     readings_json TEXT DEFAULT '[]',
-    calc_data TEXT DEFAULT '{}',
+    calc_data TEXT DEFAULT '{{}}',
     conclusion TEXT DEFAULT '',
     created_by INTEGER NOT NULL,
     created_at TEXT NOT NULL
