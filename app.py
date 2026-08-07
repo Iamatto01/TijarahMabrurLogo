@@ -510,10 +510,13 @@ def machinery_detail(mid):
     reports = q("""SELECT r.*, usr.name AS author FROM reports r
                    JOIN users usr ON usr.id = r.created_by
                    WHERE r.machinery_id = ? ORDER BY r.created_at DESC""", (mid,))
+    ut_reports = q("""SELECT r.*, usr.name AS author FROM ut_reports r
+                   JOIN users usr ON usr.id = r.created_by
+                   WHERE r.machinery_id = ? ORDER BY r.created_at DESC""", (mid,))
     reminders = q("SELECT * FROM expiry_reminders WHERE machinery_id = ? ORDER BY reminder_date", (mid,))
     from datetime import date, timedelta
     return render_template("portal/machinery_detail.html", m=m, owner=owner, company=company,
-                           images=images, reports=reports, reminders=reminders,
+                           images=images, reports=reports, ut_reports=ut_reports, reminders=reminders,
                            report_types=REPORT_TYPES, report_statuses=REPORT_STATUSES,
                            today=date.today().isoformat(),
                            today_plus_60=(date.today() + timedelta(days=60)).isoformat())
@@ -644,6 +647,89 @@ def sample_pdf(doc_name):
     from flask import Response
     return Response(pdf_bytes, mimetype="application/pdf", headers={"Content-Disposition": f"inline; filename={clean_name}.pdf"})
 
+# ---------------- portal: ut reports ----------------
+@app.route("/portal/machinery/<int:mid>/ut-report/new", methods=["GET", "POST"])
+@login_required
+def ut_report_new(mid):
+    u = current_user()
+    m = q("SELECT * FROM machinery WHERE id = ?", (mid,), one=True)
+    if not m or (u["role"] != "admin" and m["owner_id"] != u["id"]):
+        abort(404)
+        
+    if request.method == "POST":
+        f = request.form
+        probe_details = {
+            "probe": f.get("probe"), "test_range": f.get("test_range"), 
+            "reject_setting": f.get("reject_setting"), "ut_set_calibration": f.get("ut_set_calibration"),
+            "calib_due": f.get("calib_due"), "calib_validity": f.get("calib_validity")
+        }
+        specimen_details = {
+            "circumference": f.get("circumference"), "outer_dia": f.get("outer_dia"),
+            "radius": f.get("radius"), "design_temp": f.get("design_temp"),
+            "testing_temp": f.get("testing_temp"), "surface_condition": f.get("surface_condition"),
+            "shell_material": f.get("shell_material"), "shell_grade": f.get("shell_grade"), "shell_value": f.get("shell_value"),
+            "head_material": f.get("head_material"), "head_grade": f.get("head_grade"), "head_value": f.get("head_value"),
+            "head_type": f.get("head_type")
+        }
+        calc_data = {
+            "design_code": f.get("design_code"), "size_od": f.get("size_od"),
+            "design_pressure": f.get("design_pressure"), "design_temp_calc": f.get("design_temp_calc"),
+            "material_calc": f.get("material_calc")
+        }
+        
+        # Readings JSON
+        readings = []
+        for i in range(1, 5):  # 4 rows
+            row_name = f.get(f"row_{i}_name")
+            if row_name:
+                readings.append({
+                    "name": row_name,
+                    "v0": f.get(f"row_{i}_0"),
+                    "v90": f.get(f"row_{i}_90"),
+                    "v180": f.get(f"row_{i}_180"),
+                    "v270": f.get(f"row_{i}_270"),
+                    "min_thk": f.get(f"row_{i}_min"),
+                    "req_thk": f.get(f"row_{i}_req"),
+                    "remark": f.get(f"row_{i}_remark")
+                })
+
+        rid = execute(
+            """INSERT INTO ut_reports (
+                machinery_id, report_no, tested_by, uttm_date, calculated_by, report_date,
+                client_pic, designation, probe_details, specimen_details, readings_json,
+                calc_data, conclusion, created_by, created_at
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                mid, f.get("report_no"), f.get("tested_by"), f.get("uttm_date"),
+                f.get("calculated_by"), f.get("report_date"), f.get("client_pic"),
+                f.get("designation"), json.dumps(probe_details), json.dumps(specimen_details),
+                json.dumps(readings), json.dumps(calc_data), f.get("conclusion"),
+                u["id"], datetime.utcnow().isoformat()
+            )
+        )
+        flash("UT Report saved successfully.", "ok")
+        return redirect(url_for("ut_report_view", rid=rid))
+        
+    client = q("SELECT * FROM users WHERE id = ?", (m["owner_id"],), one=True) if m["owner_id"] else None
+    return render_template("portal/ut_report_form.html", m=m, client=client)
+
+@app.route("/portal/report/ut/<int:rid>")
+@login_required
+def ut_report_view(rid):
+    u = current_user()
+    r = q("SELECT * FROM ut_reports WHERE id = ?", (rid,), one=True)
+    if not r: abort(404)
+    m = q("SELECT * FROM machinery WHERE id = ?", (r["machinery_id"],), one=True)
+    if not m or (u["role"] != "admin" and m["owner_id"] != u["id"]): abort(404)
+    client = q("SELECT * FROM users WHERE id = ?", (m["owner_id"],), one=True) if m["owner_id"] else None
+    
+    probe = json.loads(r["probe_details"]) if r["probe_details"] else {}
+    specimen = json.loads(r["specimen_details"]) if r["specimen_details"] else {}
+    readings = json.loads(r["readings_json"]) if r["readings_json"] else []
+    calc = json.loads(r["calc_data"]) if r["calc_data"] else {}
+    
+    return render_template("portal/ut_report_view.html", r=r, m=m, client=client, 
+                           probe=probe, specimen=specimen, readings=readings, calc=calc)
 
 # ---------------- portal: reports list, new, edit, delete ----------------
 @app.route("/portal/reports")

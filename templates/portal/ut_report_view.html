@@ -1,0 +1,140 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}UTTM Report | Portal{% endblock %}
+{% block content %}
+<style>
+@media print {
+    body { background: #fff; margin:0; padding:0; }
+    .portal-sidebar, .portal-topbar, .site-nav-toggle, .btn { display: none !important; }
+    .portal-main { padding: 0 !important; margin: 0 !important; }
+    .report-container { width: 100%; max-width: none; border: none; box-shadow: none; padding: 20px; font-size: 12px; }
+}
+.report-container { max-width: 900px; margin: 0 auto; background: #fff; padding: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); font-family: 'Arial', sans-serif; color: #222; }
+.report-header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+.report-header h1 { margin: 0; font-size: 20px; font-weight: bold; text-transform: uppercase; }
+.report-header h2 { margin: 5px 0 0; font-size: 16px; font-weight: normal; }
+.section-title { background: #f4f4f4; border: 1px solid #ccc; font-weight: bold; padding: 5px 10px; margin-top: 15px; font-size: 13px; text-transform: uppercase; }
+.details-grid { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #ccc; border-top: none; }
+.details-grid > div { padding: 8px 10px; font-size: 12px; border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; }
+.details-grid > div:nth-child(even) { border-right: none; }
+.details-grid strong { display: inline-block; width: 130px; }
+.readings-tbl { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+.readings-tbl th, .readings-tbl td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+.readings-tbl th { background: #f4f4f4; font-weight: bold; }
+.conclusion-box { border: 1px solid #ccc; padding: 15px; margin-top: 15px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+</style>
+
+<div class="portal-topbar" style="max-width:900px;margin:0 auto">
+    <h1>UTTM Report View</h1>
+    <div>
+        <button class="btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+        <a class="btn ghost" href="{{ url_for('machinery_detail', mid=m.id) }}">Back to Machinery</a>
+    </div>
+</div>
+
+<div class="report-container">
+    <div class="report-header">
+        <h1>ULTRASONIC THICKNESS TEST MEASUREMENT REPORT (UTTM)</h1>
+        <h2>{{ m.cert_no }}</h2>
+    </div>
+
+    <div class="details-grid" style="border-top:1px solid #ccc">
+        <div><strong>CLIENT DETAIL</strong><br><br>
+            {{ client.company if client else '' }}<br>
+            {{ client.address if client else '' }}<br><br>
+            <strong>Client PIC:</strong> {{ r.client_pic }}<br>
+            <strong>Designation:</strong> {{ r.designation }}
+        </div>
+        <div><strong>REPORT DETAIL</strong><br><br>
+            <strong>Report Number:</strong> {{ r.report_no }}<br>
+            <strong>Tested & Measured by:</strong> {{ r.tested_by }}<br>
+            <strong>UTTM Date:</strong> {{ r.uttm_date }}<br>
+            <strong>Report & Calculation by:</strong> {{ r.calculated_by }}<br>
+            <strong>Report Date:</strong> {{ r.report_date }}
+        </div>
+    </div>
+
+    <div class="section-title">EQUIPMENT & INSPECTED ITEM DETAIL</div>
+    <div class="details-grid">
+        <div>
+            <strong>Machinery Name:</strong> {{ m.name }}<br>
+            <strong>Serial Number:</strong> {{ m.serial_no }}<br>
+            <strong>Model:</strong> {{ m.item_name }}<br>
+            <strong>Medium:</strong> {{ m.medium }}<br>
+            <strong>Year Build:</strong> {{ m.year }}<br>
+            <strong>Design Pressure:</strong> {{ calc.design_pressure }} psi<br>
+            <strong>Volume:</strong> {{ m.volume }}
+        </div>
+        <div>
+            <strong>Manufacturer:</strong> {{ m.manufacturer }}<br>
+            <strong>Couplant:</strong> Sonagel<br>
+            <strong>Calibration Block:</strong> Step Wedge<br>
+            <strong>Origin:</strong> Local
+        </div>
+    </div>
+
+    <div class="section-title">PROBE & SPECIMEN DETAIL</div>
+    <div class="details-grid">
+        <div>
+            <strong>Probe:</strong> {{ probe.probe }}<br>
+            <strong>Test Range:</strong> {{ probe.test_range }} mm<br>
+            <strong>Reject Setting:</strong> {{ probe.reject_setting }}<br>
+            <strong>UT Set Calibration:</strong> {{ probe.ut_set_calibration }}<br>
+            <strong>Calibration Due:</strong> {{ probe.calib_due }}<br>
+            <strong>Calibration Validity:</strong> {{ probe.calib_validity }}
+        </div>
+        <div>
+            <strong>Circumferences:</strong> {{ specimen.circumference }} inch<br>
+            <strong>Outside Diameter:</strong> {{ specimen.outer_dia }} inch<br>
+            <strong>Radius:</strong> {{ specimen.radius }} inch<br>
+            <strong>Design Temp:</strong> {{ specimen.design_temp }} °C<br>
+            <strong>Testing Temp:</strong> {{ specimen.testing_temp }}<br>
+            <strong>Surface Condition:</strong> {{ specimen.surface_condition }}<br>
+            <strong>Shell Material:</strong> {{ specimen.shell_material }} ({{ specimen.shell_grade }})<br>
+            <strong>Head Material:</strong> {{ specimen.head_material }} ({{ specimen.head_grade }}) - {{ specimen.head_type }}
+        </div>
+    </div>
+
+    <table class="readings-tbl">
+        <thead>
+            <tr>
+                <th>Point/Orientation</th>
+                <th>0°</th>
+                <th>90°</th>
+                <th>180°</th>
+                <th>270°</th>
+                <th>Minimum Thickness</th>
+                <th>Required Thickness</th>
+                <th>Remark</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in readings %}
+            <tr>
+                <td>{{ row.name }}</td>
+                <td>{{ row.v0 or '-' }}</td>
+                <td>{{ row.v90 or '-' }}</td>
+                <td>{{ row.v180 or '-' }}</td>
+                <td>{{ row.v270 or '-' }}</td>
+                <td><strong>{{ row.min_thk or '-' }}</strong></td>
+                <td>{{ row.req_thk or '-' }}</td>
+                <td>{{ row.remark }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="section-title">RESULT & CONCLUSION</div>
+    <div class="conclusion-box">{{ r.conclusion }}</div>
+    
+    <div class="section-title">CALCULATION OF PRESSURE VESSEL DESIGN</div>
+    <div class="details-grid" style="grid-template-columns:1fr; border-right:1px solid #ccc">
+        <div>
+            <strong>Design Code:</strong> {{ calc.design_code }}<br>
+            <strong>Size (OD):</strong> {{ calc.size_od }}<br>
+            <strong>Design Pressure:</strong> {{ calc.design_pressure }} psi<br>
+            <strong>Design Temperature:</strong> {{ calc.design_temp_calc }}<br>
+            <strong>Material:</strong> {{ calc.material_calc }}
+        </div>
+    </div>
+</div>
+{% endblock %}

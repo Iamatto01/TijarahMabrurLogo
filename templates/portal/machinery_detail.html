@@ -84,7 +84,10 @@
 <div class="panel">
     <div class="panel-head">
         <h3>Reports ({{ reports|length }})</h3>
-        <button class="btn sm" onclick="document.getElementById('report-form').style.display='block'">+ Add Report</button>
+        <div>
+            <a href="{{ url_for('ut_report_new', mid=m.id) }}" class="btn sm" style="background:#0984e3;border-color:#0984e3">+ Generate UT Report</a>
+            <button class="btn sm" onclick="document.getElementById('report-form').style.display='block'">+ Upload Report File</button>
+        </div>
     </div>
     <div class="panel-body">
         <div id="report-form" style="display:none;margin-bottom:20px;padding:18px;background:var(--bg-2);border-radius:8px;border:1px solid var(--line)">
@@ -103,11 +106,22 @@
                 <button class="btn ghost sm" type="button" onclick="this.closest('#report-form').style.display='none'">Cancel</button>
             </form>
         </div>
-        {% if reports %}
+        {% if reports or ut_reports %}
         <div class="tbl-scroll">
             <table class="tbl">
                 <thead><tr><th>Title</th><th>Type</th><th>Status</th><th>Author</th><th>Date</th><th>PDF</th><th></th></tr></thead>
                 <tbody>
+                    {% for ur in ut_reports %}
+                    <tr>
+                        <td><b>{{ ur.report_no }}</b><br><small style="color:var(--muted)">Ultrasonic Thickness Report</small></td>
+                        <td>UTTM</td>
+                        <td><span class="tag Active">Generated</span></td>
+                        <td>{{ ur.author }}</td>
+                        <td>{{ ur.created_at[:10] }}</td>
+                        <td><a class="btn sm ghost" href="{{ url_for('ut_report_view', rid=ur.id) }}">📄 View</a></td>
+                        <td></td>
+                    </tr>
+                    {% endfor %}
                     {% for r in reports %}
                     <tr>
                         <td><b>{{ r.title }}</b>{% if r.summary %}<br><small style="color:var(--muted)">{{ r.summary[:100] }}{% if r.summary|length > 100 %}…{% endif %}</small>{% endif %}</td>

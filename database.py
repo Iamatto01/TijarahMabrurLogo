@@ -151,6 +151,25 @@ CREATE TABLE IF NOT EXISTS expiry_reminders (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS ut_reports (
+    id {_serial()},
+    machinery_id INTEGER NOT NULL,
+    report_no TEXT DEFAULT '',
+    tested_by TEXT DEFAULT '',
+    uttm_date TEXT DEFAULT '',
+    calculated_by TEXT DEFAULT '',
+    report_date TEXT DEFAULT '',
+    client_pic TEXT DEFAULT '',
+    designation TEXT DEFAULT '',
+    probe_details TEXT DEFAULT '{}',
+    specimen_details TEXT DEFAULT '{}',
+    readings_json TEXT DEFAULT '[]',
+    calc_data TEXT DEFAULT '{}',
+    conclusion TEXT DEFAULT '',
+    created_by INTEGER NOT NULL,
+    created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS rfq_entries (
     id {_serial()},
     rfq_id TEXT NOT NULL,
