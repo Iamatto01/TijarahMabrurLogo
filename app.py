@@ -711,7 +711,7 @@ def ut_report_new(mid):
         return redirect(url_for("ut_report_view", rid=rid))
         
     client = q("SELECT * FROM users WHERE id = ?", (m["owner_id"],), one=True) if m["owner_id"] else None
-    return render_template("portal/ut_report_form.html", m=m, client=client)
+    return render_template("portal/ut_report_form.html", m=m, client=client, datetime=datetime)
 
 @app.route("/portal/report/ut/<int:rid>")
 @login_required

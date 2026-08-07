@@ -27,7 +27,7 @@
             <div class="form-row">
                 <div class="field">
                     <label>Tested & Measured By</label>
-                    <input type="text" name="tested_by" required value="{{ current_user().get('name') }}">
+                    <input type="text" name="tested_by" required value="{{ user.get('name') if user else '' }}">
                 </div>
                 <div class="field">
                     <label>UTTM Date</label>
@@ -37,7 +37,7 @@
             <div class="form-row">
                 <div class="field">
                     <label>Report & Calculation By</label>
-                    <input type="text" name="calculated_by" required value="{{ current_user().get('name') }}">
+                    <input type="text" name="calculated_by" required value="{{ user.get('name') if user else '' }}">
                 </div>
                 <div class="field">
                     <label>Report Date</label>
