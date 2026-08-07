@@ -70,11 +70,16 @@
         <script>
         setTimeout(function() {
             document.querySelectorAll('.flash').forEach(function(el) {
-                el.style.transition = 'opacity 0.5s ease';
+                el.style.transition = 'all 0.5s ease-out';
                 el.style.opacity = '0';
+                el.style.margin = '0 auto';
+                el.style.padding = '0';
+                el.style.height = '0';
+                el.style.border = '0';
+                el.style.overflow = 'hidden';
                 setTimeout(() => el.remove(), 500);
             });
-        }, 3000);
+        }, 4000);
         </script>
         {% block content %}{% endblock %}
     </main>
