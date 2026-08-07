@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Tijarah Mabrur (M) Sdn. Bhd.{% endblock %}</title>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon-blue.png') }}">
-    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='img/favicon-blue.png') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon-blue.png') }}?v=3">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='img/favicon-blue.png') }}?v=3">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <header class="site-header">
         <div class="container inner">
             <a class="brand" href="{{ url_for('home') }}" style="text-decoration:none">
-                <img src="{{ url_for('static', filename='img/main-logo.png') }}" alt="Tijarah Mabrur" class="brand-logo">
+                <img src="{{ url_for('static', filename='img/main-logo.png') }}?v=3" alt="Tijarah Mabrur" class="brand-logo">
                 <span>TIJARAH MABRUR<small>YOUR RELIABLE PARTNER</small></span>
             </a>
             <button class="site-nav-toggle" id="siteNavToggle" aria-label="Toggle Navigation">
@@ -70,6 +70,15 @@
             <div class="flash {{ cat }} container">{{ msg }}</div>
         {% endfor %}
     {% endwith %}
+    <script>
+    setTimeout(function() {
+        document.querySelectorAll('.flash').forEach(function(el) {
+            el.style.transition = 'opacity 0.5s ease';
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 500);
+        });
+    }, 3000);
+    </script>
 
     {% block content %}{% endblock %}
 
