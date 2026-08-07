@@ -84,7 +84,7 @@ textarea.ss-input { resize: vertical; min-height: 80px; }
             <div class="ss-row">
                 <div class="ss-label w-120">Client Name</div>
                 <div class="flex-1">
-                    <input type="text" name="client_name" class="ss-input" required value="{{ e.client_name if e else '' }}" list="cust_list">
+                    <input type="text" name="client_name" id="inp_client_name" class="ss-input" required value="{{ e.client_name if e else '' }}" list="cust_list">
                     <datalist id="cust_list">
                         {% for c in customers %}<option value="{{ c.company_name or c.name }}">{% endfor %}
                     </datalist>
@@ -108,13 +108,13 @@ textarea.ss-input { resize: vertical; min-height: 80px; }
             </div>
             <div class="ss-row">
                 <div class="ss-label w-120">Location</div>
-                <div class="flex-1"><input type="text" name="location" class="ss-input" value="{{ e.location if e else '' }}"></div>
+                <div class="flex-1"><input type="text" name="location" id="inp_location" class="ss-input" value="{{ e.location if e else '' }}"></div>
                 <div class="ss-label w-80">State</div>
-                <div class="flex-1"><input type="text" name="state" class="ss-input" value="{{ e.state if e else '' }}"></div>
+                <div class="flex-1"><input type="text" name="state" id="inp_state" class="ss-input" value="{{ e.state if e else '' }}"></div>
             </div>
             <div class="ss-row">
                 <div class="ss-label w-120">Person In Charge</div>
-                <div class="flex-1"><input type="text" name="person_in_charge" class="ss-input" value="{{ e.person_in_charge if e else '' }}"></div>
+                <div class="flex-1"><input type="text" name="person_in_charge" id="inp_pic" class="ss-input" value="{{ e.person_in_charge if e else '' }}"></div>
                 <div class="ss-label w-80">Introducer</div>
                 <div class="flex-1">
                     <select name="introducer" class="ss-input">
@@ -125,7 +125,7 @@ textarea.ss-input { resize: vertical; min-height: 80px; }
             </div>
             <div class="ss-row">
                 <div class="ss-label w-120">Contact Number</div>
-                <div class="flex-1"><input type="text" name="contact_number" class="ss-input" value="{{ e.contact_number if e else '' }}"></div>
+                <div class="flex-1"><input type="text" name="contact_number" id="inp_contact" class="ss-input" value="{{ e.contact_number if e else '' }}"></div>
                 <div class="ss-label w-80">Source</div>
                 <div class="flex-1">
                     <select name="source" class="ss-input">
@@ -136,7 +136,7 @@ textarea.ss-input { resize: vertical; min-height: 80px; }
             </div>
             <div class="ss-row">
                 <div class="ss-label w-120">Email</div>
-                <div class="flex-1"><input type="text" name="email" class="ss-input" value="{{ e.email if e else '' }}"></div>
+                <div class="flex-1"><input type="text" name="email" id="inp_email" class="ss-input" value="{{ e.email if e else '' }}"></div>
                 <div class="ss-label w-80">Date</div>
                 <div class="flex-1"><input type="date" name="date" class="ss-input" value="{{ e.date if e else '' }}"></div>
             </div>
@@ -376,6 +376,24 @@ textarea.ss-input { resize: vertical; min-height: 80px; }
 </form>
 
 <script>
+// Customer Data for auto-fill
+const customersData = [
+    {% for c in customers %}
+    { name: "{{ (c.company_name or c.name)|replace('\"', '\\\"') }}", pic: "{{ c.name|replace('\"', '\\\"') }}", phone: "{{ c.mobile|replace('\"', '\\\"') }}", email: "{{ c.email|replace('\"', '\\\"') }}", location: "{{ c.location|replace('\"', '\\\"') }}", state: "{{ c.state|replace('\"', '\\\"') }}" },
+    {% endfor %}
+];
+
+document.getElementById('inp_client_name').addEventListener('input', function(e) {
+    const val = e.target.value.toLowerCase();
+    const match = customersData.find(c => c.name.toLowerCase() === val);
+    if (match) {
+        document.getElementById('inp_pic').value = match.pic;
+        document.getElementById('inp_contact').value = match.phone;
+        document.getElementById('inp_email').value = match.email;
+        document.getElementById('inp_location').value = match.location;
+        document.getElementById('inp_state').value = match.state;
+    }
+});
 // Load JSON data
 let csData = JSON.parse('{{ e.cost_subcon_json|safe if e and e.cost_subcon_json else "[]" }}');
 let ccData = JSON.parse('{{ e.cost_company_json|safe if e and e.cost_company_json else "[]" }}');
