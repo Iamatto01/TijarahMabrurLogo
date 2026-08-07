@@ -166,7 +166,8 @@ def scope_clause(u, col="m.owner_id"):
 def login_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if not session.get("user_id"):
+        if not session.get("user_id") or not current_user():
+            session.clear()
             flash("Please log in first.", "warn")
             return redirect(url_for("login", next=request.path))
         return f(*args, **kwargs)
