@@ -342,7 +342,7 @@ def machinery_list():
         where += " AND (m.cert_type = ? OR (m.cert_type IS NULL AND ? = 'PMT'))"
         args += [cert_type, cert_type]
     if search:
-        where += " AND (m.name LIKE ? OR m.item_name LIKE ? OR m.serial_no LIKE ? OR m.cert_no LIKE ? OR m.location LIKE ?)"
+        where += " AND (LOWER(m.name) LIKE LOWER(?) OR LOWER(m.item_name) LIKE LOWER(?) OR LOWER(m.serial_no) LIKE LOWER(?) OR LOWER(m.cert_no) LIKE LOWER(?) OR LOWER(m.location) LIKE LOWER(?))"
         args += [f"%{search}%"] * 5
     total = q(f"SELECT COUNT(*) c FROM machinery m WHERE {where}", tuple(args), one=True)["c"]
     pages = max((total + PER_PAGE - 1) // PER_PAGE, 1)

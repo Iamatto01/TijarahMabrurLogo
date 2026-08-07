@@ -6,16 +6,14 @@
 <div style="margin-bottom:24px">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px">
 
-        <div style="display:flex;align-items:center;gap:12px">
-            <form method="get" action="{{ url_for('machinery_list') }}" style="display:flex;align-items:center">
-                <input type="hidden" name="type" value="{{ cert_type }}">
-                <div style="position:relative;display:flex;align-items:center">
-                    <input type="text" name="q" value="{{ search }}" placeholder="Search…" style="padding:8px 36px 8px 16px;border-radius:20px;border:1px solid #ccc;background:#fff;font-size:13px;width:220px">
-                    <button type="submit" style="position:absolute;right:10px;background:none;border:none;cursor:pointer;color:#666;font-size:14px">🔍</button>
-                </div>
-            </form>
-            <a href="{{ url_for('machinery_new') }}" style="width:36px;height:36px;border-radius:50%;border:1px solid #333;display:inline-flex;align-items:center;justify-content:center;font-size:20px;color:#333;text-decoration:none;font-weight:300" title="Add Machinery">+</a>
-        </div>
+        <form method="get" action="{{ url_for('machinery_list') }}" style="display:flex;align-items:center">
+            <input type="hidden" name="type" value="{{ cert_type }}">
+            <div style="position:relative;display:flex;align-items:center">
+                <input type="text" name="q" value="{{ search }}" placeholder="Search…" style="padding:8px 36px 8px 16px;border-radius:20px;border:1px solid #ccc;background:#fff;font-size:13px;width:220px">
+                <button type="submit" style="position:absolute;right:10px;background:none;border:none;cursor:pointer;color:#666;font-size:14px">🔍</button>
+            </div>
+        </form>
+        <a href="{{ url_for('machinery_new') }}" style="width:36px;height:36px;border-radius:50%;border:1px solid #333;display:inline-flex;align-items:center;justify-content:center;font-size:20px;color:#333;text-decoration:none;font-weight:300" title="Add Machinery">+</a>
     </div>
 
     <!-- PMT / PMA / PMD Pill Tabs -->
@@ -55,7 +53,7 @@
                             {% if m.image_filename %}
                             <img src="{{ url_for('serve_machinery_image', filename=m.image_filename) }}" style="width:46px;height:46px;border-radius:6px;object-fit:cover;border:1px solid #ddd;box-shadow:0 1px 3px rgba(0,0,0,0.1)">
                             {% else %}
-                            <div style="width:46px;height:46px;border-radius:6px;background:#ddd;display:flex;align-items:center;justify-content:center;font-size:20px">⚙️</div>
+                            <img src="{{ url_for('static', filename='img/' ~ (m.cert_type|lower if m.cert_type in ['PMT', 'PMA', 'PMD'] else 'pmt') ~ '.png') }}" style="width:46px;height:46px;border-radius:6px;object-fit:cover;border:1px solid #ddd;box-shadow:0 1px 3px rgba(0,0,0,0.1)">
                             {% endif %}
                         </div>
                     </td>
