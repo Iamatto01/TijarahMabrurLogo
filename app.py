@@ -40,7 +40,8 @@ from pdf_utils import (extract_acroform_fields, fill_pdf, validate_fields_json,
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "change-me-in-production-tijarah-2026")
 
-UPLOAD_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), "uploads")
+STORAGE_PATH = os.getenv("STORAGE_PATH", os.path.join(os.path.abspath(os.path.dirname(__file__)), "uploads"))
+UPLOAD_DIR = STORAGE_PATH
 LOGO_DIR = os.path.join(UPLOAD_DIR, "logos")
 MACHINERY_IMG_DIR = os.path.join(UPLOAD_DIR, "machinery")
 REPORT_PDF_DIR = os.path.join(UPLOAD_DIR, "reports")

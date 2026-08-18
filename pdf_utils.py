@@ -370,7 +370,8 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
 
             if i in insertions_by_page:
                 for pdf_filename in insertions_by_page[i]:
-                    pdf_path = os.path.join(base_dir, "uploads", "reports", pdf_filename)
+                    storage_path = os.getenv("STORAGE_PATH", os.path.join(base_dir, "uploads"))
+                    pdf_path = os.path.join(storage_path, "reports", pdf_filename)
                     if os.path.exists(pdf_path):
                         try:
                             sec_reader = PdfReader(pdf_path)
