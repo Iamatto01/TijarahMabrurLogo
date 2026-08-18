@@ -6,7 +6,21 @@
         <h1>📄 Reports</h1>
         <div class="who">Statutory &amp; Inspection Reports</div>
     </div>
-    <a class="btn" href="{{ url_for('report_new') }}">+ New Report</a>
+    <div style="display:flex;gap:8px">
+        <a class="btn ghost" href="{{ url_for('osh_list') }}">🛡️ OSHWA Safety Manuals</a>
+        <a class="btn" href="{{ url_for('report_new') }}">+ New Report</a>
+    </div>
+</div>
+
+<div style="padding:14px 18px;background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%);color:#fff;border-radius:12px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+    <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:24px">🛡️</span>
+        <div>
+            <b style="font-size:14px;color:#38bdf8">OshOne OSHWA Safety Manuals &amp; PDF Report Templates</b>
+            <div style="font-size:12px;color:#94a3b8">Manage full 350+ page statutory safety manuals, HIRARC reports, and modular stage PDFs with interactive template viewer.</div>
+        </div>
+    </div>
+    <a href="{{ url_for('osh_list') }}" class="btn sm" style="background:#0284c7;color:#fff;font-weight:700">Open OSHWA Hub ↗</a>
 </div>
 
 <div class="panel">

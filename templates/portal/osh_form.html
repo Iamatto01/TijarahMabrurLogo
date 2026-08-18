@@ -1,0 +1,139 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}{{ 'Edit' if r else 'New' }} OSHWA Manual | OshOne Portal{% endblock %}
+{% block content %}
+<div class="portal-topbar">
+    <div>
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">
+            <a href="{{ url_for('osh_list') }}" style="color:var(--accent-2);text-decoration:none">← OSHWA Document Hub</a>
+        </div>
+        <h1 style="margin:4px 0 0">{{ 'Edit OSHWA Manual — ' ~ r.title if r else 'New OSHWA Safety Manual / Report' }}</h1>
+    </div>
+    <a class="btn ghost" href="{{ url_for('osh_list') }}">← Back to Hub</a>
+</div>
+
+<div class="panel" style="max-width:920px;margin:0 auto 40px">
+    <div style="padding:16px 20px;background:#f0f9ff;border-bottom:1px solid #bae6fd;display:flex;align-items:center;gap:12px">
+        <span style="font-size:24px">🛡️</span>
+        <div>
+            <strong style="color:#0369a1;display:block;font-size:14px">OshOne Statutory Safety Manual &amp; Report Generator</strong>
+            <span style="font-size:12px;color:#475569">Upload statutory PDF dossiers (like the 350-page Safety Manual or modular stage reports) to automatically embed inside the interactive Report Template Viewer.</span>
+        </div>
+    </div>
+
+    <div class="panel-body" style="padding:28px">
+        <form method="post" enctype="multipart/form-data">
+            <!-- TITLE & COMPANY -->
+            <div class="field" style="margin-bottom:20px">
+                <label style="font-weight:700;font-size:13px">Document Title *</label>
+                <input type="text" name="title" required value="{{ r.title if r else '' }}" placeholder="e.g. OSHWA Occupational Safety & Health Management Manual 2026" style="font-size:14px;padding:10px 12px">
+            </div>
+
+            <div class="form-row" style="margin-bottom:20px">
+                <div class="field">
+                    <label style="font-weight:700;font-size:13px">Client / Company *</label>
+                    <select name="company_id" required style="padding:10px 12px;font-size:13px">
+                        {% for c in companies %}
+                        <option value="{{ c.id }}" {{ 'selected' if (r and r.company_id == c.id) or (not r and companies|length == 1) }}>{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label style="font-weight:700;font-size:13px">Document Category *</label>
+                    <select name="category" style="padding:10px 12px;font-size:13px">
+                        {% for cat in categories %}
+                        <option value="{{ cat }}" {{ 'selected' if r and r.category == cat }}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- REF NO, REVISION, STATUS -->
+            <div class="form-row" style="margin-bottom:20px">
+                <div class="field">
+                    <label style="font-weight:700;font-size:13px">Document Reference No.</label>
+                    <input type="text" name="ref_no" value="{{ r.ref_no if r else '' }}" placeholder="e.g. TM/OSHWA/2026/CB-01" style="font-family:monospace;padding:10px 12px;font-size:13px">
+                </div>
+                <div class="field">
+                    <label style="font-weight:700;font-size:13px">Revision / Edition</label>
+                    <input type="text" name="revision" value="{{ r.revision if r else 'Rev 1.0 (2026 Edition)' }}" placeholder="Rev 1.0" style="padding:10px 12px;font-size:13px">
+                </div>
+                <div class="field">
+                    <label style="font-weight:700;font-size:13px">Approval Status</label>
+                    <select name="status" style="padding:10px 12px;font-size:13px">
+                        {% for s in statuses %}
+                        <option value="{{ s }}" {{ 'selected' if r and r.status == s }}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- DATES & SIGNATORIES -->
+            <div class="form-row" style="margin-bottom:20px">
+                <div class="field">
+                    <label style="font-weight:700;font-size:13px">Effective Date</label>
+                    <input type="date" name="effective_date" value="{{ r.effective_date if r else datetime.utcnow().strftime('%Y-%m-%d') }}" style="padding:10px 12px;font-size:13px">
+                </div>
+                <div class="field">
+                    <label style="font-weight:700;font-size:13px">Review Due Date</label>
+                    <input type="date" name="review_due_date" value="{{ r.review_due_date if r else '' }}" style="padding:10px 12px;font-size:13px">
+                </div>
+            </div>
+
+            <div class="form-row" style="margin-bottom:20px">
+                <div class="field">
+                    <label style="font-weight:700;font-size:13px">Prepared By</label>
+                    <input type="text" name="prepared_by" value="{{ r.prepared_by if r else 'Tijarah Mabrur OSH Specialist' }}" placeholder="e.g. Tijarah Mabrur Specialist" style="padding:10px 12px;font-size:13px">
+                </div>
+                <div class="field">
+                    <label style="font-weight:700;font-size:13px">Approved By (Client PIC / MD)</label>
+                    <input type="text" name="approved_by" value="{{ r.approved_by if r else 'Managing Director' }}" placeholder="e.g. Teh Chee Hang (Managing Director)" style="padding:10px 12px;font-size:13px">
+                </div>
+            </div>
+
+            <!-- SUMMARY & SCOPE -->
+            <div class="field" style="margin-bottom:20px">
+                <label style="font-weight:700;font-size:13px">Executive Summary &amp; Statutory Notes</label>
+                <textarea name="summary" rows="4" placeholder="Summary of safety manual, OSHA 1994 compliance highlights, policies, and inspection findings…" style="padding:10px 12px;font-size:13px;line-height:1.5">{{ r.summary if r else '' }}</textarea>
+            </div>
+
+            <div class="field" style="margin-bottom:20px">
+                <label style="font-weight:700;font-size:13px">Operational Scope of Work</label>
+                <input type="text" name="scope_of_work" value="{{ r.scope_of_work if r else '' }}" placeholder="e.g. Factory manufacturing plant, warehouse, fabrication yard, and management offices." style="padding:10px 12px;font-size:13px">
+            </div>
+
+            <!-- PRIMARY PDF FILE -->
+            <div class="field" style="margin-bottom:24px;background:#f8fafc;padding:16px;border-radius:10px;border:1px solid #e2e8f0">
+                <label style="font-weight:700;font-size:13px;display:block;margin-bottom:6px">📄 Primary Statutory PDF Document (Safety Manual / Dossier)</label>
+                <input type="file" name="pdf_file" accept=".pdf" style="font-size:13px">
+                {% if r and r.pdf_filename %}
+                <div style="font-size:12px;color:#0284c7;margin-top:6px;font-weight:600">
+                    Current Document: <a href="{{ url_for('serve_report_pdf', filename=r.pdf_filename) }}" target="_blank">{{ r.pdf_filename }}</a>
+                </div>
+                {% else %}
+                <small style="color:#64748b;display:block;margin-top:4px">Upload the full PDF file (supports large manuals, up to 64MB).</small>
+                {% endif %}
+            </div>
+
+            <!-- SECTIONS TABLE OF CONTENTS JSON (OPTIONAL / ADVANCED) -->
+            {% if r %}
+            <div class="field" style="margin-bottom:24px">
+                <details>
+                    <summary style="font-weight:700;font-size:13px;color:#0369a1;cursor:pointer">⚙️ Advanced: Table of Contents &amp; Page Jumps (JSON)</summary>
+                    <div style="margin-top:10px">
+                        <textarea name="sections_json" rows="6" style="font-family:monospace;font-size:12px;width:100%;padding:10px;border-radius:6px;border:1px solid #cbd5e1">{{ r.sections_json }}</textarea>
+                        <small style="color:#64748b">Format: Array of objects with `{"id": 1, "title": "Section Name", "page": 2, "icon": "📜", "desc": "Summary"}`</small>
+                    </div>
+                </details>
+            </div>
+            {% endif %}
+
+            <div style="display:flex;gap:12px;justify-content:flex-end;border-top:1px solid #e2e8f0;padding-top:20px">
+                <a href="{{ url_for('osh_list') }}" class="btn ghost">Cancel</a>
+                <button class="btn" type="submit" style="background:#0284c7;color:#fff;font-weight:700;padding:10px 24px">
+                    {{ 'Update OSHWA Manual' if r else 'Create & View in Template' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -87,7 +87,7 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, "static", "img"), "logo.png", mimetype="image/png")
 
 ALLOWED_LOGO_EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
-app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024  # 8 MB uploads
+app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # 64 MB uploads for statutory dossiers and safety manuals
 
 
 def save_machinery_file(file_storage, target_dir, prefix="doc"):
@@ -133,6 +133,18 @@ CATEGORIES = ["Pressure Vessel", "Lifting Device", "Boiler", "Compressor", "Othe
 STATUSES = ["Active", "Under Maintenance", "Expired"]
 REPORT_TYPES = ["Inspection", "Calibration", "Maintenance", "NDT"]
 REPORT_STATUSES = ["Draft", "Submitted", "Approved"]
+OSH_CATEGORIES = [
+    "Full Safety Manual",
+    "HIRARC Risk Register",
+    "Workplace Safety Inspection",
+    "OSH Policy & Committee",
+    "Safe Operating Procedures (SOP)",
+    "Emergency Response Plan (ERP)",
+    "DOSH / JKKP Statutory Compliance",
+    "Training & Competency Records",
+    "Audit & Review Report",
+]
+OSH_STATUSES = ["Approved", "Active", "In Review", "Draft", "Expired"]
 PER_PAGE = 25  # pagination size for large tenant datasets
 
 
@@ -808,6 +820,364 @@ def report_edit(rid):
     machines = q(f"SELECT id, name FROM machinery m WHERE {scope} ORDER BY m.name", params)
     return render_template("portal/report_form.html", r=r, machines=machines,
                            report_types=REPORT_TYPES, report_statuses=REPORT_STATUSES)
+
+
+# ---------------- portal: OSHWA / OshOne Documents & Safety Manuals ----------------
+@app.route("/portal/oshwa")
+@app.route("/portal/osh-reports")
+@login_required
+def osh_list():
+    u = current_user()
+    cat_filter = request.args.get("category", "").strip()
+    status_filter = request.args.get("status", "").strip()
+    company_filter = request.args.get("company_id", type=int)
+    search_q = request.args.get("q", "").strip()
+
+    where_clauses = ["1=1"]
+    params = []
+
+    if u["role"] != "admin" and u.get("company_id"):
+        where_clauses.append("o.company_id = ?")
+        params.append(u["company_id"])
+    elif company_filter:
+        where_clauses.append("o.company_id = ?")
+        params.append(company_filter)
+
+    if cat_filter:
+        where_clauses.append("o.category = ?")
+        params.append(cat_filter)
+    if status_filter:
+        where_clauses.append("o.status = ?")
+        params.append(status_filter)
+    if search_q:
+        where_clauses.append("(o.title LIKE ? OR o.ref_no LIKE ? OR c.name LIKE ?)")
+        params.extend([f"%{search_q}%", f"%{search_q}%", f"%{search_q}%"])
+
+    sql = f"""SELECT o.*, c.name AS company_name, c.logo_filename AS company_logo,
+                     m.name AS machinery_name, u.name AS author_name
+              FROM osh_reports o
+              LEFT JOIN companies c ON c.id = o.company_id
+              LEFT JOIN machinery m ON m.id = o.machinery_id
+              LEFT JOIN users u ON u.id = o.created_by
+              WHERE {' AND '.join(where_clauses)}
+              ORDER BY o.id DESC"""
+    rows = q(sql, params)
+    reports = [dict(r) for r in rows]
+
+    total_docs = len(reports)
+    approved_docs = sum(1 for r in reports if r.get("status") in ("Approved", "Active"))
+    review_docs = sum(1 for r in reports if r.get("status") in ("In Review", "Draft"))
+
+    companies = q("SELECT id, name FROM companies ORDER BY name") if u["role"] == "admin" else []
+
+    return render_template(
+        "portal/osh_list.html",
+        reports=reports,
+        categories=OSH_CATEGORIES,
+        statuses=OSH_STATUSES,
+        cat_filter=cat_filter,
+        status_filter=status_filter,
+        company_filter=company_filter,
+        search_q=search_q,
+        companies=companies,
+        total_docs=total_docs,
+        approved_docs=approved_docs,
+        review_docs=review_docs,
+    )
+
+
+@app.route("/portal/oshwa/new", methods=["GET", "POST"])
+@login_required
+def osh_new():
+    u = current_user()
+    if request.method == "POST":
+        f = request.form
+        title = f.get("title", "").strip()
+        company_id = f.get("company_id", type=int) or u.get("company_id")
+        machinery_id = f.get("machinery_id", type=int) or None
+        category = f.get("category", "Full Safety Manual")
+        ref_no = f.get("ref_no", "").strip()
+        revision = f.get("revision", "Rev 1.0").strip()
+        status = f.get("status", "Approved")
+        summary = f.get("summary", "").strip()
+        scope_of_work = f.get("scope_of_work", "").strip()
+        prepared_by = f.get("prepared_by", "").strip()
+        approved_by = f.get("approved_by", "").strip()
+        effective_date = f.get("effective_date", "").strip()
+        review_due_date = f.get("review_due_date", "").strip()
+
+        if not title:
+            flash("Document title is required.", "err")
+            return redirect(url_for("osh_new"))
+
+        if not ref_no:
+            yr = datetime.utcnow().strftime("%Y")
+            ref_no = f"TM/OSHWA/{yr}/{uuid.uuid4().hex[:4].upper()}"
+
+        pdf_file = request.files.get("pdf_file")
+        pdf_name = ""
+        if pdf_file and pdf_file.filename and pdf_file.filename.lower().endswith(".pdf"):
+            orig_name = secure_filename(pdf_file.filename)
+            pdf_name = f"osh_{uuid.uuid4().hex[:8]}_{orig_name}"
+            pdf_file.save(os.path.join(REPORT_PDF_DIR, pdf_name))
+
+        # Default section suggestions if none provided
+        sections = [
+            {"id": 1, "title": "Polisi Keselamatan & Kesihatan Pekerjaan (OSH Policy)", "page": 1, "icon": "📜", "desc": "Polisi rasmi keselamatan majikan selaras Seksyen 16 OSHA 1994."},
+            {"id": 2, "title": "Surat Pelantikan Jawatankuasa Keselamatan (Appointment Letters)", "page": 5, "icon": "✍️", "desc": "Surat lantikan Pengerusi, Setiausaha & Ahli Jawatankuasa OSH."},
+            {"id": 3, "title": "Minit Mesyuarat & Komunikasi Keselamatan (Meeting Minutes)", "page": 9, "icon": "📝", "desc": "Rekod perbincangan keselamatan dan isu berkala tempat kerja."},
+            {"id": 4, "title": "Penilaian Risiko HIRARC (Risk Assessment & Control)", "page": 20, "icon": "⚠️", "desc": "Identifikasi punca bahaya, analisis risiko dan hierarki kawalan."},
+            {"id": 5, "title": "Prosedur Kerja Selamat (Safe Operating Procedures - SOP)", "page": 40, "icon": "⚙️", "desc": "SOP pengoperasian alatan, peralatan keselamatan dan PPE."},
+            {"id": 6, "title": "Pelan Tindakan Kecemasan & Kebakaran (ERP & Fire Safety)", "page": 80, "icon": "🚒", "desc": "Pelan tindakan kebakaran, rawatan kecemasan & laluan evakuasi."}
+        ]
+
+        now = datetime.utcnow().isoformat()
+        oid = execute(
+            """INSERT INTO osh_reports (
+                company_id, machinery_id, title, category, ref_no, revision, status,
+                summary, scope_of_work, prepared_by, approved_by, effective_date, review_due_date,
+                pdf_filename, sections_json, attachments_json, created_by, created_at, updated_at
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                company_id, machinery_id, title, category, ref_no, revision, status,
+                summary, scope_of_work, prepared_by, approved_by, effective_date, review_due_date,
+                pdf_name, json.dumps(sections), json.dumps([]), u["id"], now, now
+            )
+        )
+        flash("OSHWA Document Report created successfully!", "ok")
+        return redirect(url_for("osh_view", oid=oid))
+
+    companies = q("SELECT id, name FROM companies ORDER BY name") if u["role"] == "admin" else q("SELECT id, name FROM companies WHERE id = ?", (u.get("company_id"),))
+    machines = q("SELECT id, name FROM machinery ORDER BY name")
+    return render_template(
+        "portal/osh_form.html",
+        r=None,
+        companies=companies,
+        machines=machines,
+        categories=OSH_CATEGORIES,
+        statuses=OSH_STATUSES,
+        datetime=datetime
+    )
+
+
+@app.route("/portal/oshwa/<int:oid>/view")
+@login_required
+def osh_view(oid):
+    u = current_user()
+    r = q("""SELECT o.*, c.name AS company_name, c.reg_no AS company_reg, c.address AS company_address,
+                    c.phone AS company_phone, c.email AS company_email, c.logo_filename AS company_logo,
+                    m.name AS machinery_name, m.cert_no AS machinery_cert, u.name AS author_name
+             FROM osh_reports o
+             LEFT JOIN companies c ON c.id = o.company_id
+             LEFT JOIN machinery m ON m.id = o.machinery_id
+             LEFT JOIN users u ON u.id = o.created_by
+             WHERE o.id = ?""", (oid,), one=True)
+    if not r:
+        abort(404)
+    if u["role"] != "admin" and r["company_id"] and u.get("company_id") and r["company_id"] != u["company_id"]:
+        abort(403)
+
+    sections = json.loads(r["sections_json"] or "[]")
+    attachments = json.loads(r["attachments_json"] or "[]")
+
+    active_file = request.args.get("file", "").strip() or r["pdf_filename"]
+    page_num = request.args.get("page", 1, type=int)
+
+    return render_template(
+        "portal/osh_view.html",
+        r=r,
+        sections=sections,
+        attachments=attachments,
+        active_file=active_file,
+        page_num=page_num
+    )
+
+
+@app.route("/portal/oshwa/<int:oid>/edit", methods=["GET", "POST"])
+@login_required
+def osh_edit(oid):
+    u = current_user()
+    r = q("SELECT * FROM osh_reports WHERE id = ?", (oid,), one=True)
+    if not r:
+        abort(404)
+    if u["role"] != "admin" and r["company_id"] and u.get("company_id") and r["company_id"] != u["company_id"]:
+        abort(403)
+
+    if request.method == "POST":
+        f = request.form
+        title = f.get("title", r["title"]).strip()
+        company_id = f.get("company_id", type=int) or r["company_id"]
+        machinery_id = f.get("machinery_id", type=int) or None
+        category = f.get("category", r["category"])
+        ref_no = f.get("ref_no", r["ref_no"]).strip()
+        revision = f.get("revision", r["revision"]).strip()
+        status = f.get("status", r["status"])
+        summary = f.get("summary", "").strip()
+        scope_of_work = f.get("scope_of_work", "").strip()
+        prepared_by = f.get("prepared_by", "").strip()
+        approved_by = f.get("approved_by", "").strip()
+        effective_date = f.get("effective_date", "").strip()
+        review_due_date = f.get("review_due_date", "").strip()
+
+        pdf_name = r["pdf_filename"]
+        pdf_file = request.files.get("pdf_file")
+        if pdf_file and pdf_file.filename and pdf_file.filename.lower().endswith(".pdf"):
+            orig_name = secure_filename(pdf_file.filename)
+            pdf_name = f"osh_{uuid.uuid4().hex[:8]}_{orig_name}"
+            pdf_file.save(os.path.join(REPORT_PDF_DIR, pdf_name))
+
+        sections_raw = f.get("sections_json")
+        sections_json = r["sections_json"]
+        if sections_raw:
+            try:
+                json.loads(sections_raw)
+                sections_json = sections_raw
+            except Exception:
+                pass
+
+        now = datetime.utcnow().isoformat()
+        execute(
+            """UPDATE osh_reports SET
+                company_id=?, machinery_id=?, title=?, category=?, ref_no=?, revision=?,
+                status=?, summary=?, scope_of_work=?, prepared_by=?, approved_by=?,
+                effective_date=?, review_due_date=?, pdf_filename=?, sections_json=?,
+                updated_at=? WHERE id=?""",
+            (
+                company_id, machinery_id, title, category, ref_no, revision,
+                status, summary, scope_of_work, prepared_by, approved_by,
+                effective_date, review_due_date, pdf_name, sections_json,
+                now, oid
+            )
+        )
+        flash("OSHWA Document Report updated.", "ok")
+        return redirect(url_for("osh_view", oid=oid))
+
+    companies = q("SELECT id, name FROM companies ORDER BY name") if u["role"] == "admin" else q("SELECT id, name FROM companies WHERE id = ?", (u.get("company_id"),))
+    machines = q("SELECT id, name FROM machinery ORDER BY name")
+    return render_template(
+        "portal/osh_form.html",
+        r=r,
+        companies=companies,
+        machines=machines,
+        categories=OSH_CATEGORIES,
+        statuses=OSH_STATUSES,
+        datetime=datetime
+    )
+
+
+@app.route("/portal/oshwa/<int:oid>/add-attachment", methods=["POST"])
+@login_required
+def osh_add_attachment(oid):
+    u = current_user()
+    r = q("SELECT * FROM osh_reports WHERE id = ?", (oid,), one=True)
+    if not r:
+        abort(404)
+    if u["role"] != "admin" and r["company_id"] and u.get("company_id") and r["company_id"] != u["company_id"]:
+        abort(403)
+
+    att_title = request.form.get("attachment_title", "").strip() or "Modular Stage Report"
+    att_cat = request.form.get("attachment_category", "HIRARC").strip()
+    f = request.files.get("attachment_file")
+
+    if not f or not f.filename or not f.filename.lower().endswith(".pdf"):
+        flash("Please choose a valid PDF file for the attachment.", "err")
+        return redirect(url_for("osh_view", oid=oid))
+
+    orig_name = secure_filename(f.filename)
+    stored_name = f"osh_sub_{uuid.uuid4().hex[:8]}_{orig_name}"
+    f.save(os.path.join(REPORT_PDF_DIR, stored_name))
+
+    attachments = json.loads(r["attachments_json"] or "[]")
+    attachments.append({
+        "id": uuid.uuid4().hex[:6],
+        "title": att_title,
+        "category": att_cat,
+        "filename": stored_name,
+        "orig_filename": f.filename,
+        "uploaded_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M")
+    })
+
+    execute("UPDATE osh_reports SET attachments_json=?, updated_at=? WHERE id=?",
+            (json.dumps(attachments), datetime.utcnow().isoformat(), oid))
+
+    flash(f"Attached modular PDF: '{att_title}' successfully!", "ok")
+    return redirect(url_for("osh_view", oid=oid, file=stored_name))
+
+
+@app.route("/portal/oshwa/<int:oid>/delete-attachment/<att_id>", methods=["POST"])
+@login_required
+def osh_delete_attachment(oid, att_id):
+    u = current_user()
+    r = q("SELECT * FROM osh_reports WHERE id = ?", (oid,), one=True)
+    if not r:
+        abort(404)
+    if u["role"] != "admin" and r["company_id"] and u.get("company_id") and r["company_id"] != u["company_id"]:
+        abort(403)
+
+    attachments = json.loads(r["attachments_json"] or "[]")
+    new_attachments = []
+    for att in attachments:
+        if att.get("id") == att_id:
+            try:
+                os.remove(os.path.join(REPORT_PDF_DIR, att["filename"]))
+            except OSError:
+                pass
+        else:
+            new_attachments.append(att)
+
+    execute("UPDATE osh_reports SET attachments_json=?, updated_at=? WHERE id=?",
+            (json.dumps(new_attachments), datetime.utcnow().isoformat(), oid))
+
+    flash("Modular PDF attachment deleted.", "ok")
+    return redirect(url_for("osh_view", oid=oid))
+
+
+@app.route("/portal/oshwa/<int:oid>/delete", methods=["POST"])
+@login_required
+def osh_delete(oid):
+    u = current_user()
+    r = q("SELECT * FROM osh_reports WHERE id = ?", (oid,), one=True)
+    if not r:
+        abort(404)
+    if u["role"] != "admin" and r["company_id"] and u.get("company_id") and r["company_id"] != u["company_id"]:
+        abort(403)
+
+    if r["pdf_filename"] and r["pdf_filename"] != "camoor safety manual.pdf":
+        try:
+            os.remove(os.path.join(REPORT_PDF_DIR, r["pdf_filename"]))
+        except OSError:
+            pass
+
+    attachments = json.loads(r["attachments_json"] or "[]")
+    for att in attachments:
+        try:
+            os.remove(os.path.join(REPORT_PDF_DIR, att["filename"]))
+        except OSError:
+            pass
+
+    execute("DELETE FROM osh_reports WHERE id = ?", (oid,))
+    flash("OSHWA Document Report deleted.", "ok")
+    return redirect(url_for("osh_list"))
+
+
+@app.route("/portal/oshwa/<int:oid>/download")
+@login_required
+def osh_download(oid):
+    u = current_user()
+    r = q("SELECT * FROM osh_reports WHERE id = ?", (oid,), one=True)
+    if not r:
+        abort(404)
+    if u["role"] != "admin" and r["company_id"] and u.get("company_id") and r["company_id"] != u["company_id"]:
+        abort(403)
+
+    fname = request.args.get("file") or r["pdf_filename"]
+    if not fname:
+        abort(404)
+    path = os.path.join(REPORT_PDF_DIR, fname)
+    if not os.path.exists(path):
+        abort(404)
+    download_name = re.sub(r"[^A-Za-z0-9_-]+", "_", r["title"]) + ".pdf"
+    return send_file(path, mimetype="application/pdf", as_attachment=True, download_name=download_name)
 
 
 

@@ -256,6 +256,29 @@ CREATE TABLE IF NOT EXISTS rfq_customers (
     state TEXT DEFAULT '',
     created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS osh_reports (
+    id {_serial()},
+    company_id INTEGER,
+    machinery_id INTEGER,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'Full Safety Manual',
+    ref_no TEXT DEFAULT '',
+    revision TEXT DEFAULT 'Rev 1.0',
+    status TEXT NOT NULL DEFAULT 'Approved',
+    summary TEXT DEFAULT '',
+    scope_of_work TEXT DEFAULT '',
+    prepared_by TEXT DEFAULT '',
+    approved_by TEXT DEFAULT '',
+    effective_date TEXT DEFAULT '',
+    review_due_date TEXT DEFAULT '',
+    pdf_filename TEXT DEFAULT '',
+    sections_json TEXT DEFAULT '[]',
+    attachments_json TEXT DEFAULT '[]',
+    created_by INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT DEFAULT ''
+);
 """
 
 INDEXES = """
@@ -272,6 +295,8 @@ CREATE INDEX IF NOT EXISTS idx_rfq_entries_owner ON rfq_entries(owner_id);
 CREATE INDEX IF NOT EXISTS idx_rfq_items_entry ON rfq_items(rfq_entry_id);
 CREATE INDEX IF NOT EXISTS idx_rfq_lists_type ON rfq_lists(list_type);
 CREATE INDEX IF NOT EXISTS idx_rfq_team_comm ON rfq_team_commissions(rfq_entry_id);
+CREATE INDEX IF NOT EXISTS idx_osh_reports_company ON osh_reports(company_id);
+CREATE INDEX IF NOT EXISTS idx_osh_reports_cat ON osh_reports(category);
 """
 
 
@@ -347,6 +372,28 @@ def _migrate(conn):
                 sent INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL
             )""",
+            """CREATE TABLE IF NOT EXISTS osh_reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                company_id INTEGER,
+                machinery_id INTEGER,
+                title TEXT NOT NULL,
+                category TEXT NOT NULL DEFAULT 'Full Safety Manual',
+                ref_no TEXT DEFAULT '',
+                revision TEXT DEFAULT 'Rev 1.0',
+                status TEXT NOT NULL DEFAULT 'Approved',
+                summary TEXT DEFAULT '',
+                scope_of_work TEXT DEFAULT '',
+                prepared_by TEXT DEFAULT '',
+                approved_by TEXT DEFAULT '',
+                effective_date TEXT DEFAULT '',
+                review_due_date TEXT DEFAULT '',
+                pdf_filename TEXT DEFAULT '',
+                sections_json TEXT DEFAULT '[]',
+                attachments_json TEXT DEFAULT '[]',
+                created_by INTEGER NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT DEFAULT ''
+            )""",
         ]:
             conn.execute(table_ddl)
         conn.commit()
@@ -395,6 +442,28 @@ def _migrate(conn):
                 days_before INTEGER NOT NULL DEFAULT 30,
                 sent INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL
+            )""",
+            """CREATE TABLE IF NOT EXISTS osh_reports (
+                id SERIAL PRIMARY KEY,
+                company_id INTEGER,
+                machinery_id INTEGER,
+                title TEXT NOT NULL,
+                category TEXT NOT NULL DEFAULT 'Full Safety Manual',
+                ref_no TEXT DEFAULT '',
+                revision TEXT DEFAULT 'Rev 1.0',
+                status TEXT NOT NULL DEFAULT 'Approved',
+                summary TEXT DEFAULT '',
+                scope_of_work TEXT DEFAULT '',
+                prepared_by TEXT DEFAULT '',
+                approved_by TEXT DEFAULT '',
+                effective_date TEXT DEFAULT '',
+                review_due_date TEXT DEFAULT '',
+                pdf_filename TEXT DEFAULT '',
+                sections_json TEXT DEFAULT '[]',
+                attachments_json TEXT DEFAULT '[]',
+                created_by INTEGER NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT DEFAULT ''
             )""",
         ]:
             try:
@@ -766,6 +835,63 @@ def init_db():
                 "INSERT INTO reports (machinery_id, title, report_type, summary, pdf_filename, status, created_by, created_at) VALUES (?,?,?,?,?,?,?,?)",
                 (m["id"], full_title, rtype, rsum, "", rstat, admin_id, now)
             )
+
+    # ── Seed OSHWA Documents / Safety Manuals ──
+    now = datetime.utcnow().isoformat()
+    admin = q("SELECT id FROM users WHERE role = 'admin' LIMIT 1", one=True)
+    admin_id = admin["id"] if admin else 1
+
+    camoor = q("SELECT id FROM companies WHERE name LIKE ?", ("%Camoor Blinds%",), one=True)
+    if camoor is None:
+        camoor_id = execute(
+            "INSERT INTO companies (name, reg_no, address, phone, email, logo_filename, created_at) VALUES (?,?,?,?,?,?,?)",
+            ("Camoor Blinds Sdn. Bhd.", "201801012345 (1234567-X)", "Lot 1234, Kawasan Perindustrian Valdor, 14200 Sungai Bakap, Pulau Pinang", "+604-582 1234", "safety@camoorblinds.com", "", now)
+        )
+        execute(
+            "INSERT INTO users (name, email, password_hash, role, company, company_id, created_at) VALUES (?,?,?,?,?,?,?)",
+            ("Teh Chee Pang (Safety Chairman)", "safety@camoorblinds.com", generate_password_hash("client123"), "client", "Camoor Blinds Sdn. Bhd.", camoor_id, now)
+        )
+    else:
+        camoor_id = camoor["id"] if _ENGINE == "pg" else camoor[0]
+
+    osh_check = q("SELECT id FROM osh_reports WHERE pdf_filename = ?", ("camoor safety manual.pdf",), one=True)
+    if osh_check is None:
+        import json
+        camoor_sections = [
+            {"id": 1, "title": "Polisi Keselamatan & Kesihatan Pekerjaan (OSH Policy)", "page": 2, "icon": "📜", "desc": "Polisi rasmi dwibahasa (BM & BI) selaras Seksyen 16 Akta Keselamatan dan Kesihatan Pekerjaan 1994."},
+            {"id": 2, "title": "Surat Pelantikan Jawatankuasa OSH (Letters of Appointment)", "page": 5, "icon": "✍️", "desc": "Pelantikan Pengerusi OSH, Setiausaha, Ahli Jawatankuasa, First Aider, & Fire Warden."},
+            {"id": 3, "title": "Minit Mesyuarat Pasukan Keselamatan (Minutes of Meeting)", "page": 9, "icon": "📝", "desc": "Minit mesyuarat jawatankuasa OSH suku tahunan No. 1/4 membincangkan keselamatan kilang."},
+            {"id": 4, "title": "Senarai Semak & Laporan Pemeriksaan Tapak (Workplace Inspection)", "page": 15, "icon": "🔍", "desc": "Laporan audit berkala premis, pematuhan housekeeping, dan pemeriksaan laluan kecemasan."},
+            {"id": 5, "title": "Penilaian Risiko HIRARC (Hazard Identification & Risk Assessment)", "page": 25, "icon": "⚠️", "desc": "Matriks penilaian risiko, identifikasi hazad operasi pengeluaran & langkah kawalan hierarki."},
+            {"id": 6, "title": "Prosedur Kerja Selamat (Safe Operating Procedures - SOP)", "page": 60, "icon": "⚙️", "desc": "SOP pengoperasian mesin pemotong, jentera berat, penggunaan PPE & keselamatan elektrik."},
+            {"id": 7, "title": "Pelan Tindakan Kecemasan & Kebakaran (ERP & Fire Safety)", "page": 120, "icon": "🚒", "desc": "Pelan evakuasi kilang, tindakan kecemasan tumpahan kimia, rawatan kecederaan & carta organisasi ERP."},
+            {"id": 8, "title": "Rekod Latihan, Sijil Kompetensi & Kelulusan JKKP / DOSH", "page": 200, "icon": "🏅", "desc": "Sijil kelayakan OSH-C, rekod latihan keselamatan pekerja, dan kelulusan statutory DOSH."}
+        ]
+        execute(
+            """INSERT INTO osh_reports (
+                company_id, machinery_id, title, category, ref_no, revision, status,
+                summary, scope_of_work, prepared_by, approved_by, effective_date, review_due_date,
+                pdf_filename, sections_json, attachments_json, created_by, created_at, updated_at
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                camoor_id, None,
+                "OSHWA Occupational Safety & Health Management Manual 2026",
+                "Full Safety Manual",
+                "TM/OSHWA/2026/CB-01",
+                "Rev 1.0 (2026 Edition)",
+                "Approved",
+                "Dokumentasi lengkap Keselamatan dan Kesihatan Pekerjaan (OSHWA) untuk Camoor Blinds Sdn. Bhd. selaras dengan peruntukan Seksyen 16 dan Seksyen 31 Akta Keselamatan dan Kesihatan Pekerjaan 1994 (Akta 514 / Pindaan 2022).",
+                "Kawasan kilang pemprosesan, stor penyimpanan bahan mentah, bengkel fabrikasi tirai/blinds, dan pejabat pentadbiran Camoor Blinds Sdn. Bhd. Valdor.",
+                "Tijarah Mabrur OSH Consultancy Specialist",
+                "Teh Chee Hang (Managing Director)",
+                "2026-04-14",
+                "2027-04-14",
+                "camoor safety manual.pdf",
+                json.dumps(camoor_sections),
+                json.dumps([]),
+                admin_id, now, now
+            )
+        )
 
 
 def _fetch_rows(cur, rows):
