@@ -90,14 +90,29 @@ def serve_report_pdf(filename):
     if os.path.exists(static_doc_path):
         return send_from_directory(static_doc_dir, filename)
 
-    # Dynamic fallback: Generate clean statutory OSHWA dossier PDF on the fly
-    clean_name = os.path.splitext(filename)[0].replace("-", " ").replace("_", " ").title()
-    pdf_bytes = generate_oshwa_dossier_pdf(
-        title=f"{clean_name} (Statutory Compliance Dossier)",
-        company_name="Camoor Blinds Sdn. Bhd." if "camoor" in filename.lower() else "Tijarah Mabrur Client",
-        ref_no=f"TM/OSHWA/2026/{uuid.uuid4().hex[:4].upper()}",
-        revision="Rev 1.0 (2026 Edition)"
-    )
+    # Dynamic fallback: If file is missing (e.g. Render ephemeral disk wipe), check DB
+    r = q("SELECT o.*, c.name AS company_name, c.logo_filename AS company_logo FROM osh_reports o LEFT JOIN companies c ON c.id=o.company_id WHERE o.pdf_filename = ?", (filename,), one=True)
+    if r:
+        import json
+        sections = json.loads(r["sections_json"] or "[]")
+        pdf_bytes = generate_oshwa_dossier_pdf(
+            title=r["title"],
+            company_name=r["company_name"] or "Tijarah Mabrur Client",
+            ref_no=r["ref_no"] or "TM/OSHWA/2026/01",
+            revision=r["revision"] or "Rev 1.0 (2026 Edition)",
+            sections=sections,
+            company_logo=r["company_logo"]
+        )
+    else:
+        # Generic fallback if not in DB
+        clean_name = os.path.splitext(filename)[0].replace("-", " ").replace("_", " ").title()
+        pdf_bytes = generate_oshwa_dossier_pdf(
+            title=f"{clean_name} (Statutory Compliance Dossier)",
+            company_name="Camoor Blinds Sdn. Bhd." if "camoor" in filename.lower() else "Tijarah Mabrur Client",
+            ref_no=f"TM/OSHWA/2026/{uuid.uuid4().hex[:4].upper()}",
+            revision="Rev 1.0 (2026 Edition)"
+        )
+
     return Response(
         pdf_bytes,
         mimetype="application/pdf",
