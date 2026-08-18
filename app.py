@@ -1317,6 +1317,7 @@ def osh_edit(oid):
         approved_by = f.get("approved_by", "").strip()
         effective_date = f.get("effective_date", "").strip()
         review_due_date = f.get("review_due_date", "").strip()
+        pdf_name = r["pdf_filename"]
 
         sections_raw = f.get("sections_json")
         sections = json.loads(r["sections_json"] or "[]")
