@@ -241,7 +241,7 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
                 story.append(hdr_tbl)
                 story.append(Spacer(1, 8))
             else:
-                story.append(Paragraph(f"<b>{sec_title}</b> &nbsp;<font color='#0284c7' size='8'>(Hlm. {sec_page})</font>", h2_style))
+                story.append(Paragraph(f"<b>{sec_title}</b>", h2_style))
                 story.append(HRFlowable(width="100%", thickness=0.75, color=colors.HexColor("#e2e8f0"), spaceAfter=8))
 
             # Render Section Content
