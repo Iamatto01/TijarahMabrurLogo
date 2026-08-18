@@ -13,7 +13,7 @@
 .field-lbl { display:block; font-size:12px; font-weight:700; color:#374151; margin-bottom:6px; text-transform:uppercase; letter-spacing:.4px; }
 .field-lbl .req { color:#ef4444; margin-left:2px; }
 .osh-input, .osh-select, .osh-textarea {
-    width:100%; padding:10px 14px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:13px;
+    width:100%; padding:12px 16px; border:1.5px solid #cbd5e1; border-radius:10px; font-size:14px;
     color:#1e293b; background:#fff; transition:border-color .15s, box-shadow .15s; font-family:inherit;
 }
 .osh-input:focus, .osh-select:focus, .osh-textarea:focus {
@@ -37,17 +37,17 @@
 .toc-row.is-header { background:#f0f9ff; }
 .toc-row:hover { background:#f8fafc; }
 .toc-row.is-header:hover { background:#e0f2fe; }
-.toc-drag-handle { cursor:grab; color:#94a3b8; font-size:15px; padding:2px 4px; flex-shrink:0; }
+.toc-drag-handle { cursor:grab; color:#94a3b8; font-size:16px; padding:2px 4px; flex-shrink:0; }
 .toc-drag-handle:active { cursor:grabbing; }
 .toc-row.dragging { opacity:.4; background:#dbeafe; }
 .toc-row.drag-over { border-top:3px solid #0284c7; }
-.toc-icon-sel { width:48px; border:1.5px solid #e2e8f0; border-radius:6px; padding:5px 4px; font-size:13px; text-align:center; flex-shrink:0; }
-.toc-title-inp { flex:1; min-width:0; border:1.5px solid #e2e8f0; border-radius:6px; padding:6px 10px; font-size:12.5px; font-weight:600; color:#1e293b; background:transparent; }
-.toc-row.is-header .toc-title-inp { font-size:13px; font-weight:800; text-transform:uppercase; color:#0369a1; }
+.toc-icon-sel { width:52px; border:1.5px solid #e2e8f0; border-radius:8px; padding:8px 6px; font-size:16px; text-align:center; flex-shrink:0; }
+.toc-title-inp { flex:1; min-width:0; border:1.5px solid #e2e8f0; border-radius:8px; padding:8px 12px; font-size:14px; font-weight:600; color:#1e293b; background:transparent; }
+.toc-row.is-header .toc-title-inp { font-size:15px; font-weight:800; text-transform:uppercase; color:#0369a1; }
 .toc-title-inp:focus { outline:none; border-color:#0284c7; background:#fff; }
-.toc-page-inp { width:58px; flex-shrink:0; border:1.5px solid #e2e8f0; border-radius:6px; padding:6px 8px; font-size:12px; text-align:center; font-family:monospace; color:#475569; }
+.toc-page-inp { width:65px; flex-shrink:0; border:1.5px solid #e2e8f0; border-radius:8px; padding:8px 8px; font-size:13px; text-align:center; font-family:monospace; color:#475569; }
 .toc-page-inp:focus { outline:none; border-color:#0284c7; }
-.toc-header-chk { width:16px; height:16px; cursor:pointer; flex-shrink:0; accent-color:#0284c7; }
+.toc-header-chk { width:18px; height:18px; cursor:pointer; flex-shrink:0; accent-color:#0284c7; }
 .toc-del-btn { background:none; border:none; color:#cbd5e1; cursor:pointer; font-size:16px; padding:2px 5px; border-radius:5px; flex-shrink:0; transition:color .15s,background .15s; }
 .toc-del-btn:hover { color:#ef4444; background:#fef2f2; }
 .toc-empty { padding:30px 20px; text-align:center; color:#94a3b8; font-size:13px; }
@@ -291,37 +291,42 @@ function renderToc() {
                     placeholder="Nama Seksyen…"
                     onchange="tocData[${idx}].title=this.value;syncHidden()"
                     oninput="tocData[${idx}].title=this.value;syncHidden()">
-                <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#64748b;white-space:nowrap;cursor:pointer" title="Tajuk Utama">
+                <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#64748b;white-space:nowrap;cursor:pointer" title="Tajuk Utama">
                     <input type="checkbox" class="toc-header-chk" ${item.is_header ? 'checked' : ''}
                         onchange="tocData[${idx}].is_header=this.checked;renderToc();syncHidden()">
                     Tajuk
                 </label>
-                <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#64748b;white-space:nowrap">
+                <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#64748b;white-space:nowrap">
                     Hlm.
                     <input class="toc-page-inp" type="number" min="1" value="${item.page || ''}"
                         placeholder="—"
                         onchange="tocData[${idx}].page=parseInt(this.value)||0;syncHidden()"
                         oninput="tocData[${idx}].page=parseInt(this.value)||0;syncHidden()">
                 </label>
-                <button type="button" class="btn sm ghost" onclick="toggleFormSecBody(${idx})" title="Tulis / Edit Kandungan Seksyen" style="padding:3px 8px;font-size:11px;color:#0284c7">
+                
+                <div style="display:flex; flex-direction:column; align-items:center; gap:2px; margin-left:6px;">
+                    <label class="btn sm ghost" style="padding:5px 12px;font-size:12px;color:#16a34a;border:1px dashed #bbf7d0;cursor:pointer;margin:0;" title="Upload PDF for this section">
+                        📄 Upload PDF
+                        <input type="file" name="sec_pdf_${item.id || idx}" accept=".pdf" style="display:none;" onchange="updateUploadLabel(this, ${idx})">
+                    </label>
+                    <span id="upload-lbl-${idx}" style="font-size:10.5px;color:#16a34a;max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${item.pdf_filename || ''}">
+                        ${item.pdf_filename ? '✅ '+item.pdf_filename : ''}
+                    </span>
+                </div>
+
+                <button type="button" class="btn sm ghost" onclick="toggleFormSecBody(${idx})" title="Tulis / Edit Kandungan Seksyen" style="padding:6px 12px;font-size:12px;color:#0284c7;border:1px solid #bae6fd;">
                     📝 Edit Teks
                 </button>
                 <button type="button" class="toc-del-btn" onclick="deleteTocRow(${idx})" title="Padam seksyen">🗑️</button>
             </div>
-            <div class="toc-sec-content-box" id="form-sec-body-${idx}" style="display:none;padding:10px 14px 14px 44px;background:#f8fafc;border-top:1px dashed #e2e8f0">
-                <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">
+            <div class="toc-sec-content-box" id="form-sec-body-${idx}" style="display:none;padding:14px 18px 18px 50px;background:#f8fafc;border-top:1px dashed #e2e8f0">
+                <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:6px">
                     Kandungan Teks / Nota Laporan Bagi Seksyen Ini:
                 </label>
-                <textarea class="osh-textarea" rows="3" placeholder="Tuliskan huraian terperinci, penemuan, atau nota statutori bagi seksyen ini..."
-                    style="width:100%;font-size:12px;padding:8px 10px;border-radius:6px;border:1px solid #cbd5e1;box-sizing:border-box;margin-bottom:12px;"
+                <textarea class="osh-textarea" rows="4" placeholder="Tuliskan huraian terperinci, penemuan, atau nota statutori bagi seksyen ini..."
+                    style="width:100%;font-size:13.5px;padding:12px 14px;border-radius:8px;border:1.5px solid #cbd5e1;box-sizing:border-box;margin-bottom:0;"
                     onchange="tocData[${idx}].content=this.value;syncHidden()"
                     oninput="tocData[${idx}].content=this.value;syncHidden()">${escHtml(item.content || item.desc || '')}</textarea>
-                
-                <div style="display:flex; flex-direction:column; gap:6px;">
-                    <label style="font-size:11px;font-weight:700;color:#64748b;display:block;">📄 Upload PDF for this Section (Optional):</label>
-                    <input type="file" name="sec_pdf_${item.id || idx}" accept=".pdf" class="form-control" style="font-size:11px; padding:4px;">
-                    ${item.pdf_filename ? `<div style="font-size:11px; color:#16a34a; font-weight:600;">✅ PDF Attached: ${item.pdf_filename}</div>` : ''}
-                </div>
             </div>
         `;
 
@@ -426,15 +431,14 @@ function resetTocToDefault() {
 }
 
 // ── File upload UI ──────────────────────────────────────────────────────────
-document.getElementById('pdf-input').addEventListener('change', function() {
-    const nameEl = document.getElementById('file-chosen-name');
-    if (this.files && this.files[0]) {
-        nameEl.textContent = '✅ ' + this.files[0].name;
-        nameEl.style.display = 'block';
+function updateUploadLabel(inputEl, idx) {
+    const lbl = document.getElementById('upload-lbl-' + idx);
+    if (inputEl.files && inputEl.files.length > 0) {
+        lbl.innerHTML = '✅ ' + inputEl.files[0].name;
     } else {
-        nameEl.style.display = 'none';
+        lbl.innerHTML = '';
     }
-});
+}
 
 // ── Sync before submit ──────────────────────────────────────────────────────
 document.getElementById('osh-main-form').addEventListener('submit', function() {
