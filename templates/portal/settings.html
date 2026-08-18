@@ -1,0 +1,129 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}Company Settings | Tijarah Mabrur{% endblock %}
+
+{% block content %}
+<div class="pg-header">
+    <div>
+        <h1>Company Settings</h1>
+        <div class="pg-meta">Manage your company profile, logo, and security.</div>
+    </div>
+</div>
+
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div style="border-bottom: 1px solid var(--border); margin-bottom: 24px; padding-bottom: 16px; display: flex; gap: 20px;">
+        <button class="btn sm" onclick="showTab('profile')" id="btn-profile" style="background:var(--primary); color:white; border:none;">Profile Details</button>
+        <button class="btn sm ghost" onclick="showTab('logo')" id="btn-logo">Company Logo</button>
+        <button class="btn sm ghost" onclick="showTab('security')" id="btn-security">Security</button>
+    </div>
+
+    <!-- Profile Details Tab -->
+    <div id="tab-profile">
+        <form method="post" action="{{ url_for('portal_settings') }}">
+            <input type="hidden" name="action" value="profile">
+            
+            <div class="form-group">
+                <label>Company Name</label>
+                <input type="text" name="name" class="form-control" value="{{ company.name if company else '' }}" required>
+            </div>
+            
+            <div class="form-row" style="display: flex; gap: 16px;">
+                <div class="form-group" style="flex:1;">
+                    <label>Registration No. (SSM)</label>
+                    <input type="text" name="reg_no" class="form-control" value="{{ company.reg_no if company else '' }}">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Contact Phone</label>
+                    <input type="text" name="phone" class="form-control" value="{{ company.phone if company else '' }}">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" name="email" class="form-control" value="{{ company.email if company else '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label>Facility Address</label>
+                <textarea name="address" class="form-control" rows="3">{{ company.address if company else '' }}</textarea>
+            </div>
+            
+            <div style="text-align: right; margin-top: 24px;">
+                <button type="submit" class="btn">Save Profile</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Company Logo Tab -->
+    <div id="tab-logo" style="display: none;">
+        <form method="post" action="{{ url_for('portal_settings') }}" enctype="multipart/form-data">
+            <input type="hidden" name="action" value="logo">
+            
+            <div style="display:flex; align-items:flex-start; gap:24px; margin-bottom: 24px;">
+                <div style="flex: 0 0 150px;">
+                    <label>Current Logo</label>
+                    <div style="width: 150px; height: 150px; border: 1px dashed var(--border); border-radius: 8px; display:flex; align-items:center; justify-content:center; background:#f8fafc;">
+                        {% if company and company.logo_filename %}
+                            <img src="{{ url_for('serve_logo', filename=company.logo_filename) }}" style="max-width: 130px; max-height: 130px; object-fit: contain;">
+                        {% else %}
+                            <span style="color:var(--muted); font-size:13px;">No Logo</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div style="flex:1;">
+                    <div class="form-group">
+                        <label>Upload New Logo</label>
+                        <input type="file" name="logo" class="form-control" accept="image/*" required>
+                        <p style="font-size:12px; color:var(--muted); margin-top:6px;">Recommended format: PNG with transparent background. Max size: 2MB.</p>
+                    </div>
+                    
+                    <button type="submit" class="btn">Update Logo</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Security Tab -->
+    <div id="tab-security" style="display: none;">
+        <form method="post" action="{{ url_for('portal_settings') }}">
+            <input type="hidden" name="action" value="security">
+            
+            <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" name="old_password" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" name="new_password" class="form-control" required>
+            </div>
+            
+            <div style="text-align: right; margin-top: 24px;">
+                <button type="submit" class="btn" style="background:#dc2626; border-color:#dc2626;">Change Password</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showTab(tabName) {
+    document.getElementById('tab-profile').style.display = (tabName === 'profile') ? 'block' : 'none';
+    document.getElementById('tab-logo').style.display = (tabName === 'logo') ? 'block' : 'none';
+    document.getElementById('tab-security').style.display = (tabName === 'security') ? 'block' : 'none';
+    
+    document.getElementById('btn-profile').className = (tabName === 'profile') ? 'btn sm' : 'btn sm ghost';
+    document.getElementById('btn-profile').style.background = (tabName === 'profile') ? 'var(--primary)' : 'transparent';
+    document.getElementById('btn-profile').style.color = (tabName === 'profile') ? 'white' : 'var(--text-main)';
+    document.getElementById('btn-profile').style.border = (tabName === 'profile') ? 'none' : '1px solid var(--border)';
+    
+    document.getElementById('btn-logo').className = (tabName === 'logo') ? 'btn sm' : 'btn sm ghost';
+    document.getElementById('btn-logo').style.background = (tabName === 'logo') ? 'var(--primary)' : 'transparent';
+    document.getElementById('btn-logo').style.color = (tabName === 'logo') ? 'white' : 'var(--text-main)';
+    document.getElementById('btn-logo').style.border = (tabName === 'logo') ? 'none' : '1px solid var(--border)';
+    
+    document.getElementById('btn-security').className = (tabName === 'security') ? 'btn sm' : 'btn sm ghost';
+    document.getElementById('btn-security').style.background = (tabName === 'security') ? 'var(--primary)' : 'transparent';
+    document.getElementById('btn-security').style.color = (tabName === 'security') ? 'white' : 'var(--text-main)';
+    document.getElementById('btn-security').style.border = (tabName === 'security') ? 'none' : '1px solid var(--border)';
+}
+</script>
+{% endblock %}

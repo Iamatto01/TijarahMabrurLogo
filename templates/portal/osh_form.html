@@ -209,27 +209,6 @@
         </div>
     </div>
 
-    <!-- ── CARD 2: PDF UPLOAD ── -->
-    <div class="osh-form-card">
-        <div class="osh-form-body">
-            <label class="field-lbl" style="margin-bottom:12px">📄 Primary Statutory PDF Document (Safety Manual / Dossier)</label>
-
-            <div class="upload-box" onclick="document.getElementById('pdf-input').click()">
-                <div class="upload-icon">📂</div>
-                <label class="upload-lbl" for="pdf-input">Klik untuk pilih fail PDF</label>
-                <div class="upload-hint">atau seret fail ke sini &nbsp;•&nbsp; PDF sahaja, maksimum 64MB</div>
-                <div class="file-chosen" id="file-chosen-name" style="display:none"></div>
-                <input type="file" name="pdf_file" accept=".pdf" id="pdf-input">
-            </div>
-
-            {% if r and r.pdf_filename %}
-            <div style="margin-top:12px;padding:10px 14px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;font-size:12px;color:#16a34a;font-weight:600">
-                ✅ Dokumen semasa: <a href="{{ url_for('serve_report_pdf', filename=r.pdf_filename) }}" target="_blank" style="color:#0284c7">{{ r.pdf_filename }}</a>
-                &nbsp;•&nbsp; <em style="color:#64748b">Muat naik fail baru untuk gantikan.</em>
-            </div>
-            {% endif %}
-        </div>
-    </div>
 
     <!-- ── CARD 3: TABLE OF CONTENTS BUILDER ── -->
     <div class="osh-form-card">
@@ -334,9 +313,15 @@ function renderToc() {
                     Kandungan Teks / Nota Laporan Bagi Seksyen Ini:
                 </label>
                 <textarea class="osh-textarea" rows="3" placeholder="Tuliskan huraian terperinci, penemuan, atau nota statutori bagi seksyen ini..."
-                    style="width:100%;font-size:12px;padding:8px 10px;border-radius:6px;border:1px solid #cbd5e1;box-sizing:border-box"
+                    style="width:100%;font-size:12px;padding:8px 10px;border-radius:6px;border:1px solid #cbd5e1;box-sizing:border-box;margin-bottom:12px;"
                     onchange="tocData[${idx}].content=this.value;syncHidden()"
                     oninput="tocData[${idx}].content=this.value;syncHidden()">${escHtml(item.content || item.desc || '')}</textarea>
+                
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label style="font-size:11px;font-weight:700;color:#64748b;display:block;">📄 Upload PDF for this Section (Optional):</label>
+                    <input type="file" name="sec_pdf_${item.id || idx}" accept=".pdf" class="form-control" style="font-size:11px; padding:4px;">
+                    ${item.pdf_filename ? `<div style="font-size:11px; color:#16a34a; font-weight:600;">✅ PDF Attached: ${item.pdf_filename}</div>` : ''}
+                </div>
             </div>
         `;
 

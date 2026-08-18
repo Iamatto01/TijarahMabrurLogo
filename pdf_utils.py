@@ -100,11 +100,13 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
                                company_name="Camoor Blinds Sdn. Bhd.",
                                ref_no="TM/OSHWA/2026/CB-01",
                                revision="Rev 1.0 (2026 Edition)",
-                               sections=None):
+                               sections=None,
+                               company_logo=None):
     """Generate a comprehensive multi-page statutory OSHWA dossier PDF using ReportLab with custom section contents."""
     from reportlab.lib.pagesizes import letter
     from reportlab.lib import colors
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, HRFlowable, KeepTogether
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, HRFlowable, KeepTogether, Image
+    import os
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch
 
@@ -169,6 +171,17 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
 
     # ── PAGE 1: OFFICIAL COVER PAGE ──
     story.append(Spacer(1, 20))
+    if company_logo:
+        logo_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "uploads", "logos", company_logo)
+        if os.path.exists(logo_path):
+            try:
+                img = Image(logo_path, width=1.5*inch, height=1.5*inch, kind='proportional')
+                img.hAlign = 'CENTER'
+                story.append(img)
+                story.append(Spacer(1, 10))
+            except Exception:
+                pass
+                
     story.append(Paragraph("TIJARAH MABRUR (M) SDN. BHD.", ParagraphStyle('Brand', fontSize=13, leading=15, fontName="Helvetica-Bold", textColor=colors.HexColor("#0284c7"), alignment=1)))
     story.append(Paragraph("OSHONE STATUTORY COMPLIANCE & SAFETY ENGINEERING DIVISION", ParagraphStyle('SubBrand', fontSize=8.5, leading=11, textColor=colors.HexColor("#64748b"), alignment=1)))
     story.append(Spacer(1, 25))
@@ -291,8 +304,39 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
         ('PADDING', (0,0), (-1,-1), 10),
     ]))
     story.append(fb)
-
+    
     doc.build(story)
-    return buf.getvalue()
+    base_pdf_bytes = buf.getvalue()
 
-
+    # Now merge uploaded section PDFs if any
+    has_section_pdfs = any(sec.get("pdf_filename") for sec in sections) if sections else False
+    if not has_section_pdfs:
+        return base_pdf_bytes
+        
+    try:
+        from pypdf import PdfReader, PdfWriter
+        writer = PdfWriter()
+        base_reader = PdfReader(io.BytesIO(base_pdf_bytes))
+        for page in base_reader.pages:
+            writer.add_page(page)
+            
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        
+        for sec in sections:
+            pdf_filename = sec.get("pdf_filename")
+            if pdf_filename:
+                pdf_path = os.path.join(base_dir, "uploads", "reports", pdf_filename)
+                if os.path.exists(pdf_path):
+                    try:
+                        sec_reader = PdfReader(pdf_path)
+                        for page in sec_reader.pages:
+                            writer.add_page(page)
+                    except Exception:
+                        pass
+                        
+        out_buf = io.BytesIO()
+        writer.write(out_buf)
+        return out_buf.getvalue()
+    except Exception as e:
+        print("Error merging section PDFs:", e)
+        return base_pdf_bytes

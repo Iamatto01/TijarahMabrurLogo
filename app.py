@@ -314,6 +314,58 @@ def logout():
     return redirect(url_for("home"))
 
 
+# ---------------- portal: settings ----------------
+@app.route("/portal/settings", methods=["GET", "POST"])
+@login_required
+def portal_settings():
+    u = current_user()
+    if u["role"] not in ("admin", "client"):
+        flash("You do not have permission to access company settings.", "error")
+        return redirect(url_for("dashboard"))
+    
+    company = None
+    if u.get("company_id"):
+        company = q("SELECT * FROM companies WHERE id = ?", (u["company_id"],), one=True)
+    
+    if request.method == "POST":
+        f = request.form
+        action = f.get("action")
+        
+        if action == "profile" and company:
+            execute("UPDATE companies SET name=?, reg_no=?, phone=?, address=?, email=? WHERE id=?",
+                    (f.get("name", "").strip(), f.get("reg_no", "").strip(), f.get("phone", "").strip(), 
+                     f.get("address", "").strip(), f.get("email", "").strip(), company["id"]))
+            flash("Company profile updated.", "ok")
+            
+        elif action == "logo" and company:
+            file = request.files.get("logo")
+            if file and file.filename:
+                ext = os.path.splitext(file.filename)[1].lower()
+                if ext in ALLOWED_LOGO_EXT:
+                    filename = f"logo_{company['id']}_{uuid.uuid4().hex[:6]}{ext}"
+                    file.save(os.path.join(LOGO_DIR, filename))
+                    execute("UPDATE companies SET logo_filename=? WHERE id=?", (filename, company["id"]))
+                    flash("Company logo updated.", "ok")
+                else:
+                    flash("Invalid file type. Only images are allowed.", "error")
+                    
+        elif action == "security":
+            old_pass = f.get("old_password", "")
+            new_pass = f.get("new_password", "")
+            if check_password_hash(u["password_hash"], old_pass):
+                if new_pass:
+                    execute("UPDATE users SET password_hash=? WHERE id=?", (generate_password_hash(new_pass), u["id"]))
+                    flash("Password updated successfully.", "ok")
+                else:
+                    flash("New password cannot be empty.", "error")
+            else:
+                flash("Incorrect current password.", "error")
+                
+        return redirect(url_for("portal_settings"))
+
+    return render_template("portal/settings.html", company=company)
+
+
 # ---------------- portal: dashboard ----------------
 @app.route("/portal")
 @login_required
@@ -1124,14 +1176,6 @@ def osh_new():
             yr = datetime.utcnow().strftime("%Y")
             ref_no = f"TM/OSHWA/{yr}/{uuid.uuid4().hex[:4].upper()}"
 
-        pdf_file = request.files.get("pdf_file")
-        pdf_name = ""
-        if pdf_file and pdf_file.filename and pdf_file.filename.lower().endswith(".pdf"):
-            orig_name = secure_filename(pdf_file.filename)
-            pdf_name = f"osh_{uuid.uuid4().hex[:8]}_{orig_name}"
-            pdf_file.save(os.path.join(REPORT_PDF_DIR, pdf_name))
-
-        # Use sections from form (TOC builder), fallback to standard 34-section TOC
         sections_raw = f.get("sections_json", "").strip()
         sections = DEFAULT_CHRA_TOC
         if sections_raw:
@@ -1141,24 +1185,32 @@ def osh_new():
                     sections = parsed
             except Exception:
                 pass
+                
+        # Handle per-section PDF uploads
+        for i, sec in enumerate(sections):
+            sec_id = sec.get("id", i)
+            sec_pdf = request.files.get(f"sec_pdf_{sec_id}")
+            if sec_pdf and sec_pdf.filename and sec_pdf.filename.lower().endswith(".pdf"):
+                orig_name = secure_filename(sec_pdf.filename)
+                sec_pdf_name = f"sec_{uuid.uuid4().hex[:8]}_{orig_name}"
+                sec_pdf.save(os.path.join(REPORT_PDF_DIR, sec_pdf_name))
+                sec["pdf_filename"] = sec_pdf_name
 
-        # If no physical PDF was uploaded, generate the official PDF on the fly!
-        if not pdf_name:
-            co_name = "Tijarah Mabrur Client"
-            if company_id:
-                co_row = q("SELECT name FROM companies WHERE id = ?", (company_id,), one=True)
-                if co_row:
-                    co_name = co_row["name"]
-            pdf_bytes = generate_oshwa_dossier_pdf(
-                title=title,
-                company_name=co_name,
-                ref_no=ref_no,
-                revision=revision,
-                sections=sections
-            )
-            pdf_name = f"osh_{uuid.uuid4().hex[:8]}_dossier.pdf"
-            with open(os.path.join(REPORT_PDF_DIR, pdf_name), "wb") as pf:
-                pf.write(pdf_bytes)
+        co_name = "Tijarah Mabrur Client"
+        if company_id:
+            co_row = q("SELECT name FROM companies WHERE id = ?", (company_id,), one=True)
+            if co_row:
+                co_name = co_row["name"]
+        pdf_bytes = generate_oshwa_dossier_pdf(
+            title=title,
+            company_name=co_name,
+            ref_no=ref_no,
+            revision=revision,
+            sections=sections
+        )
+        pdf_name = f"osh_{uuid.uuid4().hex[:8]}_dossier.pdf"
+        with open(os.path.join(REPORT_PDF_DIR, pdf_name), "wb") as pf:
+            pf.write(pdf_bytes)
 
         now = datetime.utcnow().isoformat()
         oid = execute(
@@ -1259,21 +1311,27 @@ def osh_edit(oid):
         effective_date = f.get("effective_date", "").strip()
         review_due_date = f.get("review_due_date", "").strip()
 
-        pdf_name = r["pdf_filename"]
-        pdf_file = request.files.get("pdf_file")
-        if pdf_file and pdf_file.filename and pdf_file.filename.lower().endswith(".pdf"):
-            orig_name = secure_filename(pdf_file.filename)
-            pdf_name = f"osh_{uuid.uuid4().hex[:8]}_{orig_name}"
-            pdf_file.save(os.path.join(REPORT_PDF_DIR, pdf_name))
-
         sections_raw = f.get("sections_json")
-        sections_json = r["sections_json"]
+        sections = json.loads(r["sections_json"] or "[]")
         if sections_raw:
             try:
-                json.loads(sections_raw)
-                sections_json = sections_raw
+                parsed = json.loads(sections_raw)
+                if isinstance(parsed, list):
+                    sections = parsed
             except Exception:
                 pass
+                
+        # Handle per-section PDF uploads
+        for i, sec in enumerate(sections):
+            sec_id = sec.get("id", i)
+            sec_pdf = request.files.get(f"sec_pdf_{sec_id}")
+            if sec_pdf and sec_pdf.filename and sec_pdf.filename.lower().endswith(".pdf"):
+                orig_name = secure_filename(sec_pdf.filename)
+                sec_pdf_name = f"sec_{uuid.uuid4().hex[:8]}_{orig_name}"
+                sec_pdf.save(os.path.join(REPORT_PDF_DIR, sec_pdf_name))
+                sec["pdf_filename"] = sec_pdf_name
+                
+        sections_json_str = json.dumps(sections)
 
         now = datetime.utcnow().isoformat()
         execute(
@@ -1285,7 +1343,7 @@ def osh_edit(oid):
             (
                 company_id, machinery_id, title, category, ref_no, revision,
                 status, summary, scope_of_work, prepared_by, approved_by,
-                effective_date, review_due_date, pdf_name, sections_json,
+                effective_date, review_due_date, pdf_name, sections_json_str,
                 now, oid
             )
         )
@@ -1446,7 +1504,7 @@ def osh_save_sections(oid):
 @login_required
 def osh_compile_pdf(oid):
     u = current_user()
-    r = q("SELECT o.*, c.name AS company_name FROM osh_reports o LEFT JOIN companies c ON c.id=o.company_id WHERE o.id = ?", (oid,), one=True)
+    r = q("SELECT o.*, c.name AS company_name, c.logo_filename AS company_logo FROM osh_reports o LEFT JOIN companies c ON c.id=o.company_id WHERE o.id = ?", (oid,), one=True)
     if not r:
         abort(404)
     if u["role"] != "admin":
@@ -1459,7 +1517,8 @@ def osh_compile_pdf(oid):
         company_name=r["company_name"] or "Tijarah Mabrur Client",
         ref_no=r["ref_no"] or "TM/OSHWA/2026/01",
         revision=r["revision"] or "Rev 1.0",
-        sections=sections
+        sections=sections,
+        company_logo=r["company_logo"]
     )
     compiled_filename = f"osh_compiled_{oid}_{uuid.uuid4().hex[:6]}.pdf"
     with open(os.path.join(REPORT_PDF_DIR, compiled_filename), "wb") as f:
