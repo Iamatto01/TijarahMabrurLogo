@@ -986,8 +986,16 @@ def osh_new():
             pdf_name = f"osh_{uuid.uuid4().hex[:8]}_{orig_name}"
             pdf_file.save(os.path.join(REPORT_PDF_DIR, pdf_name))
 
-        # Default section suggestions if none provided
+        # Use sections from form (TOC builder), fallback to standard 34-section TOC
+        sections_raw = f.get("sections_json", "").strip()
         sections = DEFAULT_CHRA_TOC
+        if sections_raw:
+            try:
+                parsed = json.loads(sections_raw)
+                if isinstance(parsed, list) and parsed:
+                    sections = parsed
+            except Exception:
+                pass
 
         now = datetime.utcnow().isoformat()
         oid = execute(
@@ -1005,7 +1013,13 @@ def osh_new():
         flash("OSHWA Document Report created successfully!", "ok")
         return redirect(url_for("osh_view", oid=oid))
 
-    companies = q("SELECT id, name FROM companies ORDER BY name") if u["role"] == "admin" else q("SELECT id, name FROM companies WHERE id = ?", (u.get("company_id"),))
+    # Non-admins can only assign their own company; admins see all
+    if u["role"] == "admin":
+        companies = q("SELECT id, name FROM companies ORDER BY name")
+    elif u.get("company_id"):
+        companies = q("SELECT id, name FROM companies WHERE id = ?", (u["company_id"],))
+    else:
+        companies = q("SELECT id, name FROM companies ORDER BY name")
     machines = q("SELECT id, name FROM machinery ORDER BY name")
     return render_template(
         "portal/osh_form.html",
@@ -1014,7 +1028,8 @@ def osh_new():
         machines=machines,
         categories=OSH_CATEGORIES,
         statuses=OSH_STATUSES,
-        datetime=datetime
+        datetime=datetime,
+        default_toc=DEFAULT_CHRA_TOC
     )
 
 
@@ -1112,8 +1127,14 @@ def osh_edit(oid):
         flash("OSHWA Document Report updated.", "ok")
         return redirect(url_for("osh_view", oid=oid))
 
-    companies = q("SELECT id, name FROM companies ORDER BY name") if u["role"] == "admin" else q("SELECT id, name FROM companies WHERE id = ?", (u.get("company_id"),))
+    if u["role"] == "admin":
+        companies = q("SELECT id, name FROM companies ORDER BY name")
+    elif u.get("company_id"):
+        companies = q("SELECT id, name FROM companies WHERE id = ?", (u["company_id"],))
+    else:
+        companies = q("SELECT id, name FROM companies ORDER BY name")
     machines = q("SELECT id, name FROM machinery ORDER BY name")
+    sections_data = json.loads(r["sections_json"] or "[]") or DEFAULT_CHRA_TOC
     return render_template(
         "portal/osh_form.html",
         r=r,
@@ -1121,7 +1142,8 @@ def osh_edit(oid):
         machines=machines,
         categories=OSH_CATEGORIES,
         statuses=OSH_STATUSES,
-        datetime=datetime
+        datetime=datetime,
+        default_toc=sections_data
     )
 
 
