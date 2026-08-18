@@ -2,423 +2,434 @@
 {% block title %}{{ r.title }} | OSHWA Report Template{% endblock %}
 {% block content %}
 <style>
-:root {
-    --osh-navy: #0f172a;
-    --osh-blue: #0284c7;
-    --osh-blue-dark: #0369a1;
-    --osh-accent: #06b6d4;
-    --osh-border: #cbd5e1;
-    --osh-bg-light: #f8fafc;
-    --osh-gold: #d97706;
-}
-
-@media print {
-    body { background: #fff !important; margin: 0; padding: 0; }
-    .portal-sidebar, .portal-topbar, .site-nav-toggle, .btn, .osh-toolbar, .osh-toc-panel, .osh-modal { display: none !important; }
-    .portal-main { padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: none !important; }
-    .osh-report-wrapper { box-shadow: none !important; border: none !important; padding: 0 !important; max-width: none !important; width: 100% !important; }
-    .osh-viewer-container { display: none !important; }
-    .osh-print-view { display: block !important; }
-}
-
-.osh-print-view { display: none; }
-
-/* Main Wrapper */
-.osh-report-wrapper {
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 10px 35px rgba(15, 23, 42, 0.08);
-    border: 1px solid #e2e8f0;
-    overflow: hidden;
+/* Workspace Base */
+.osh-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
     margin-bottom: 30px;
 }
 
-/* Formal Statutory Report Header */
-.osh-report-header {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0369a1 100%);
-    color: #ffffff;
-    padding: 24px 28px;
-    position: relative;
-    border-bottom: 4px solid var(--osh-accent);
-}
-
-.osh-header-top {
+/* Header Top Bar */
+.osh-top-bar {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    gap: 20px;
-    flex-wrap: wrap;
-}
-
-.osh-brand-block {
-    display: flex;
     align-items: center;
     gap: 16px;
+    flex-wrap: wrap;
 }
 
-.osh-company-badge-logo {
-    width: 58px;
-    height: 58px;
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 6px;
+.osh-top-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.osh-logo-sq {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 4px;
     object-fit: contain;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    border: 2px solid rgba(255,255,255,0.8);
 }
 
-.osh-title-block h1 {
+.osh-doc-title {
     margin: 0 0 4px;
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 800;
-    letter-spacing: -0.5px;
-    color: #ffffff;
-    line-height: 1.25;
+    color: #0f172a;
+    letter-spacing: -0.3px;
 }
 
-.osh-subtitle {
-    font-size: 13px;
-    color: #94a3b8;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.osh-badge-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.osh-badge-compliance {
-    background: rgba(6, 182, 212, 0.18);
-    color: #67e8f9;
-    border: 1px solid rgba(6, 182, 212, 0.4);
-}
-
-.osh-badge-status {
-    background: rgba(16, 185, 129, 0.2);
-    color: #34d399;
-    border: 1px solid rgba(16, 185, 129, 0.4);
-}
-
-.osh-header-meta-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px 20px;
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid rgba(255,255,255,0.12);
-    font-size: 12px;
-}
-
-.osh-meta-item strong {
-    color: #94a3b8;
-    display: block;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 2px;
-}
-
-.osh-meta-item span {
-    color: #f8fafc;
-    font-weight: 600;
-    font-size: 13px;
-}
-
-/* Action Bar */
-.osh-action-bar {
-    background: #f1f5f9;
-    padding: 12px 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e2e8f0;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.osh-action-group {
+.osh-badge-row {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+    font-size: 11px;
 }
 
-/* Main Split Viewer Layout */
-.osh-viewer-layout {
+.osh-pill {
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.osh-pill-verified {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.osh-pill-ref {
+    background: #f1f5f9;
+    color: #0369a1;
+    font-family: monospace;
+    font-size: 11px;
+    border: 1px solid #cbd5e1;
+}
+
+.osh-pill-rev {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+/* Tabs */
+.osh-tab-nav {
+    display: flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 10px;
+    gap: 4px;
+    border: 1px solid #e2e8f0;
+    overflow-x: auto;
+}
+
+.osh-tab-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.osh-tab-btn:hover {
+    color: #0f172a;
+    background: rgba(255,255,255,0.6);
+}
+
+.osh-tab-btn.active {
+    background: #ffffff;
+    color: #0284c7;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    font-weight: 700;
+}
+
+/* Split Workspace */
+.osh-reader-grid {
     display: grid;
-    grid-template-columns: 310px 1fr;
-    min-height: 820px;
-    background: #e2e8f0;
+    grid-template-columns: 360px 1fr;
+    gap: 16px;
+    min-height: 860px;
 }
 
 @media (max-width: 1024px) {
-    .osh-viewer-layout {
+    .osh-reader-grid {
         grid-template-columns: 1fr;
     }
 }
 
-/* Left Sidebar (Table of Contents & Stage Uploads) */
-.osh-toc-panel {
+/* Sidebar TOC */
+.osh-side-toc {
     background: #ffffff;
-    border-right: 1px solid #cbd5e1;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    overflow-y: auto;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04);
 }
 
-.osh-toc-header {
-    padding: 16px 20px;
+.osh-toc-top {
+    padding: 14px 16px;
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
 }
 
-.osh-toc-header h3 {
-    margin: 0 0 4px;
-    font-size: 14px;
-    font-weight: 700;
-    color: #1e293b;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.osh-doc-selector {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+    background: #ffffff;
+    margin-bottom: 8px;
 }
 
-.osh-toc-header p {
-    margin: 0;
-    font-size: 11px;
-    color: #64748b;
-}
-
-.osh-toc-list {
-    padding: 10px;
-    list-style: none;
-    margin: 0;
+.osh-toc-search-row {
     display: flex;
-    flex-direction: column;
     gap: 6px;
 }
 
-.osh-toc-item {
+.osh-toc-search {
+    flex: 1;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    font-size: 12px;
+    background: #ffffff;
+}
+
+.osh-chapter-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 10px 12px;
+    flex-direction: column;
+    gap: 4px;
+    list-style: none;
+    margin: 0;
+    max-height: calc(860px - 140px);
+}
+
+.osh-chapter-card {
+    padding: 8px 10px;
     border-radius: 8px;
     background: #ffffff;
     border: 1px solid #f1f5f9;
-    text-decoration: none;
-    color: #334155;
-    transition: all 0.2s ease;
     cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
 }
 
-.osh-toc-item:hover {
+.osh-chapter-card:hover {
     background: #f0f9ff;
     border-color: #bae6fd;
-    transform: translateX(3px);
+    transform: translateX(2px);
 }
 
-.osh-toc-item.active {
+.osh-chapter-card.active {
     background: #e0f2fe;
     border-color: #7dd3fc;
-    color: #0369a1;
+}
+
+.osh-chapter-card.active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 3.5px;
+    background: #0284c7;
+    border-radius: 0 4px 4px 0;
+}
+
+.osh-chapter-card.is-header {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    font-weight: 800;
+}
+
+.osh-chapter-card.is-header .osh-ch-title {
+    color: #0f172a;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+}
+
+.osh-chapter-card.is-sub {
+    padding-left: 20px;
+}
+
+.osh-chapter-card.is-sub .osh-ch-title {
+    color: #334155;
+    font-size: 11.5px;
     font-weight: 600;
 }
 
-.osh-toc-num {
-    background: #f1f5f9;
-    color: #475569;
+.osh-ch-icon {
+    font-size: 14px;
     width: 24px;
     height: 24px;
     border-radius: 6px;
-    display: inline-flex;
+    background: #f1f5f9;
+    display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
     flex-shrink: 0;
 }
 
-.osh-toc-item:hover .osh-toc-num, .osh-toc-item.active .osh-toc-num {
-    background: #0284c7;
-    color: #fff;
-}
-
-.osh-toc-info {
+.osh-ch-info {
     flex: 1;
     min-width: 0;
 }
 
-.osh-toc-title {
-    font-size: 12px;
-    line-height: 1.35;
-    font-weight: 600;
-    margin-bottom: 2px;
-}
-
-.osh-toc-sub {
-    font-size: 11px;
-    color: #64748b;
+.osh-ch-title {
+    line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.osh-toc-page-badge {
-    background: #f1f5f9;
-    padding: 2px 6px;
-    border-radius: 4px;
+.osh-ch-badge {
     font-size: 10px;
     font-weight: 700;
     color: #0284c7;
+    background: #f0f9ff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #bae6fd;
     flex-shrink: 0;
 }
 
-/* Stage-by-Stage Modular Attachments Section */
-.osh-stage-section {
-    padding: 16px 20px;
-    background: #f8fafc;
-    border-top: 1px solid #e2e8f0;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.osh-stage-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.osh-stage-header h4 {
-    margin: 0;
-    font-size: 12px;
-    font-weight: 700;
-    color: #1e293b;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.osh-att-pill {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
+/* Main PDF Canvas */
+.osh-main-canvas {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    margin-bottom: 6px;
-    font-size: 12px;
-    text-decoration: none;
-    color: #1e293b;
-    transition: all 0.2s;
-}
-
-.osh-att-pill:hover, .osh-att-pill.active {
-    background: #f0fdf4;
-    border-color: #86efac;
-    color: #166534;
-}
-
-/* Right Central PDF Viewer Engine */
-.osh-viewer-main {
+    border-radius: 14px;
     display: flex;
     flex-direction: column;
-    position: relative;
-    background: #334155;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04);
 }
 
-.osh-viewer-toolbar {
-    background: #1e293b;
+.osh-canvas-toolbar {
+    background: #0f172a;
     color: #ffffff;
-    padding: 10px 20px;
+    padding: 10px 18px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
     flex-wrap: wrap;
 }
 
-.osh-toolbar-title {
-    font-size: 13px;
+.osh-tool-btn {
+    background: #1e293b;
+    color: #ffffff;
+    border: 1px solid #334155;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
     font-weight: 600;
-    color: #e2e8f0;
-    display: flex;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
-.osh-iframe-container {
+.osh-tool-btn:hover {
+    background: #0284c7;
+    border-color: #0284c7;
+    color: #ffffff;
+}
+
+.osh-iframe-wrap {
     flex: 1;
     width: 100%;
-    min-height: 750px;
-    height: 100%;
+    min-height: 780px;
+    background: #334155;
     position: relative;
-    background: #1e293b;
 }
 
-.osh-pdf-iframe {
+.osh-pdf-frame {
     width: 100%;
     height: 100%;
-    min-height: 750px;
+    min-height: 780px;
     border: none;
     display: block;
     background: #ffffff;
 }
 
-/* Compliance Verification Box */
-.osh-audit-panel {
-    background: #ffffff;
-    padding: 24px 28px;
-    border-top: 1px solid #e2e8f0;
+/* Tab Panels */
+.osh-tab-panel {
+    display: none;
+    animation: fadeIn 0.2s ease-out;
 }
 
-.osh-audit-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 24px;
+.osh-tab-panel.active {
+    display: block;
 }
 
-@media (max-width: 768px) {
-    .osh-audit-grid { grid-template-columns: 1fr; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.osh-stamp-card {
-    background: #f8fafc;
-    border: 2px dashed #94a3b8;
-    border-radius: 12px;
-    padding: 16px 20px;
-    text-align: center;
+/* Drag & Drop TOC Builder Styles */
+.builder-list {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    gap: 8px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
-.osh-stamp-badge {
-    display: inline-flex;
+.builder-item {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    background: #166534;
-    color: #ffffff;
-    border-radius: 20px;
+    gap: 10px;
+    transition: all 0.15s ease;
+    cursor: grab;
+}
+
+.builder-item:hover {
+    border-color: #0284c7;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.08);
+}
+
+.builder-item.dragging {
+    opacity: 0.4;
+    background: #e0f2fe;
+    border: 2px dashed #0284c7;
+    cursor: grabbing;
+}
+
+.builder-item.drag-over {
+    border-top: 3px solid #0284c7;
+}
+
+.drag-handle {
+    font-size: 16px;
+    color: #94a3b8;
+    cursor: grab;
+    user-select: none;
+    padding: 2px 4px;
+}
+
+.builder-insert-btn {
+    background: #f8fafc;
+    border: 1px dashed #94a3b8;
+    color: #0284c7;
+    padding: 4px 10px;
+    border-radius: 6px;
     font-size: 11px;
     font-weight: 700;
-    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 2px 0 2px 30px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
-/* Modal styles for adding stage pdf */
+.builder-insert-btn:hover {
+    background: #e0f2fe;
+    border-color: #0284c7;
+}
+
+/* Modals */
 .osh-modal-overlay {
     display: none;
     position: fixed;
@@ -434,248 +445,357 @@
     background: #ffffff;
     border-radius: 16px;
     width: 100%;
-    max-width: 520px;
+    max-width: 540px;
     box-shadow: 0 20px 40px rgba(0,0,0,0.25);
     overflow: hidden;
-    animation: modalPop 0.25s ease-out;
 }
 
-@keyframes modalPop {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+/* Toast */
+.osh-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    display: none;
+    align-items: center;
+    gap: 8px;
+    z-index: 20000;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 </style>
 
-<div class="portal-topbar" style="margin-bottom:16px">
-    <div>
-        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">
-            <a href="{{ url_for('osh_list') }}" style="color:var(--accent-2);text-decoration:none">← OSHWA Document Hub</a> &nbsp;/&nbsp; Report Template
-        </div>
-        <h1 style="margin:4px 0 0;font-size:24px;font-weight:800">🛡️ OSHWA Report Template Viewer</h1>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <a class="btn ghost sm" href="{{ url_for('osh_list') }}">📑 All OSH Manuals</a>
-        <a class="btn ghost sm" href="{{ url_for('osh_edit', oid=r.id) }}">✏️ Edit Report Info</a>
-        <button class="btn sm" onclick="openStageModal()">➕ Attach Modular Stage PDF</button>
-    </div>
-</div>
-
-<div class="osh-report-wrapper" id="oshReportContainer">
-    <!-- STATUTORY REPORT HEADER -->
-    <div class="osh-report-header">
-        <div class="osh-header-top">
-            <div class="osh-brand-block">
-                {% if r.company_logo %}
-                    <img src="{{ url_for('serve_logo', filename=r.company_logo) }}" alt="Logo" class="osh-company-badge-logo">
-                {% else %}
-                    <img src="{{ url_for('static', filename='img/favicon-blue.png') }}?v=3" alt="Logo" class="osh-company-badge-logo">
-                {% endif %}
-                <div class="osh-title-block">
-                    <div class="osh-subtitle">
-                        <span style="color:#38bdf8;font-weight:700;letter-spacing:1px">{{ r.company_name or 'TIJARAH MABRUR CLIENT' }}</span>
-                        {% if r.company_reg %}<span>• Reg: {{ r.company_reg }}</span>{% endif %}
-                    </div>
-                    <h1>{{ r.title }}</h1>
-                    <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
-                        <span class="osh-badge-tag osh-badge-compliance">⚖️ OSHA 1994 (Act 514) / 2022</span>
-                        <span class="osh-badge-tag osh-badge-compliance">🏛️ DOSH / JKKP VERIFIED</span>
-                        <span class="osh-badge-tag osh-badge-status">● {{ r.status }}</span>
-                    </div>
+<div class="osh-workspace">
+    <!-- TOP BAR -->
+    <div class="osh-top-bar">
+        <div class="osh-top-meta">
+            {% if r.company_logo %}
+                <img src="{{ url_for('serve_logo', filename=r.company_logo) }}" alt="Logo" class="osh-logo-sq">
+            {% else %}
+                <img src="{{ url_for('static', filename='img/favicon-blue.png') }}?v=3" alt="Logo" class="osh-logo-sq">
+            {% endif %}
+            <div>
+                <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px">
+                    {{ r.company_name or 'TIJARAH MABRUR CLIENT' }} &nbsp;•&nbsp; OSHWA / CHRA DOSH SYSTEM
                 </div>
-            </div>
-
-            <div style="text-align:right">
-                <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px">Document Reference</div>
-                <div style="font-family:monospace;font-size:16px;font-weight:800;color:#38bdf8;background:rgba(255,255,255,0.08);padding:4px 12px;border-radius:6px;border:1px solid rgba(56,189,248,0.3)">
-                    {{ r.ref_no or 'TM/OSHWA/2026/01' }}
-                </div>
-                <div style="font-size:12px;color:#cbd5e1;margin-top:4px">
-                    Version: <b style="color:#fff">{{ r.revision or 'Rev 1.0' }}</b>
+                <h1 class="osh-doc-title">{{ r.title }}</h1>
+                <div class="osh-badge-row">
+                    <span class="osh-pill osh-pill-verified">✓ {{ r.status }}</span>
+                    <span class="osh-pill osh-pill-ref">REF: {{ r.ref_no or 'TM/OSHWA/2026/01' }}</span>
+                    <span class="osh-pill osh-pill-rev">{{ r.revision or 'Rev 1.0' }}</span>
+                    <span style="color:#64748b;font-size:12px">📑 {{ sections|length }} Sections</span>
                 </div>
             </div>
         </div>
 
-        <!-- HEADER META GRID -->
-        <div class="osh-header-meta-grid">
-            <div class="osh-meta-item">
-                <strong>Category / Module</strong>
-                <span>{{ r.category }}</span>
-            </div>
-            <div class="osh-meta-item">
-                <strong>Effective Date</strong>
-                <span>{{ r.effective_date or '14 April 2026' }}</span>
-            </div>
-            <div class="osh-meta-item">
-                <strong>Annual Review Due</strong>
-                <span>{{ r.review_due_date or '14 April 2027' }}</span>
-            </div>
-            <div class="osh-meta-item">
-                <strong>Prepared By</strong>
-                <span>{{ r.prepared_by or 'Tijarah Mabrur Specialist' }}</span>
-            </div>
-            <div class="osh-meta-item">
-                <strong>Approved Signatory</strong>
-                <span>{{ r.approved_by or 'Managing Director' }}</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- ACTION BAR -->
-    <div class="osh-action-bar">
-        <div class="osh-action-group">
-            <span style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.5px">Active Document:</span>
-            <span class="tag" style="background:#0284c7;color:#fff;font-weight:600;font-size:12px;padding:4px 10px">
-                📄 {{ active_file }}
-            </span>
-            {% if active_file != r.pdf_filename %}
-                <a href="{{ url_for('osh_view', oid=r.id) }}" class="btn sm ghost" style="padding:2px 8px;font-size:11px">← Back to Full Manual</a>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <a href="{{ url_for('osh_download', oid=r.id, file=active_file) }}" target="_blank" class="btn sm ghost">📥 Download PDF</a>
+            <button onclick="window.print()" class="btn sm ghost">🖨️ Print</button>
+            {% if user and user.role in ['admin', 'staff', 'employee'] %}
+            <a href="{{ url_for('osh_edit', oid=r.id) }}" class="btn sm ghost">✏️ Edit</a>
+            <button onclick="switchWorkspaceTab('tab-builder')" class="btn sm ghost" style="color:#0284c7;border-color:#bae6fd;background:#f0f9ff">
+                🛠️ Manage &amp; Drag Sections
+            </button>
+            <button onclick="openStageModal()" class="btn sm" style="background:#0284c7;color:#fff">➕ Attach Stage PDF</button>
             {% endif %}
         </div>
-        <div class="osh-action-group">
-            <button class="btn sm ghost" onclick="toggleFullscreen()" title="Full Screen Viewer">⛶ Fullscreen</button>
-            <a class="btn sm ghost" href="{{ url_for('osh_download', oid=r.id, file=active_file) }}" target="_blank" title="Download current file">📥 Download PDF</a>
-            <button class="btn sm" onclick="window.print()" style="background:#0f172a;color:#fff">🖨️ Print Dossier</button>
-        </div>
     </div>
 
-    <!-- SPLIT VIEW LAYOUT -->
-    <div class="osh-viewer-layout">
-        <!-- LEFT: TABLE OF CONTENTS & SECTION JUMPER -->
-        <div class="osh-toc-panel">
-            <div class="osh-toc-header">
-                <h3>📑 Table of Contents</h3>
-                <p>Click any section to jump directly to that page</p>
-            </div>
+    <!-- TABS -->
+    <div class="osh-tab-nav">
+        <button class="osh-tab-btn active" onclick="switchWorkspaceTab('tab-reader')">
+            📑 Official PDF &amp; Table of Contents
+        </button>
+        {% if user and user.role in ['admin', 'staff', 'employee'] %}
+        <button class="osh-tab-btn" onclick="switchWorkspaceTab('tab-builder')">
+            🛠️ TOC Section Builder (Drag &amp; Drop Reorder)
+        </button>
+        {% endif %}
+        <button class="osh-tab-btn" onclick="switchWorkspaceTab('tab-summary')">
+            📊 Executive Summary &amp; Audit
+        </button>
+        <button class="osh-tab-btn" onclick="switchWorkspaceTab('tab-hirarc')">
+            📋 HIRARC Risk Register
+        </button>
+        <button class="osh-tab-btn" onclick="switchWorkspaceTab('tab-stages')">
+            🧩 Modular Stages ({{ attachments|length }})
+        </button>
+    </div>
 
-            <div style="flex:1;overflow-y:auto">
-                <ul class="osh-toc-list">
-                    {% if sections %}
-                        {% for s in sections %}
-                        <li>
-                            <div class="osh-toc-item" onclick="jumpToPage({{ s.page }}, '{{ r.pdf_filename }}')">
-                                <div class="osh-toc-num">{{ s.id }}</div>
-                                <div class="osh-toc-info">
-                                    <div class="osh-toc-title">{{ s.title }}</div>
-                                    {% if s.desc %}<div class="osh-toc-sub">{{ s.desc }}</div>{% endif %}
-                                </div>
-                                <div class="osh-toc-page-badge">Pg {{ s.page }}</div>
-                            </div>
-                        </li>
+    <!-- TAB 1: OFFICIAL PDF & TOC -->
+    <div id="tab-reader" class="osh-tab-panel active">
+        <div class="osh-reader-grid">
+            <!-- SIDEBAR TOC -->
+            <div class="osh-side-toc">
+                <div class="osh-toc-top">
+                    <select class="osh-doc-selector" onchange="switchDocFile(this.value)">
+                        <option value="{{ r.pdf_filename }}" {{ 'selected' if active_file == r.pdf_filename }}>
+                            📄 Main Dossier ({{ r.pdf_filename }})
+                        </option>
+                        {% for att in attachments %}
+                        <option value="{{ att.filename }}" {{ 'selected' if active_file == att.filename }}>
+                            🧩 {{ att.title }} ({{ att.filename }})
+                        </option>
                         {% endfor %}
-                    {% else %}
-                        <li style="padding:16px;font-size:12px;color:#64748b;text-align:center">No section bookmarks defined.</li>
-                    {% endif %}
+                    </select>
+
+                    <div class="osh-toc-search-row">
+                        <input type="text" id="tocFilterInput" onkeyup="filterChapters()" placeholder="🔍 Filter {{ sections|length }} sections..." class="osh-toc-search">
+                        <button class="btn sm ghost" onclick="switchWorkspaceTab('tab-builder')" title="Reorder sections" style="padding:4px 8px;font-size:12px">🛠️</button>
+                    </div>
+                </div>
+
+                <ul class="osh-chapter-list" id="chapterList">
+                    {% for s in sections %}
+                    {% set is_sub = s.title.startswith('1.') or s.title.startswith('2.') or s.title.startswith('3.') or s.title.startswith('4.') or s.title.startswith('5.') or s.title.startswith('6.') or s.title.startswith('7.') or s.title.startswith('8.') %}
+                    {% set is_sub = is_sub and not (s.title.startswith('1.0') or s.title.startswith('2.0') or s.title.startswith('3.0') or s.title.startswith('4.0') or s.title.startswith('5.0') or s.title.startswith('6.0') or s.title.startswith('7.0') or s.title.startswith('8.0')) %}
+                    <li>
+                        <div class="osh-chapter-card {% if s.is_header %}is-header{% elif is_sub %}is-sub{% endif %} {% if loop.first and not page_num or page_num == s.page %}active{% endif %}"
+                             onclick="jumpToChapter({{ s.page }}, '{{ r.pdf_filename }}', this)">
+                            <div class="osh-ch-icon">{{ s.icon or '📄' }}</div>
+                            <div class="osh-ch-info">
+                                <div class="osh-ch-title">{{ s.title }}</div>
+                            </div>
+                            <div class="osh-ch-badge">Pg {{ s.page }}</div>
+                        </div>
+                    </li>
+                    {% endfor %}
                 </ul>
 
-                <!-- MODULAR STAGE-BY-STAGE SUB-REPORTS -->
-                <div class="osh-stage-section">
-                    <div class="osh-stage-header">
-                        <h4>🧩 Modular Stage PDFs ({{ attachments|length }})</h4>
-                        <button class="btn sm ghost" onclick="openStageModal()" style="padding:2px 6px;font-size:11px">+ Add</button>
+                <div style="padding:10px 14px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;font-size:11px">
+                    <span style="color:#64748b">CHRA / DOSH Mandate</span>
+                    <button class="btn sm ghost" onclick="switchWorkspaceTab('tab-builder')" style="padding:2px 8px;font-size:11px;color:#0284c7">+ Add / Reorder</button>
+                </div>
+            </div>
+
+            <!-- PDF CANVAS -->
+            <div class="osh-main-canvas">
+                <div class="osh-canvas-toolbar">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <span style="font-size:13px;font-weight:700">📄 <span id="currentDocLabel">{{ active_file }}</span></span>
+                        <span style="font-size:11px;color:#94a3b8;background:#1e293b;padding:2px 8px;border-radius:4px">Statutory Reader</span>
                     </div>
 
-                    {% if attachments %}
-                        {% for att in attachments %}
-                        <div class="osh-att-pill {% if active_file == att.filename %}active{% endif %}">
-                            <div style="cursor:pointer;flex:1" onclick="switchDocument('{{ att.filename }}')">
-                                <b style="display:block;font-size:12px">{{ att.title }}</b>
-                                <small style="color:#64748b;font-size:10px">{{ att.category }} • {{ att.uploaded_at }}</small>
-                            </div>
-                            <div style="display:flex;align-items:center;gap:4px">
-                                <a href="{{ url_for('serve_report_pdf', filename=att.filename) }}" target="_blank" title="Open new tab" style="text-decoration:none;font-size:12px">↗</a>
-                                <form method="post" action="{{ url_for('osh_delete_attachment', oid=r.id, att_id=att.id) }}" style="display:inline" onsubmit="return confirm('Delete this modular PDF?')">
-                                    <button type="submit" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:12px" title="Delete">✕</button>
-                                </form>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <div style="font-size:11px;color:#94a3b8;background:#ffffff;padding:10px;border-radius:6px;border:1px dashed #cbd5e1;text-align:center">
-                            No stage-by-stage sub-reports uploaded yet.<br>
-                            <a href="#" onclick="openStageModal();return false;" style="color:#0284c7;font-weight:600">Upload modular PDF</a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- AUDIT STAMP SUMMARY -->
-            <div style="padding:14px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                    <span style="font-size:16px">🛡️</span>
-                    <div>
-                        <strong style="color:#1e293b;display:block">OshOne Safety System</strong>
-                        <span>Verified by Tijarah Mabrur (M) Sdn. Bhd.</span>
+                    <div style="display:flex;align-items:center;gap:8px">
+                        <label style="font-size:11px;color:#94a3b8">Page:</label>
+                        <input type="number" id="quickPageInput" value="{{ page_num }}" min="1" max="500" style="width:55px;padding:3px 6px;border-radius:4px;border:1px solid #475569;background:#0f172a;color:#fff;font-size:12px">
+                        <button class="osh-tool-btn" onclick="applyPageJump()">Go</button>
+                        <button class="osh-tool-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+                        <a class="osh-tool-btn" href="{{ url_for('serve_report_pdf', filename=active_file) }}" target="_blank">Pop Out ↗</a>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- RIGHT: EMBEDDED DOCUMENT ENGINE -->
-        <div class="osh-viewer-main">
-            <div class="osh-viewer-toolbar">
-                <div class="osh-toolbar-title">
-                    <span>📄 Viewing: <strong style="color:#fff">{{ active_file }}</strong></span>
+                <div class="osh-iframe-wrap" id="iframeWrap">
+                    <iframe id="pdfViewerFrame"
+                            src="{{ url_for('serve_report_pdf', filename=active_file) }}#page={{ page_num }}&view=FitH&toolbar=1"
+                            class="osh-pdf-frame"
+                            title="OSHWA Document Viewer">
+                    </iframe>
                 </div>
-                <div style="display:flex;align-items:center;gap:8px">
-                    <label style="font-size:11px;color:#94a3b8">Jump Page:</label>
-                    <input type="number" id="pageJumpInput" value="{{ page_num }}" min="1" max="500" style="width:60px;padding:3px 6px;border-radius:4px;border:1px solid #475569;background:#0f172a;color:#fff;font-size:12px">
-                    <button class="btn sm" onclick="submitPageJump()" style="padding:3px 10px;font-size:11px">Go</button>
-                    <a class="btn sm ghost" href="{{ url_for('serve_report_pdf', filename=active_file) }}" target="_blank" style="padding:3px 10px;font-size:11px;color:#38bdf8;border-color:#38bdf8">Pop Out ↗</a>
-                </div>
-            </div>
-
-            <div class="osh-iframe-container" id="iframeContainer">
-                <iframe id="pdfFrame"
-                        src="{{ url_for('serve_report_pdf', filename=active_file) }}#page={{ page_num }}&toolbar=1&navpanes=1&statusbar=1"
-                        class="osh-pdf-iframe"
-                        title="OSH Report Document">
-                </iframe>
             </div>
         </div>
     </div>
 
-    <!-- AUDIT & COMPLIANCE VERIFICATION PANEL -->
-    <div class="osh-audit-panel">
-        <div class="osh-audit-grid">
-            <div>
-                <h3 style="margin:0 0 10px;font-size:16px;font-weight:800;color:#0f172a">Executive Summary &amp; Scope of Manual</h3>
-                <div style="font-size:13px;line-height:1.6;color:#334155;background:#f8fafc;padding:16px;border-radius:10px;border:1px solid #e2e8f0;white-space:pre-line">
-                    {{ r.summary or 'Statutory OSHWA Management Manual established in full compliance with OSHA 1994 statutory safety provisions, factory safety rules, and hazard risk management hierarchy.' }}
+    <!-- TAB 2: INTERACTIVE TOC BUILDER (DRAG & DROP + INSERT BETWEEN) -->
+    <div id="tab-builder" class="osh-tab-panel">
+        <div class="panel" style="background:#ffffff;border-radius:14px;padding:24px;border:1px solid #e2e8f0">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+                <div>
+                    <h2 style="margin:0 0 4px;font-size:20px;font-weight:800;color:#0f172a">🛠️ Table of Contents Builder &amp; Reorder</h2>
+                    <div style="font-size:12px;color:#64748b">
+                        Drag and drop items to reorder. Click <b>"+ Insert Section Here"</b> to add a new section in between. Edit titles and page numbers inline.
+                    </div>
                 </div>
-                {% if r.scope_of_work %}
-                <div style="margin-top:12px;font-size:12px;color:#64748b">
-                    <strong>Operational Scope:</strong> {{ r.scope_of_work }}
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button type="button" class="btn ghost sm" onclick="addNewSectionEnd()">+ Add Section at End</button>
+                    <form method="post" action="{{ url_for('osh_reset_toc', oid=r.id) }}" style="display:inline" onsubmit="return confirm('Reset TOC back to standard 34-section DOSH/CHRA template?')">
+                        <button type="submit" class="btn ghost sm" style="color:#d97706">🔄 Reset to Standard Template</button>
+                    </form>
+                    <button type="button" class="btn sm" onclick="saveSectionsLive()" style="background:#16a34a;color:#fff;font-weight:700">
+                        💾 Save Changes
+                    </button>
                 </div>
-                {% endif %}
             </div>
 
-            <div class="osh-stamp-card">
-                <div class="osh-stamp-badge">✓ STATUTORY AUDIT COMPLIANT</div>
-                <img src="{{ url_for('static', filename='img/favicon-blue.png') }}?v=3" alt="Stamp" style="width:48px;height:48px;margin-bottom:8px;opacity:0.9">
-                <div style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase">TIJARAH MABRUR (M) SDN. BHD.</div>
-                <div style="font-size:10px;color:#64748b;margin-bottom:6px">Occupational Safety &amp; Health Consultancy Division</div>
-                <div style="font-size:10px;font-family:monospace;color:#0369a1;background:#e0f2fe;padding:2px 8px;border-radius:4px">
+            <div id="builderContainer">
+                <ul class="builder-list" id="builderList">
+                    <!-- Populated dynamically via JS from sectionsData -->
+                </ul>
+            </div>
+
+            <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-top:1px solid #e2e8f0;padding-top:16px">
+                <button type="button" class="btn ghost sm" onclick="addNewSectionEnd()">+ Add Section at End</button>
+                <button type="button" class="btn sm" onclick="saveSectionsLive()" style="background:#16a34a;color:#fff;font-weight:700">
+                    💾 Save All Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: EXECUTIVE SUMMARY & AUDIT DOSSIER -->
+    <div id="tab-summary" class="osh-tab-panel">
+        <div class="panel" style="background:#ffffff;border-radius:14px;padding:24px;border:1px solid #e2e8f0;margin-bottom:20px">
+            <h2 style="margin:0 0 16px;font-size:20px;font-weight:800;color:#0f172a">Executive Summary &amp; Statutory Dossier</h2>
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:18px;font-size:14px;line-height:1.6;color:#334155;white-space:pre-line">
+                {{ r.summary or 'Statutory Chemical Health Risk Assessment (CHRA) & Occupational Safety & Health Management Manual established in full accordance with the Occupational Safety and Health Act 1994 (Act 514 / Amendment 2022) and USECHH 2000 Regulations.' }}
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div class="panel" style="background:#ffffff;border-radius:14px;padding:24px;border:1px solid #e2e8f0">
+                <h3 style="margin:0 0 12px;font-size:16px;font-weight:700;color:#0f172a">Premise &amp; Operational Scope</h3>
+                <table class="tbl" style="font-size:13px">
+                    <tr><td style="width:140px;color:#64748b"><b>Company Name</b></td><td><b>{{ r.company_name }}</b></td></tr>
+                    <tr><td style="color:#64748b"><b>Reg. No (SSM)</b></td><td>{{ r.company_reg or '201801012345 (1234567-X)' }}</td></tr>
+                    <tr><td style="color:#64748b"><b>Facility Address</b></td><td>{{ r.company_address or 'Lot 1234, Kawasan Perindustrian Valdor, 14200 Sungai Bakap, Pulau Pinang' }}</td></tr>
+                    <tr><td style="color:#64748b"><b>Contact / Email</b></td><td>{{ r.company_phone }} &nbsp;•&nbsp; {{ r.company_email }}</td></tr>
+                    <tr><td style="color:#64748b"><b>Operational Scope</b></td><td>{{ r.scope_of_work or 'Plant manufacturing lines, assembly, storage, and offices.' }}</td></tr>
+                </table>
+            </div>
+
+            <div style="background:#f0fdf4;border:2px dashed #16a34a;border-radius:14px;padding:20px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                <div style="font-size:12px;font-weight:800;color:#166534;background:#dcfce7;padding:4px 12px;border-radius:20px;margin-bottom:10px">
+                    ✓ STATUTORY AUDIT COMPLIANT
+                </div>
+                <img src="{{ url_for('static', filename='img/favicon-blue.png') }}?v=3" alt="Stamp" style="width:52px;height:52px;margin-bottom:8px">
+                <div style="font-size:14px;font-weight:800;color:#0f172a">TIJARAH MABRUR (M) SDN. BHD.</div>
+                <div style="font-size:11px;color:#64748b;margin-bottom:8px">Occupational Safety &amp; Health Consultancy Division</div>
+                <div style="font-family:monospace;font-size:12px;color:#0369a1;background:#ffffff;border:1px solid #cbd5e1;padding:4px 10px;border-radius:6px">
                     CERT NO: TM-OSH-{{ r.id }}-2026
                 </div>
+                <div style="font-size:11px;color:#64748b;margin-top:8px">
+                    Approved by: <b>{{ r.approved_by or 'Teh Chee Hang (Managing Director)' }}</b>
+                </div>
             </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: HIRARC -->
+    <div id="tab-hirarc" class="osh-tab-panel">
+        <div class="panel" style="background:#ffffff;border-radius:14px;padding:24px;border:1px solid #e2e8f0">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+                <div>
+                    <h2 style="margin:0 0 4px;font-size:20px;font-weight:800;color:#0f172a">HIRARC Risk Register Table</h2>
+                    <div style="font-size:12px;color:#64748b">Hazard Identification, Risk Assessment, and Risk Control per DOSH 2008 &amp; OSHA 1994 guidelines.</div>
+                </div>
+                <button class="btn sm" onclick="switchWorkspaceTab('tab-reader'); jumpToChapter(25, '{{ r.pdf_filename }}')">View in Full PDF (Pg 25) ↗</button>
+            </div>
+
+            <div class="tbl-scroll">
+                <table class="tbl" style="font-size:12px">
+                    <thead>
+                        <tr style="background:#f8fafc">
+                            <th>NO</th>
+                            <th>WORK ACTIVITY</th>
+                            <th>HAZARD IDENTIFIED</th>
+                            <th>POTENTIAL EFFECT</th>
+                            <th>INITIAL RISK (L x S)</th>
+                            <th>HIERARCHY OF CONTROL</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><b>1</b></td>
+                            <td><b>Spray Coating Work Unit (Spray Booth)</b></td>
+                            <td>Organic solvent vapors (Toluene/Xylene)</td>
+                            <td>Inhalation toxicity / respiratory irritation</td>
+                            <td><span class="tag Expired" style="font-weight:700">3 x 4 = 12 (High)</span></td>
+                            <td>Enclosed spray booth + LEV face velocity 0.5m/s + Half-face organic vapor respirator</td>
+                            <td><span class="tag Active">Controlled</span></td>
+                        </tr>
+                        <tr>
+                            <td><b>2</b></td>
+                            <td><b>Assembler Work Unit (Assembly Table)</b></td>
+                            <td>Adhesive application / solvent vapor</td>
+                            <td>Dermal skin absorption &amp; inhalation</td>
+                            <td><span class="tag Under_Maintenance" style="font-weight:700">3 x 2 = 6 (Med)</span></td>
+                            <td>Nitrile chemical resistant gloves + Local exhaust hood + Job rotation</td>
+                            <td><span class="tag Active">Controlled</span></td>
+                        </tr>
+                        <tr>
+                            <td><b>3</b></td>
+                            <td><b>Cleaner Work Unit (Premise Washdown)</b></td>
+                            <td>Degreasing alkaline cleaning agent</td>
+                            <td>Skin corrosion / chemical splash</td>
+                            <td><span class="tag Under_Maintenance" style="font-weight:700">2 x 4 = 8 (Med)</span></td>
+                            <td>Chemical safety goggles + Full rubber apron &amp; heavy duty PVC gloves</td>
+                            <td><span class="tag Active">Controlled</span></td>
+                        </tr>
+                        <tr>
+                            <td><b>4</b></td>
+                            <td><b>Compressor &amp; Receiver Vessel</b></td>
+                            <td>Pressurized air receiver (10 Bar)</td>
+                            <td>Pneumatic vessel rupture hazard</td>
+                            <td><span class="tag Active" style="font-weight:700">2 x 2 = 4 (Low)</span></td>
+                            <td>Statutory DOSH PMT certificate + Annual Safety Valve calibration</td>
+                            <td><span class="tag Active">Controlled</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 5: MODULAR STAGES -->
+    <div id="tab-stages" class="osh-tab-panel">
+        <div class="panel" style="background:#ffffff;border-radius:14px;padding:24px;border:1px solid #e2e8f0">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+                <div>
+                    <h2 style="margin:0 0 4px;font-size:20px;font-weight:800;color:#0f172a">Modular Stage PDFs &amp; Sub-Reports</h2>
+                    <div style="font-size:12px;color:#64748b">Upload stage-by-stage statutory documents (HIRARC, Inspection forms, Certificates) attached to this manual.</div>
+                </div>
+                <button class="btn sm" onclick="openStageModal()">➕ Upload New Stage PDF</button>
+            </div>
+
+            {% if attachments %}
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:16px">
+                {% for att in attachments %}
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;display:flex;flex-direction:column;justify-content:space-between">
+                    <div>
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+                            <span class="tag" style="background:#e0f2fe;color:#0369a1;font-size:10px;font-weight:700">{{ att.category }}</span>
+                            <small style="color:#64748b;font-size:11px">{{ att.uploaded_at }}</small>
+                        </div>
+                        <h4 style="margin:0 0 4px;font-size:14px;color:#0f172a">{{ att.title }}</h4>
+                        <div style="font-size:11px;color:#64748b;font-family:monospace">{{ att.filename }}</div>
+                    </div>
+                    <div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-top:12px;display:flex;gap:6px">
+                        <button class="btn sm" onclick="switchDocFile('{{ att.filename }}'); switchWorkspaceTab('tab-reader')" style="flex:1;background:#0284c7;color:#fff">
+                            👁️ Open in Reader
+                        </button>
+                        <a href="{{ url_for('serve_report_pdf', filename=att.filename) }}" target="_blank" class="btn sm ghost" title="Open in new tab">↗</a>
+                        <form method="post" action="{{ url_for('osh_delete_attachment', oid=r.id, att_id=att.id) }}" style="display:inline" onsubmit="return confirm('Delete this modular PDF?')">
+                            <button type="submit" class="btn sm danger" title="Delete">🗑️</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="padding:40px 20px;text-align:center;background:#f8fafc;border-radius:12px;border:1px dashed #cbd5e1">
+                <div style="font-size:32px;margin-bottom:8px">🧩</div>
+                <h4 style="margin:0 0 4px;color:#0f172a">No Stage Attachments Yet</h4>
+                <p style="font-size:12px;color:#64748b;margin:0 0 14px">Attach your first modular stage PDF report.</p>
+                <button class="btn sm" onclick="openStageModal()">+ Upload Modular PDF</button>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
-<!-- PRINT VIEW (STATIC CLEAN FALLBACK FOR PRINTERS) -->
-<div class="osh-print-view" style="padding:20px;font-family:sans-serif">
-    <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:20px">
-        <h2>TIJARAH MABRUR (M) SDN. BHD.</h2>
-        <h3>{{ r.title }}</h3>
-        <p>{{ r.company_name }} | Ref: {{ r.ref_no }} | Status: {{ r.status }}</p>
-    </div>
-    <p><b>Executive Summary:</b><br>{{ r.summary }}</p>
-    <p><b>Scope:</b> {{ r.scope_of_work }}</p>
-    <p><b>Prepared By:</b> {{ r.prepared_by }} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Approved By:</b> {{ r.approved_by }}</p>
-    <p><i>Official document attached: {{ active_file }}</i></p>
-</div>
-
-<!-- ATTACH MODULAR STAGE PDF MODAL -->
+<!-- STAGE PDF MODAL -->
 <div id="stageModal" class="osh-modal-overlay">
     <div class="osh-modal-box">
         <div style="padding:18px 24px;background:#0f172a;color:#fff;display:flex;justify-content:space-between;align-items:center">
@@ -685,26 +805,24 @@
         <form method="post" action="{{ url_for('osh_add_attachment', oid=r.id) }}" enctype="multipart/form-data" style="padding:24px">
             <div class="field" style="margin-bottom:16px">
                 <label style="display:block;font-size:12px;font-weight:700;margin-bottom:6px">Stage / Section Title *</label>
-                <input type="text" name="attachment_title" required placeholder="e.g. Workplace HIRARC Assessment Q2 2026" style="width:100%;padding:10px;border-radius:8px;border:1px solid #cbd5e1;font-size:13px">
+                <input type="text" name="attachment_title" required placeholder="e.g. Form C Spray Coating Assessment" style="width:100%;padding:10px;border-radius:8px;border:1px solid #cbd5e1;font-size:13px">
             </div>
 
             <div class="field" style="margin-bottom:16px">
                 <label style="display:block;font-size:12px;font-weight:700;margin-bottom:6px">Category</label>
                 <select name="attachment_category" style="width:100%;padding:10px;border-radius:8px;border:1px solid #cbd5e1;font-size:13px">
                     <option value="HIRARC Risk Register">HIRARC Risk Register</option>
+                    <option value="CHRA Statutory Assessment">CHRA Statutory Assessment</option>
                     <option value="Workplace Safety Inspection">Workplace Safety Inspection</option>
                     <option value="Safe Operating Procedures (SOP)">Safe Operating Procedures (SOP)</option>
                     <option value="Emergency Response Plan (ERP)">Emergency Response Plan (ERP)</option>
-                    <option value="OSH Committee & Minutes">OSH Committee & Minutes</option>
                     <option value="DOSH / Statutory Sijil">DOSH / Statutory Sijil</option>
-                    <option value="Training & Competency Records">Training & Competency Records</option>
                 </select>
             </div>
 
             <div class="field" style="margin-bottom:20px">
                 <label style="display:block;font-size:12px;font-weight:700;margin-bottom:6px">PDF File *</label>
                 <input type="file" name="attachment_file" accept=".pdf" required style="width:100%;padding:8px;border:1px dashed #94a3b8;border-radius:8px;font-size:12px">
-                <small style="color:#64748b;display:block;margin-top:4px">Upload any modular sub-report or supplementary stage PDF.</small>
             </div>
 
             <div style="display:flex;justify-content:flex-end;gap:10px">
@@ -715,45 +833,80 @@
     </div>
 </div>
 
-<script>
-function jumpToPage(page, filename) {
-    var frame = document.getElementById('pdfFrame');
-    var currentUrl = "{{ url_for('serve_report_pdf', filename='') }}" + encodeURIComponent(filename);
-    frame.src = currentUrl + '#page=' + page + '&toolbar=1&navpanes=1&statusbar=1';
-    document.getElementById('pageJumpInput').value = page;
+<!-- TOAST NOTIFICATION -->
+<div id="saveToast" class="osh-toast">
+    <span style="font-size:16px">✅</span> <span id="toastMsg">TOC Saved Successfully!</span>
+</div>
 
-    // Highlight active in TOC
-    document.querySelectorAll('.osh-toc-item').forEach(function(el) {
+<script>
+// Data Store
+var sectionsData = {{ sections|tojson|safe }} || [];
+var reportOid = {{ r.id }};
+var activeDocFile = "{{ active_file }}";
+
+function switchWorkspaceTab(tabId) {
+    document.querySelectorAll('.osh-tab-panel').forEach(function(el) {
         el.classList.remove('active');
     });
-    if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
+    document.querySelectorAll('.osh-tab-btn').forEach(function(el) {
+        el.classList.remove('active');
+    });
+    var target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
+
+    var btn = Array.from(document.querySelectorAll('.osh-tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+    if (btn) btn.classList.add('active');
+
+    if (tabId === 'tab-builder') {
+        renderBuilder();
     }
 }
 
-function submitPageJump() {
-    var p = document.getElementById('pageJumpInput').value || 1;
-    var frame = document.getElementById('pdfFrame');
-    var baseSrc = frame.src.split('#')[0];
-    frame.src = baseSrc + '#page=' + p + '&toolbar=1&navpanes=1&statusbar=1';
+function jumpToChapter(page, filename, cardElem) {
+    var frame = document.getElementById('pdfViewerFrame');
+    var targetFile = filename || activeDocFile;
+    var baseUrl = "{{ url_for('serve_report_pdf', filename='') }}" + encodeURIComponent(targetFile);
+    frame.src = baseUrl + '#page=' + page + '&view=FitH&toolbar=1';
+    document.getElementById('quickPageInput').value = page;
+
+    if (cardElem) {
+        document.querySelectorAll('.osh-chapter-card').forEach(c => c.classList.remove('active'));
+        cardElem.classList.add('active');
+    }
 }
 
-function switchDocument(filename) {
-    window.location.href = "{{ url_for('osh_view', oid=r.id) }}?file=" + encodeURIComponent(filename);
+function applyPageJump() {
+    var p = document.getElementById('quickPageInput').value || 1;
+    var frame = document.getElementById('pdfViewerFrame');
+    var base = frame.src.split('#')[0];
+    frame.src = base + '#page=' + p + '&view=FitH&toolbar=1';
+}
+
+function switchDocFile(filename) {
+    if (!filename) return;
+    activeDocFile = filename;
+    document.getElementById('currentDocLabel').innerText = filename;
+    var frame = document.getElementById('pdfViewerFrame');
+    frame.src = "{{ url_for('serve_report_pdf', filename='') }}" + encodeURIComponent(filename) + '#page=1&view=FitH&toolbar=1';
+    document.getElementById('quickPageInput').value = 1;
+}
+
+function filterChapters() {
+    var q = document.getElementById('tocFilterInput').value.toLowerCase();
+    var items = document.querySelectorAll('#chapterList li');
+    items.forEach(function(item) {
+        var text = item.innerText.toLowerCase();
+        item.style.display = text.includes(q) ? '' : 'none';
+    });
 }
 
 function toggleFullscreen() {
-    var elem = document.getElementById('iframeContainer');
+    var elem = document.getElementById('iframeWrap');
     if (!document.fullscreenElement) {
-        if (elem.requestFullscreen) {
-            elem.requestFullscreen();
-        } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen();
-        }
+        if (elem.requestFullscreen) elem.requestFullscreen();
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
     } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        }
+        if (document.exitFullscreen) document.exitFullscreen();
     }
 }
 
@@ -763,6 +916,186 @@ function openStageModal() {
 
 function closeStageModal() {
     document.getElementById('stageModal').style.display = 'none';
+}
+
+function showToast(msg) {
+    var t = document.getElementById('saveToast');
+    document.getElementById('toastMsg').innerText = msg || 'Saved Successfully!';
+    t.style.display = 'flex';
+    setTimeout(function() { t.style.display = 'none'; }, 3000);
+}
+
+// ─── DRAG AND DROP BUILDER ENGINE ───
+var draggedIndex = null;
+
+function renderBuilder() {
+    var list = document.getElementById('builderList');
+    list.innerHTML = '';
+
+    sectionsData.forEach(function(sec, idx) {
+        // Render insert button above
+        var insertBtn = document.createElement('button');
+        insertBtn.type = 'button';
+        insertBtn.className = 'builder-insert-btn';
+        insertBtn.innerHTML = '+ Insert section here';
+        insertBtn.onclick = function() { insertSectionAt(idx); };
+        list.appendChild(insertBtn);
+
+        // Render draggable row
+        var li = document.createElement('li');
+        li.className = 'builder-item';
+        li.draggable = true;
+        li.dataset.index = idx;
+
+        li.innerHTML = `
+            <div class="drag-handle" title="Drag to reorder">⠿</div>
+            <input type="text" value="${sec.icon || '📄'}" style="width:36px;text-align:center;padding:6px 2px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px" onchange="updateSecField(${idx}, 'icon', this.value)">
+            <input type="text" value="${escapeHtml(sec.title)}" style="flex:1;padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;font-weight:${sec.is_header ? '800':'600'}" placeholder="Section title" onchange="updateSecField(${idx}, 'title', this.value)">
+            <div style="display:flex;align-items:center;gap:4px">
+                <span style="font-size:11px;color:#64748b">Page:</span>
+                <input type="number" value="${sec.page || 1}" min="1" max="999" style="width:60px;padding:6px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px" onchange="updateSecField(${idx}, 'page', parseInt(this.value)||1)">
+            </div>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#475569;cursor:pointer;white-space:nowrap">
+                <input type="checkbox" ${sec.is_header ? 'checked':''} onchange="updateSecField(${idx}, 'is_header', this.checked)">
+                Header
+            </label>
+            <button type="button" class="btn sm danger" onclick="deleteSection(${idx})" style="padding:4px 8px;font-size:12px" title="Delete section">🗑️</button>
+        `;
+
+        // Drag events
+        li.addEventListener('dragstart', function(e) {
+            draggedIndex = idx;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        li.addEventListener('dragend', function() {
+            this.classList.remove('dragging');
+            document.querySelectorAll('.builder-item').forEach(el => el.classList.remove('drag-over'));
+        });
+
+        li.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            this.classList.add('drag-over');
+        });
+
+        li.addEventListener('dragleave', function() {
+            this.classList.remove('drag-over');
+        });
+
+        li.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            var targetIndex = parseInt(this.dataset.index);
+            if (draggedIndex !== null && draggedIndex !== targetIndex) {
+                var item = sectionsData.splice(draggedIndex, 1)[0];
+                sectionsData.splice(targetIndex, 0, item);
+                renderBuilder();
+            }
+        });
+
+        list.appendChild(li);
+    });
+
+    // Final insert button at bottom
+    var finalInsertBtn = document.createElement('button');
+    finalInsertBtn.type = 'button';
+    finalInsertBtn.className = 'builder-insert-btn';
+    finalInsertBtn.innerHTML = '+ Insert section here at end';
+    finalInsertBtn.onclick = function() { addNewSectionEnd(); };
+    list.appendChild(finalInsertBtn);
+}
+
+function updateSecField(idx, field, val) {
+    if (sectionsData[idx]) {
+        sectionsData[idx][field] = val;
+    }
+}
+
+function insertSectionAt(index) {
+    var newSec = {
+        id: Date.now(),
+        title: "New Sub-Section " + (index + 1),
+        page: sectionsData[index] ? sectionsData[index].page : 1,
+        icon: "📄",
+        is_header: false,
+        desc: "Custom added section"
+    };
+    sectionsData.splice(index, 0, newSec);
+    renderBuilder();
+}
+
+function addNewSectionEnd() {
+    var lastPage = sectionsData.length > 0 ? (sectionsData[sectionsData.length - 1].page || 1) : 1;
+    var newSec = {
+        id: Date.now(),
+        title: "New Section " + (sectionsData.length + 1),
+        page: lastPage + 1,
+        icon: "📄",
+        is_header: false,
+        desc: "Custom added section"
+    };
+    sectionsData.push(newSec);
+    renderBuilder();
+}
+
+function deleteSection(idx) {
+    if (confirm('Delete section "' + (sectionsData[idx].title || '') + '"?')) {
+        sectionsData.splice(idx, 1);
+        renderBuilder();
+    }
+}
+
+function saveSectionsLive() {
+    fetch('/portal/oshwa/' + reportOid + '/save-sections', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(sectionsData)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            showToast('✅ All ' + data.count + ' Sections Saved Successfully!');
+            refreshSidebarTOC();
+        } else {
+            alert('Error saving sections: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        alert('Network error saving sections: ' + err);
+    });
+}
+
+function refreshSidebarTOC() {
+    var list = document.getElementById('chapterList');
+    list.innerHTML = '';
+    sectionsData.forEach(function(s, loopIdx) {
+        var isSub = (s.title.startsWith('1.') || s.title.startsWith('2.') || s.title.startsWith('3.') || s.title.startsWith('4.') || s.title.startsWith('5.') || s.title.startsWith('6.') || s.title.startsWith('7.') || s.title.startsWith('8.')) &&
+                    !(s.title.startsWith('1.0') || s.title.startsWith('2.0') || s.title.startsWith('3.0') || s.title.startsWith('4.0') || s.title.startsWith('5.0') || s.title.startsWith('6.0') || s.title.startsWith('7.0') || s.title.startsWith('8.0'));
+
+        var li = document.createElement('li');
+        var card = document.createElement('div');
+        card.className = 'osh-chapter-card ' + (s.is_header ? 'is-header ' : (isSub ? 'is-sub ' : '')) + (loopIdx === 0 ? 'active' : '');
+        card.onclick = function() { jumpToChapter(s.page, activeDocFile, card); };
+
+        card.innerHTML = `
+            <div class="osh-ch-icon">${s.icon || '📄'}</div>
+            <div class="osh-ch-info">
+                <div class="osh-ch-title">${escapeHtml(s.title)}</div>
+            </div>
+            <div class="osh-ch-badge">Pg ${s.page || 1}</div>
+        `;
+        li.appendChild(card);
+        list.appendChild(li);
+    });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 </script>
 {% endblock %}

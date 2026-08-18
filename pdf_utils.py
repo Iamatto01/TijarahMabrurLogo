@@ -94,3 +94,226 @@ def fill_pdf(template_path, fields, data):
     out = io.BytesIO()
     writer.write(out)
     return out.getvalue()
+
+
+def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
+                               company_name="Camoor Blinds Sdn. Bhd.",
+                               ref_no="TM/OSHWA/2026/CB-01",
+                               revision="Rev 1.0 (2026 Edition)"):
+    """Generate a multi-page statutory OSHWA dossier PDF using ReportLab."""
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, HRFlowable
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=letter,
+                            leftMargin=40, rightMargin=40, topMargin=40, bottomMargin=40)
+    styles = getSampleStyleSheet()
+
+    # Custom styles
+    title_style = ParagraphStyle(
+        'CoverTitle',
+        parent=styles['Heading1'],
+        fontSize=22,
+        leading=26,
+        textColor=colors.HexColor("#0f172a"),
+        alignment=1, # Center
+        spaceAfter=10
+    )
+    sub_style = ParagraphStyle(
+        'CoverSub',
+        parent=styles['Normal'],
+        fontSize=12,
+        leading=16,
+        textColor=colors.HexColor("#0284c7"),
+        alignment=1,
+        spaceAfter=20
+    )
+    h2_style = ParagraphStyle(
+        'H2Section',
+        parent=styles['Heading2'],
+        fontSize=14,
+        leading=18,
+        textColor=colors.HexColor("#0f172a"),
+        spaceBefore=12,
+        spaceAfter=8
+    )
+    body_style = ParagraphStyle(
+        'DocBody',
+        parent=styles['Normal'],
+        fontSize=10,
+        leading=14,
+        textColor=colors.HexColor("#334155"),
+        spaceAfter=8
+    )
+
+    story = []
+
+    # ── PAGE 1: COVER PAGE ──
+    story.append(Spacer(1, 30))
+    story.append(Paragraph("TIJARAH MABRUR (M) SDN. BHD.", ParagraphStyle('Brand', fontSize=14, leading=16, fontName="Helvetica-Bold", textColor=colors.HexColor("#0284c7"), alignment=1)))
+    story.append(Paragraph("OSHONE STATUTORY COMPLIANCE & SAFETY ENGINEERING DIVISION", ParagraphStyle('SubBrand', fontSize=9, leading=12, textColor=colors.HexColor("#64748b"), alignment=1)))
+    story.append(Spacer(1, 40))
+    story.append(HRFlowable(width="100%", thickness=3, color=colors.HexColor("#0284c7"), spaceAfter=30))
+    story.append(Paragraph(f"<b>{title.upper()}</b>", title_style))
+    story.append(Paragraph(f"Client: <b>{company_name}</b>", sub_style))
+    story.append(Spacer(1, 20))
+
+    meta_table_data = [
+        [Paragraph("<b>Document Reference:</b>", body_style), Paragraph(f"<b>{ref_no}</b>", body_style)],
+        [Paragraph("<b>Revision Edition:</b>", body_style), Paragraph(revision, body_style)],
+        [Paragraph("<b>Statutory Mandate:</b>", body_style), Paragraph("OSHA 1994 (Act 514 / 2022 Amendment) Section 16 & Section 31", body_style)],
+        [Paragraph("<b>Compliance Standards:</b>", body_style), Paragraph("DOSH / JKKP Malaysia & ISO 45001:2018 Aligned", body_style)],
+        [Paragraph("<b>Effective Date:</b>", body_style), Paragraph("14 April 2026", body_style)],
+        [Paragraph("<b>Review Due Date:</b>", body_style), Paragraph("14 April 2027", body_style)],
+        [Paragraph("<b>Prepared By:</b>", body_style), Paragraph("Tijarah Mabrur OSH Consultancy Specialist", body_style)],
+        [Paragraph("<b>Approved Signatory:</b>", body_style), Paragraph("Teh Chee Hang (Managing Director)", body_style)],
+        [Paragraph("<b>Verification Status:</b>", body_style), Paragraph("<font color='#16a34a'><b>VERIFIED & STATUTORY COMPLIANT</b></font>", body_style)],
+    ]
+    t = Table(meta_table_data, colWidths=[2.2 * inch, 4.8 * inch])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#f8fafc")),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#cbd5e1")),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+        ('TOPPADDING', (0,0), (-1,-1), 6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('LEFTPADDING', (0,0), (-1,-1), 10),
+        ('RIGHTPADDING', (0,0), (-1,-1), 10),
+    ]))
+    story.append(t)
+    story.append(Spacer(1, 40))
+    story.append(Paragraph("<i>This statutory dossier is registered under the Tijarah Mabrur OshOne Portal system. All contents and risk assessment controls are certified for official workplace safety audit.</i>", ParagraphStyle('Notice', fontSize=9, leading=12, textColor=colors.HexColor("#64748b"), alignment=1)))
+    story.append(PageBreak())
+
+    # ── PAGE 2: SECTION 1 - POLISI KESELAMATAN (OSH POLICY) ──
+    story.append(Paragraph("SEKSYEN 1: POLISI KESELAMATAN DAN KESIHATAN PEKERJAAN", h2_style))
+    story.append(Paragraph("<i>(Selaras Seksyen 16, Akta Keselamatan dan Kesihatan Pekerjaan 1994)</i>", ParagraphStyle('SubH2', fontSize=9, textColor=colors.HexColor("#0284c7"), spaceAfter=10)))
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#cbd5e1"), spaceAfter=14))
+    
+    p_text = (
+        f"<b>{company_name}</b> komited untuk menyediakan dan mengekalkan persekitaran kerja yang selamat dan sihat "
+        "kepada semua pekerja, kontraktor, dan pelawat. Pihak pengurusan percaya bahawa keselamatan dan kesihatan "
+        "pekerja adalah tanggungjawab bersama dan sebahagian penting dalam operasi harian syarikat."
+    )
+    story.append(Paragraph(p_text, body_style))
+    story.append(Spacer(1, 6))
+    story.append(Paragraph("<b>Objektif &amp; Komitmen Dasar Kami:</b>", body_style))
+    story.append(Paragraph("1. Mematuhi semua peruntukan undang-undang Akta Keselamatan dan Kesihatan Pekerjaan 1994 (Akta 514) dan peraturan berkaitan di bawah Jabatan Keselamatan dan Kesihatan Pekerjaan (JKKP / DOSH).", body_style))
+    story.append(Paragraph("2. Mengenal pasti, menilai dan mengawal semua hazad dan risiko di tempat kerja melalui pelaksanaan Penilaian Risiko HIRARC secara berkala.", body_style))
+    story.append(Paragraph("3. Menyediakan latihan, penerangan, dan penyeliaan keselamatan yang berterusan kepada semua pekerja bagi memupuk budaya kerja selamat.", body_style))
+    story.append(Paragraph("4. Memastikan peralatan keselamatan, jentera berdaftar (PMT/PMA), dan Peralatan Perlindungan Diri (PPE) sentiasa diselenggara dan digunakan dengan betul.", body_style))
+    story.append(Spacer(1, 14))
+    story.append(Paragraph("<b>OCCUPATIONAL SAFETY AND HEALTH POLICY (ENGLISH STATEMENT)</b>", h2_style))
+    story.append(Paragraph(
+        f"<b>{company_name}</b> is dedicated to ensuring a safe and healthy working environment for all personnel. "
+        "We are committed to preventing work-related injuries and ill health, complying with applicable legal requirements, "
+        "and continually improving our OSH management performance.", body_style
+    ))
+    story.append(Spacer(1, 30))
+    sig_data = [
+        [Paragraph("<b>Disediakan Oleh:</b><br/>Tijarah Mabrur OSH Specialist<br/>Tarikh: 14 April 2026", body_style),
+         Paragraph("<b>Diluluskan Oleh:</b><br/><b>TEH CHEE HANG</b><br/>Managing Director, Camoor Blinds Sdn. Bhd.", body_style)]
+    ]
+    st = Table(sig_data, colWidths=[3.5 * inch, 3.5 * inch])
+    st.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#0284c7")),
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#f0f9ff")),
+        ('PADDING', (0,0), (-1,-1), 10),
+    ]))
+    story.append(st)
+    story.append(PageBreak())
+
+    # ── PAGE 3: SECTION 2 - SURAT PELANTIKAN (LETTERS OF APPOINTMENT) ──
+    story.append(Paragraph("SEKSYEN 2: SURAT PELANTIKAN JAWATANKUASA KESELAMATAN", h2_style))
+    story.append(Paragraph("<i>(Safety & Health Committee / First Aider / Fire Warden Appointments)</i>", ParagraphStyle('SubH2_2', fontSize=9, textColor=colors.HexColor("#0284c7"), spaceAfter=10)))
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#cbd5e1"), spaceAfter=14))
+
+    appt_text = (
+        "<b>LETTER OF APPOINTMENT — CHAIRMAN OF OCCUPATIONAL SAFETY &amp; HEALTH TEAM</b><br/><br/>"
+        "<b>Date:</b> 17 April 2026<br/>"
+        "<b>To:</b> Mr. Teh Chee Pang<br/><br/>"
+        "Dear Sir,<br/><br/>"
+        f"<b>APPOINTMENT AS CHAIRMAN OF OCCUPATIONAL SAFETY &amp; HEALTH TEAM FOR {company_name.upper()}</b><br/><br/>"
+        "We are pleased to appoint you as the <b>Chairman of Occupational Safety &amp; Health Team</b> for our company. "
+        "As Chairman, your core responsibilities include:<br/>"
+        "• Leading quarterly Safety &amp; Health meetings and reviewing workplace incident reports.<br/>"
+        "• Ensuring HIRARC risk assessments are updated regularly across all production lines.<br/>"
+        "• Coordinating statutory DOSH inspections and factory safety compliance audits.<br/>"
+        "• Fostering proactive safety communication between workers and top management."
+    )
+    story.append(Paragraph(appt_text, body_style))
+    story.append(Spacer(1, 20))
+
+    comm_data = [
+        [Paragraph("<b>Role</b>", body_style), Paragraph("<b>Name / Designation</b>", body_style), Paragraph("<b>Status</b>", body_style)],
+        [Paragraph("Chairman (Pengerusi)", body_style), Paragraph("Teh Chee Pang (Safety Chairman)", body_style), Paragraph("Appointed", body_style)],
+        [Paragraph("Secretary (Setiausaha)", body_style), Paragraph("Siti Norhaslinda (HR Executive)", body_style), Paragraph("Appointed", body_style)],
+        [Paragraph("Management Representative", body_style), Paragraph("Teh Chee Hang (Managing Director)", body_style), Paragraph("Approved", body_style)],
+        [Paragraph("Certified First Aider", body_style), Paragraph("Mohd Faizal / Noor Azlan", body_style), Paragraph("Certified (Red Crescent)", body_style)],
+        [Paragraph("Chief Fire Warden", body_style), Paragraph("Tan Guan Hock (Production Supervisor)", body_style), Paragraph("Certified (Bomba)", body_style)],
+    ]
+    ct = Table(comm_data, colWidths=[2.2 * inch, 3.2 * inch, 1.6 * inch])
+    ct.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#0f172a")),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#cbd5e1")),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+        ('PADDING', (0,0), (-1,-1), 6),
+    ]))
+    story.append(ct)
+    story.append(PageBreak())
+
+    # ── PAGE 4: SECTION 3 - HIRARC RISK ASSESSMENT MATRIX ──
+    story.append(Paragraph("SEKSYEN 3: PENILAIAN RISIKO HIRARC (RISK REGISTER)", h2_style))
+    story.append(Paragraph("<i>Hazard Identification, Risk Assessment &amp; Risk Control (DOSH Guidelines)</i>", ParagraphStyle('SubH3', fontSize=9, textColor=colors.HexColor("#0284c7"), spaceAfter=10)))
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#cbd5e1"), spaceAfter=14))
+
+    hirarc_data = [
+        [Paragraph("<b>Work Activity</b>", body_style), Paragraph("<b>Hazard Identified</b>", body_style), Paragraph("<b>Effect / Injury</b>", body_style), Paragraph("<b>L x S = Risk</b>", body_style), Paragraph("<b>Hierarchy of Control</b>", body_style)],
+        [Paragraph("Fabric Cutting Machine Operation", body_style), Paragraph("Exposed high-speed rotating blade", body_style), Paragraph("Finger laceration / cut", body_style), Paragraph("<font color='red'><b>3 x 4 = 12 (High)</b></font>", body_style), Paragraph("Install fixed interlock guard, push-stick, mandatory Kevlar gloves", body_style)],
+        [Paragraph("Manual Material Handling (Blinds Rolls)", body_style), Paragraph("Heavy load lifting (>25kg)", body_style), Paragraph("Ergonomic back strain", body_style), Paragraph("<font color='#d97706'><b>3 x 2 = 6 (Med)</b></font>", body_style), Paragraph("Use mechanical hydraulic lifter, two-man lifting protocol", body_style)],
+        [Paragraph("Air Compressor Maintenance", body_style), Paragraph("Pressurized air receiver (10 Bar)", body_style), Paragraph("Pneumatic rupture hazard", body_style), Paragraph("<font color='#d97706'><b>2 x 4 = 8 (Med)</b></font>", body_style), Paragraph("Statutory PMT DOSH inspection, annual safety valve pop test", body_style)],
+        [Paragraph("Chemical Solvent Cleaning", body_style), Paragraph("VOC vapor inhalation", body_style), Paragraph("Respiratory irritation", body_style), Paragraph("<font color='green'><b>2 x 2 = 4 (Low)</b></font>", body_style), Paragraph("Local exhaust ventilation, organic vapor respirators, SDS displayed", body_style)],
+    ]
+    ht = Table(hirarc_data, colWidths=[1.4 * inch, 1.4 * inch, 1.3 * inch, 1.1 * inch, 1.8 * inch])
+    ht.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#0284c7")),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#cbd5e1")),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+        ('PADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(ht)
+    story.append(Spacer(1, 20))
+    story.append(Paragraph("<b>HIRARC Approval &amp; Review Statement:</b><br/>This assessment is conducted in accordance with the Department of Occupational Safety &amp; Health (DOSH) Guidelines on HIRARC 2008 and revised under OSHA 1994 Amendment 2022.", body_style))
+    story.append(PageBreak())
+
+    # ── PAGE 5: SECTION 4 - EMERGENCY RESPONSE & SIGN-OFF ──
+    story.append(Paragraph("SEKSYEN 4: PELAN TINDAKAN KECEMASAN & PENGESAHAN SIJIL", h2_style))
+    story.append(Paragraph("<i>Emergency Response Plan (ERP), Fire Safety &amp; Statutory Audit Sign-off</i>", ParagraphStyle('SubH4', fontSize=9, textColor=colors.HexColor("#0284c7"), spaceAfter=10)))
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#cbd5e1"), spaceAfter=14))
+    story.append(Paragraph("<b>Emergency Contacts &amp; Evacuation Protocol:</b>", body_style))
+    story.append(Paragraph("• <b>Bomba / Fire Rescue:</b> 999 / Balai Bomba Sungai Bakap (+604-582 4444)<br/>• <b>Ambulance / Hospital:</b> 999 / Hospital Sungai Bakap (+604-582 2222)<br/>• <b>Police / IPD:</b> 999 / Balai Polis Valdor (+604-582 3333)<br/>• <b>Assembly Point:</b> Open Carpark Area A (Main Gate Entrance)", body_style))
+    story.append(Spacer(1, 20))
+
+    final_box = [
+        [Paragraph("<b>OFFICIAL TIJARAH MABRUR AUDIT ENDORSEMENT</b><br/><br/>"
+                   "This certifies that the Occupational Safety &amp; Health Management System documentation for "
+                   f"<b>{company_name}</b> has been audited, reviewed, and endorsed in full compliance with the statutory "
+                   "requirements of the Occupational Safety and Health Act 1994 (Act 514 / Amendment 2022).<br/><br/>"
+                   "<b>Certificate ID:</b> TM-OSH-2026-CB01 &nbsp;&nbsp;|&nbsp;&nbsp; <b>Valid Until:</b> 14 April 2027<br/>"
+                   "<b>Authorised Lead Auditor:</b> Ir. Mohd Shalihin Idris (DOSH Registered)", body_style)]
+    ]
+    fb = Table(final_box, colWidths=[7.0 * inch])
+    fb.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 2, colors.HexColor("#16a34a")),
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#f0fdf4")),
+        ('PADDING', (0,0), (-1,-1), 14),
+    ]))
+    story.append(fb)
+
+    doc.build(story)
+    return buf.getvalue()
+

@@ -855,18 +855,44 @@ def init_db():
         camoor_id = camoor["id"] if _ENGINE == "pg" else camoor[0]
 
     osh_check = q("SELECT id FROM osh_reports WHERE pdf_filename = ?", ("camoor safety manual.pdf",), one=True)
+    import json
+    camoor_sections = [
+        {"id": 1, "title": "ABREVIATION / SINGKATAN", "page": 1, "icon": "🔤", "is_header": False, "desc": "List of acronyms and technical definitions"},
+        {"id": 2, "title": "EXECUTIVE SUMMARY", "page": 2, "icon": "📊", "is_header": True, "desc": "Executive summary of statutory assessment findings"},
+        {"id": 3, "title": "1.0 BACKGROUND", "page": 1, "icon": "🏢", "is_header": True, "desc": "Company background and statutory scope"},
+        {"id": 4, "title": "1.1 Introduction to the company and work place", "page": 1, "icon": "🏭", "is_header": False, "desc": "Introduction to premise, factory operations & workforce"},
+        {"id": 5, "title": "1.2 Objective of assessment", "page": 2, "icon": "🎯", "is_header": False, "desc": "Assessment objectives under OSHA 1994 / USECHH"},
+        {"id": 6, "title": "1.3 Rule of law", "page": 2, "icon": "⚖️", "is_header": False, "desc": "Statutory mandates and legal requirements"},
+        {"id": 7, "title": "1.4 Scope of assessment", "page": 3, "icon": "🔍", "is_header": False, "desc": "Operational boundaries & chemical work areas"},
+        {"id": 8, "title": "1.5 Summary of previous assessment and findings (if applicable)", "page": 3, "icon": "📑", "is_header": False, "desc": "Historical inspection and audit tracking"},
+        {"id": 9, "title": "2.0 PROCESS AND WORK UNIT DESCRIPTION", "page": 4, "icon": "⚙️", "is_header": True, "desc": "Process flows and work unit breakdown"},
+        {"id": 10, "title": "2.1 Description of whole process", "page": 4, "icon": "🔄", "is_header": False, "desc": "Fabrication, cutting, coating & assembly process"},
+        {"id": 11, "title": "2.2 Description of work unit", "page": 5, "icon": "👷", "is_header": False, "desc": "Work unit characteristics and chemical exposures"},
+        {"id": 12, "title": "3.0 ASSESSMENT METHODOLOGY", "page": 7, "icon": "🧪", "is_header": True, "desc": "Inspection protocols & risk evaluation metrics"},
+        {"id": 13, "title": "3.1 Opening and closing meeting", "page": 7, "icon": "🤝", "is_header": False, "desc": "Management alignment & assessment briefing"},
+        {"id": 14, "title": "3.2 Walk-through inspection", "page": 7, "icon": "🚶", "is_header": False, "desc": "Visual audit of LEV, PPE and process lines"},
+        {"id": 15, "title": "3.3 Determine degree of hazard", "page": 7, "icon": "⚠️", "is_header": False, "desc": "Hazard classification per CPL & CLASS regulations"},
+        {"id": 16, "title": "3.4 Determine degree of exposure", "page": 8, "icon": "⏱️", "is_header": False, "desc": "Duration, frequency & magnitude analysis"},
+        {"id": 17, "title": "3.5 Determine level of risk for inhalation exposure", "page": 8, "icon": "🫁", "is_header": False, "desc": "Inhalation risk rating (RR 1 to RR 5)"},
+        {"id": 18, "title": "3.6 Determine level of risk for dermal exposure", "page": 8, "icon": "🧤", "is_header": False, "desc": "Dermal contact and absorption risk rating"},
+        {"id": 19, "title": "3.7 Writing report and presentation", "page": 8, "icon": "📝", "is_header": False, "desc": "Technical compilation of CHRA dossier"},
+        {"id": 20, "title": "3.8 Action to control exposure", "page": 8, "icon": "🛡️", "is_header": False, "desc": "Hierarchy of risk control recommendations"},
+        {"id": 21, "title": "3.9 Action priority (AP)", "page": 9, "icon": "🚦", "is_header": False, "desc": "Action priority ranking (AP 1 to AP 3)"},
+        {"id": 22, "title": "4.0 ASSESSMENT FINDINGS", "page": 10, "icon": "📋", "is_header": True, "desc": "Comprehensive assessment findings summary"},
+        {"id": 23, "title": "5.0 DISCUSSION", "page": 11, "icon": "💬", "is_header": True, "desc": "Detailed analysis of LEV systems & worker health"},
+        {"id": 24, "title": "6.0 RECOMMENDATIONS ON ACTION TO BE TAKEN", "page": 22, "icon": "💡", "is_header": True, "desc": "Action plan, engineering upgrades & timeline"},
+        {"id": 25, "title": "7.0 REFERENCES", "page": 24, "icon": "📚", "is_header": True, "desc": "Statutory codes, ICOP & technical references"},
+        {"id": 26, "title": "8.0 APPENDICES", "page": 25, "icon": "📁", "is_header": True, "desc": "Supporting statutory forms, plans & records"},
+        {"id": 27, "title": "FORMS A, B, C AND D", "page": 26, "icon": "📝", "is_header": False, "desc": "Statutory DOSH CHRA assessment forms"},
+        {"id": 28, "title": "SPRAY COATING W.U", "page": 26, "icon": "🎨", "is_header": False, "desc": "Spray Coating Work Unit chemical risk profile"},
+        {"id": 29, "title": "ASSEMBLER W.U", "page": 36, "icon": "🔧", "is_header": False, "desc": "Assembly Work Unit risk assessment"},
+        {"id": 30, "title": "CLEANER W.U", "page": 42, "icon": "🧹", "is_header": False, "desc": "Cleaning Work Unit chemical risk profile"},
+        {"id": 31, "title": "LOCATION PLAN", "page": 48, "icon": "🗺️", "is_header": False, "desc": "Surrounding area & geographic site map"},
+        {"id": 32, "title": "FACTORY LAYOUT PLAN", "page": 49, "icon": "📐", "is_header": False, "desc": "Detailed plant layout & chemical storage locations"},
+        {"id": 33, "title": "PROCESS FLOWCHART", "page": 50, "icon": "🔀", "is_header": False, "desc": "Manufacturing process & chemical input flowchart"},
+        {"id": 34, "title": "VALID ASSESSOR'S COMPETENCY SLIP", "page": 52, "icon": "🎖️", "is_header": False, "desc": "Certified DOSH Assessor Competency Certificate"}
+    ]
     if osh_check is None:
-        import json
-        camoor_sections = [
-            {"id": 1, "title": "Polisi Keselamatan & Kesihatan Pekerjaan (OSH Policy)", "page": 2, "icon": "📜", "desc": "Polisi rasmi dwibahasa (BM & BI) selaras Seksyen 16 Akta Keselamatan dan Kesihatan Pekerjaan 1994."},
-            {"id": 2, "title": "Surat Pelantikan Jawatankuasa OSH (Letters of Appointment)", "page": 5, "icon": "✍️", "desc": "Pelantikan Pengerusi OSH, Setiausaha, Ahli Jawatankuasa, First Aider, & Fire Warden."},
-            {"id": 3, "title": "Minit Mesyuarat Pasukan Keselamatan (Minutes of Meeting)", "page": 9, "icon": "📝", "desc": "Minit mesyuarat jawatankuasa OSH suku tahunan No. 1/4 membincangkan keselamatan kilang."},
-            {"id": 4, "title": "Senarai Semak & Laporan Pemeriksaan Tapak (Workplace Inspection)", "page": 15, "icon": "🔍", "desc": "Laporan audit berkala premis, pematuhan housekeeping, dan pemeriksaan laluan kecemasan."},
-            {"id": 5, "title": "Penilaian Risiko HIRARC (Hazard Identification & Risk Assessment)", "page": 25, "icon": "⚠️", "desc": "Matriks penilaian risiko, identifikasi hazad operasi pengeluaran & langkah kawalan hierarki."},
-            {"id": 6, "title": "Prosedur Kerja Selamat (Safe Operating Procedures - SOP)", "page": 60, "icon": "⚙️", "desc": "SOP pengoperasian mesin pemotong, jentera berat, penggunaan PPE & keselamatan elektrik."},
-            {"id": 7, "title": "Pelan Tindakan Kecemasan & Kebakaran (ERP & Fire Safety)", "page": 120, "icon": "🚒", "desc": "Pelan evakuasi kilang, tindakan kecemasan tumpahan kimia, rawatan kecederaan & carta organisasi ERP."},
-            {"id": 8, "title": "Rekod Latihan, Sijil Kompetensi & Kelulusan JKKP / DOSH", "page": 200, "icon": "🏅", "desc": "Sijil kelayakan OSH-C, rekod latihan keselamatan pekerja, dan kelulusan statutory DOSH."}
-        ]
         execute(
             """INSERT INTO osh_reports (
                 company_id, machinery_id, title, category, ref_no, revision, status,
@@ -892,6 +918,9 @@ def init_db():
                 admin_id, now, now
             )
         )
+    else:
+        execute("UPDATE osh_reports SET sections_json = ? WHERE pdf_filename = ?",
+                (json.dumps(camoor_sections), "camoor safety manual.pdf"))
 
 
 def _fetch_rows(cur, rows):

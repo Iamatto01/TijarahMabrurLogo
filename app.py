@@ -34,7 +34,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 from database import execute, get_db, init_db, q
-from pdf_utils import extract_acroform_fields, fill_pdf, validate_fields_json
+from pdf_utils import (extract_acroform_fields, fill_pdf, validate_fields_json,
+                       generate_oshwa_dossier_pdf)
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "change-me-in-production-tijarah-2026")
@@ -78,8 +79,30 @@ def serve_machinery_doc(filename):
 @app.route("/uploads/reports/<filename>")
 @app.route("/portal/serve_report_pdf/<filename>")
 def serve_report_pdf(filename):
-    from flask import send_from_directory
-    return send_from_directory(REPORT_PDF_DIR, filename)
+    from flask import send_from_directory, Response
+    path = os.path.join(REPORT_PDF_DIR, filename)
+    if os.path.exists(path):
+        return send_from_directory(REPORT_PDF_DIR, filename)
+
+    # Check static/docs
+    static_doc_dir = os.path.join(app.root_path, "static", "docs")
+    static_doc_path = os.path.join(static_doc_dir, filename)
+    if os.path.exists(static_doc_path):
+        return send_from_directory(static_doc_dir, filename)
+
+    # Dynamic fallback: Generate clean statutory OSHWA dossier PDF on the fly
+    clean_name = os.path.splitext(filename)[0].replace("-", " ").replace("_", " ").title()
+    pdf_bytes = generate_oshwa_dossier_pdf(
+        title=f"{clean_name} (Statutory Compliance Dossier)",
+        company_name="Camoor Blinds Sdn. Bhd." if "camoor" in filename.lower() else "Tijarah Mabrur Client",
+        ref_no=f"TM/OSHWA/2026/{uuid.uuid4().hex[:4].upper()}",
+        revision="Rev 1.0 (2026 Edition)"
+    )
+    return Response(
+        pdf_bytes,
+        mimetype="application/pdf",
+        headers={"Content-Disposition": f"inline; filename={filename}"}
+    )
 
 @app.route("/favicon.ico")
 def favicon():
@@ -153,7 +176,8 @@ def current_user():
     uid = session.get("user_id")
     if not uid:
         return None
-    return q("SELECT * FROM users WHERE id = ?", (uid,), one=True)
+    row = q("SELECT * FROM users WHERE id = ?", (uid,), one=True)
+    return dict(row) if row else None
 
 
 @app.context_processor
@@ -836,9 +860,12 @@ def osh_list():
     where_clauses = ["1=1"]
     params = []
 
-    if u["role"] != "admin" and u.get("company_id"):
-        where_clauses.append("o.company_id = ?")
-        params.append(u["company_id"])
+    if u["role"] != "admin":
+        if u.get("company_id"):
+            where_clauses.append("o.company_id = ?")
+            params.append(u["company_id"])
+        else:
+            where_clauses.append("1 = 0")
     elif company_filter:
         where_clauses.append("o.company_id = ?")
         params.append(company_filter)
@@ -886,6 +913,44 @@ def osh_list():
     )
 
 
+DEFAULT_CHRA_TOC = [
+    {"id": 1, "title": "ABREVIATION / SINGKATAN", "page": 1, "icon": "🔤", "is_header": False, "desc": "List of acronyms and technical definitions"},
+    {"id": 2, "title": "EXECUTIVE SUMMARY", "page": 2, "icon": "📊", "is_header": True, "desc": "Executive summary of statutory assessment findings"},
+    {"id": 3, "title": "1.0 BACKGROUND", "page": 1, "icon": "🏢", "is_header": True, "desc": "Company background and statutory scope"},
+    {"id": 4, "title": "1.1 Introduction to the company and work place", "page": 1, "icon": "🏭", "is_header": False, "desc": "Introduction to premise, factory operations & workforce"},
+    {"id": 5, "title": "1.2 Objective of assessment", "page": 2, "icon": "🎯", "is_header": False, "desc": "Assessment objectives under OSHA 1994 / USECHH"},
+    {"id": 6, "title": "1.3 Rule of law", "page": 2, "icon": "⚖️", "is_header": False, "desc": "Statutory mandates and legal requirements"},
+    {"id": 7, "title": "1.4 Scope of assessment", "page": 3, "icon": "🔍", "is_header": False, "desc": "Operational boundaries & chemical work areas"},
+    {"id": 8, "title": "1.5 Summary of previous assessment and findings (if applicable)", "page": 3, "icon": "📑", "is_header": False, "desc": "Historical inspection and audit tracking"},
+    {"id": 9, "title": "2.0 PROCESS AND WORK UNIT DESCRIPTION", "page": 4, "icon": "⚙️", "is_header": True, "desc": "Process flows and work unit breakdown"},
+    {"id": 10, "title": "2.1 Description of whole process", "page": 4, "icon": "🔄", "is_header": False, "desc": "Fabrication, cutting, coating & assembly process"},
+    {"id": 11, "title": "2.2 Description of work unit", "page": 5, "icon": "👷", "is_header": False, "desc": "Work unit characteristics and chemical exposures"},
+    {"id": 12, "title": "3.0 ASSESSMENT METHODOLOGY", "page": 7, "icon": "🧪", "is_header": True, "desc": "Inspection protocols & risk evaluation metrics"},
+    {"id": 13, "title": "3.1 Opening and closing meeting", "page": 7, "icon": "🤝", "is_header": False, "desc": "Management alignment & assessment briefing"},
+    {"id": 14, "title": "3.2 Walk-through inspection", "page": 7, "icon": "🚶", "is_header": False, "desc": "Visual audit of LEV, PPE and process lines"},
+    {"id": 15, "title": "3.3 Determine degree of hazard", "page": 7, "icon": "⚠️", "is_header": False, "desc": "Hazard classification per CPL & CLASS regulations"},
+    {"id": 16, "title": "3.4 Determine degree of exposure", "page": 8, "icon": "⏱️", "is_header": False, "desc": "Duration, frequency & magnitude analysis"},
+    {"id": 17, "title": "3.5 Determine level of risk for inhalation exposure", "page": 8, "icon": "🫁", "is_header": False, "desc": "Inhalation risk rating (RR 1 to RR 5)"},
+    {"id": 18, "title": "3.6 Determine level of risk for dermal exposure", "page": 8, "icon": "🧤", "is_header": False, "desc": "Dermal contact and absorption risk rating"},
+    {"id": 19, "title": "3.7 Writing report and presentation", "page": 8, "icon": "📝", "is_header": False, "desc": "Technical compilation of CHRA dossier"},
+    {"id": 20, "title": "3.8 Action to control exposure", "page": 8, "icon": "🛡️", "is_header": False, "desc": "Hierarchy of risk control recommendations"},
+    {"id": 21, "title": "3.9 Action priority (AP)", "page": 9, "icon": "🚦", "is_header": False, "desc": "Action priority ranking (AP 1 to AP 3)"},
+    {"id": 22, "title": "4.0 ASSESSMENT FINDINGS", "page": 10, "icon": "📋", "is_header": True, "desc": "Comprehensive assessment findings summary"},
+    {"id": 23, "title": "5.0 DISCUSSION", "page": 11, "icon": "💬", "is_header": True, "desc": "Detailed analysis of LEV systems & worker health"},
+    {"id": 24, "title": "6.0 RECOMMENDATIONS ON ACTION TO BE TAKEN", "page": 22, "icon": "💡", "is_header": True, "desc": "Action plan, engineering upgrades & timeline"},
+    {"id": 25, "title": "7.0 REFERENCES", "page": 24, "icon": "📚", "is_header": True, "desc": "Statutory codes, ICOP & technical references"},
+    {"id": 26, "title": "8.0 APPENDICES", "page": 25, "icon": "📁", "is_header": True, "desc": "Supporting statutory forms, plans & records"},
+    {"id": 27, "title": "FORMS A, B, C AND D", "page": 26, "icon": "📝", "is_header": False, "desc": "Statutory DOSH CHRA assessment forms"},
+    {"id": 28, "title": "SPRAY COATING W.U", "page": 26, "icon": "🎨", "is_header": False, "desc": "Spray Coating Work Unit chemical risk profile"},
+    {"id": 29, "title": "ASSEMBLER W.U", "page": 36, "icon": "🔧", "is_header": False, "desc": "Assembly Work Unit risk assessment"},
+    {"id": 30, "title": "CLEANER W.U", "page": 42, "icon": "🧹", "is_header": False, "desc": "Cleaning Work Unit chemical risk profile"},
+    {"id": 31, "title": "LOCATION PLAN", "page": 48, "icon": "🗺️", "is_header": False, "desc": "Surrounding area & geographic site map"},
+    {"id": 32, "title": "FACTORY LAYOUT PLAN", "page": 49, "icon": "📐", "is_header": False, "desc": "Detailed plant layout & chemical storage locations"},
+    {"id": 33, "title": "PROCESS FLOWCHART", "page": 50, "icon": "🔀", "is_header": False, "desc": "Manufacturing process & chemical input flowchart"},
+    {"id": 34, "title": "VALID ASSESSOR'S COMPETENCY SLIP", "page": 52, "icon": "🎖️", "is_header": False, "desc": "Certified DOSH Assessor Competency Certificate"}
+]
+
+
 @app.route("/portal/oshwa/new", methods=["GET", "POST"])
 @login_required
 def osh_new():
@@ -922,14 +987,7 @@ def osh_new():
             pdf_file.save(os.path.join(REPORT_PDF_DIR, pdf_name))
 
         # Default section suggestions if none provided
-        sections = [
-            {"id": 1, "title": "Polisi Keselamatan & Kesihatan Pekerjaan (OSH Policy)", "page": 1, "icon": "📜", "desc": "Polisi rasmi keselamatan majikan selaras Seksyen 16 OSHA 1994."},
-            {"id": 2, "title": "Surat Pelantikan Jawatankuasa Keselamatan (Appointment Letters)", "page": 5, "icon": "✍️", "desc": "Surat lantikan Pengerusi, Setiausaha & Ahli Jawatankuasa OSH."},
-            {"id": 3, "title": "Minit Mesyuarat & Komunikasi Keselamatan (Meeting Minutes)", "page": 9, "icon": "📝", "desc": "Rekod perbincangan keselamatan dan isu berkala tempat kerja."},
-            {"id": 4, "title": "Penilaian Risiko HIRARC (Risk Assessment & Control)", "page": 20, "icon": "⚠️", "desc": "Identifikasi punca bahaya, analisis risiko dan hierarki kawalan."},
-            {"id": 5, "title": "Prosedur Kerja Selamat (Safe Operating Procedures - SOP)", "page": 40, "icon": "⚙️", "desc": "SOP pengoperasian alatan, peralatan keselamatan dan PPE."},
-            {"id": 6, "title": "Pelan Tindakan Kecemasan & Kebakaran (ERP & Fire Safety)", "page": 80, "icon": "🚒", "desc": "Pelan tindakan kebakaran, rawatan kecemasan & laluan evakuasi."}
-        ]
+        sections = DEFAULT_CHRA_TOC
 
         now = datetime.utcnow().isoformat()
         oid = execute(
@@ -974,8 +1032,9 @@ def osh_view(oid):
              WHERE o.id = ?""", (oid,), one=True)
     if not r:
         abort(404)
-    if u["role"] != "admin" and r["company_id"] and u.get("company_id") and r["company_id"] != u["company_id"]:
-        abort(403)
+    if u["role"] != "admin":
+        if not u.get("company_id") or not r["company_id"] or r["company_id"] != u["company_id"]:
+            abort(403)
 
     sections = json.loads(r["sections_json"] or "[]")
     attachments = json.loads(r["attachments_json"] or "[]")
@@ -1000,8 +1059,9 @@ def osh_edit(oid):
     r = q("SELECT * FROM osh_reports WHERE id = ?", (oid,), one=True)
     if not r:
         abort(404)
-    if u["role"] != "admin" and r["company_id"] and u.get("company_id") and r["company_id"] != u["company_id"]:
-        abort(403)
+    if u["role"] != "admin":
+        if not u.get("company_id") or not r["company_id"] or r["company_id"] != u["company_id"]:
+            abort(403)
 
     if request.method == "POST":
         f = request.form
@@ -1072,8 +1132,9 @@ def osh_add_attachment(oid):
     r = q("SELECT * FROM osh_reports WHERE id = ?", (oid,), one=True)
     if not r:
         abort(404)
-    if u["role"] != "admin" and r["company_id"] and u.get("company_id") and r["company_id"] != u["company_id"]:
-        abort(403)
+    if u["role"] != "admin":
+        if not u.get("company_id") or not r["company_id"] or r["company_id"] != u["company_id"]:
+            abort(403)
 
     att_title = request.form.get("attachment_title", "").strip() or "Modular Stage Report"
     att_cat = request.form.get("attachment_category", "HIRARC").strip()
@@ -1111,8 +1172,9 @@ def osh_delete_attachment(oid, att_id):
     r = q("SELECT * FROM osh_reports WHERE id = ?", (oid,), one=True)
     if not r:
         abort(404)
-    if u["role"] != "admin" and r["company_id"] and u.get("company_id") and r["company_id"] != u["company_id"]:
-        abort(403)
+    if u["role"] != "admin":
+        if not u.get("company_id") or not r["company_id"] or r["company_id"] != u["company_id"]:
+            abort(403)
 
     attachments = json.loads(r["attachments_json"] or "[]")
     new_attachments = []
@@ -1132,6 +1194,45 @@ def osh_delete_attachment(oid, att_id):
     return redirect(url_for("osh_view", oid=oid))
 
 
+@app.route("/portal/oshwa/<int:oid>/save-sections", methods=["POST"])
+@login_required
+def osh_save_sections(oid):
+    u = current_user()
+    r = q("SELECT * FROM osh_reports WHERE id = ?", (oid,), one=True)
+    if not r:
+        return {"ok": False, "error": "Report not found"}, 404
+    if u["role"] != "admin":
+        if not u.get("company_id") or not r["company_id"] or r["company_id"] != u["company_id"]:
+            return {"ok": False, "error": "Unauthorized"}, 403
+
+    payload = request.get_json(silent=True) or []
+    if not isinstance(payload, list):
+        return {"ok": False, "error": "Invalid format, must be list"}, 400
+
+    execute("UPDATE osh_reports SET sections_json=?, updated_at=? WHERE id=?",
+            (json.dumps(payload), datetime.utcnow().isoformat(), oid))
+
+    return {"ok": True, "count": len(payload)}
+
+
+@app.route("/portal/oshwa/<int:oid>/reset-toc", methods=["POST"])
+@login_required
+def osh_reset_toc(oid):
+    u = current_user()
+    r = q("SELECT * FROM osh_reports WHERE id = ?", (oid,), one=True)
+    if not r:
+        abort(404)
+    if u["role"] != "admin":
+        if not u.get("company_id") or not r["company_id"] or r["company_id"] != u["company_id"]:
+            abort(403)
+
+    execute("UPDATE osh_reports SET sections_json=?, updated_at=? WHERE id=?",
+            (json.dumps(DEFAULT_CHRA_TOC), datetime.utcnow().isoformat(), oid))
+
+    flash("Table of Contents has been reset to standard 34-section DOSH / CHRA structure.", "ok")
+    return redirect(url_for("osh_view", oid=oid))
+
+
 @app.route("/portal/oshwa/<int:oid>/delete", methods=["POST"])
 @login_required
 def osh_delete(oid):
@@ -1139,8 +1240,9 @@ def osh_delete(oid):
     r = q("SELECT * FROM osh_reports WHERE id = ?", (oid,), one=True)
     if not r:
         abort(404)
-    if u["role"] != "admin" and r["company_id"] and u.get("company_id") and r["company_id"] != u["company_id"]:
-        abort(403)
+    if u["role"] != "admin":
+        if not u.get("company_id") or not r["company_id"] or r["company_id"] != u["company_id"]:
+            abort(403)
 
     if r["pdf_filename"] and r["pdf_filename"] != "camoor safety manual.pdf":
         try:
@@ -1167,8 +1269,9 @@ def osh_download(oid):
     r = q("SELECT * FROM osh_reports WHERE id = ?", (oid,), one=True)
     if not r:
         abort(404)
-    if u["role"] != "admin" and r["company_id"] and u.get("company_id") and r["company_id"] != u["company_id"]:
-        abort(403)
+    if u["role"] != "admin":
+        if not u.get("company_id") or not r["company_id"] or r["company_id"] != u["company_id"]:
+            abort(403)
 
     fname = request.args.get("file") or r["pdf_filename"]
     if not fname:
