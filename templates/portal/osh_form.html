@@ -254,7 +254,7 @@
     <div style="display:flex;gap:12px;justify-content:flex-end">
         <a href="{{ url_for('osh_list') }}" class="btn ghost">Batal</a>
         <button type="submit" class="btn" style="background:#0284c7;color:#fff;font-weight:700;padding:11px 30px;font-size:14px">
-            {{ '💾 Kemaskini Manual OSHWA' if r else '🚀 Cipta &amp; Buka dalam Template' }}
+            {{ 'Kemaskini Manual OSHWA' if r else 'Cipta dan Buka dalam Template' }}
         </button>
     </div>
 
@@ -284,9 +284,6 @@ function renderToc() {
         li.innerHTML = `
             <div class="toc-row ${item.is_header ? 'is-header' : ''}" draggable="true">
                 <span class="toc-drag-handle" title="Seret untuk susun semula">⠿</span>
-                <input class="toc-icon-sel" type="text" value="${escHtml(item.icon || '📄')}"
-                    title="Icon" maxlength="4"
-                    onchange="tocData[${idx}].icon=this.value;syncHidden()">
                 <input class="toc-title-inp" type="text" value="${escHtml(item.title || '')}"
                     placeholder="Nama Seksyen…"
                     onchange="tocData[${idx}].title=this.value;syncHidden()"
@@ -377,12 +374,10 @@ function updateCount() {
 }
 
 function syncHidden() {
-    // Re-read current text from DOM inputs so user edits are not lost on re-render
     document.querySelectorAll('#toc-list .toc-row').forEach((li, idx) => {
         const inputs = li.querySelectorAll('input');
         if (tocData[idx]) {
-            tocData[idx].icon = inputs[0]?.value || '📄';
-            tocData[idx].title = inputs[1]?.value || '';
+            tocData[idx].title = inputs[0]?.value || '';
             // Don't override page here since it's updated via onchange directly on the text input.
         }
     });
