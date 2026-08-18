@@ -110,6 +110,18 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch
 
+    from reportlab.platypus import Flowable
+    class PdfInsertionFlowable(Flowable):
+        def __init__(self, filenames, insertions_list):
+            Flowable.__init__(self)
+            self.filenames = filenames
+            self.insertions_list = insertions_list
+            self.width = 0
+            self.height = 0
+        def draw(self):
+            page_num = self.canv.getPageNumber()
+            self.insertions_list.append((page_num, self.filenames))
+
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter,
                             leftMargin=36, rightMargin=36, topMargin=36, bottomMargin=36)
@@ -168,6 +180,7 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
     )
 
     story = []
+    insertions = []
 
     # ── PAGE 1: OFFICIAL COVER PAGE ──
     story.append(Spacer(1, 20))
@@ -281,6 +294,13 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
                 ]))
                 story.append(ht)
                 story.append(Spacer(1, 10))
+                
+            pdf_filenames = sec.get("pdf_filenames")
+            if not pdf_filenames and sec.get("pdf_filename"):
+                pdf_filenames = [sec.get("pdf_filename")]
+            if pdf_filenames:
+                story.append(PdfInsertionFlowable(pdf_filenames, insertions))
+                story.append(PageBreak())
 
     else:
         # Fallback default pages if no sections
@@ -308,32 +328,30 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
     doc.build(story)
     base_pdf_bytes = buf.getvalue()
 
-    # Now merge uploaded section PDFs if any
-    has_section_pdfs = any(sec.get("pdf_filenames") or sec.get("pdf_filename") for sec in sections) if sections else False
-    if not has_section_pdfs:
+    if not insertions:
         return base_pdf_bytes
         
     try:
         from pypdf import PdfReader, PdfWriter
         writer = PdfWriter()
         base_reader = PdfReader(io.BytesIO(base_pdf_bytes))
-        for page in base_reader.pages:
-            writer.add_page(page)
-            
         base_dir = os.path.abspath(os.path.dirname(__file__))
         
-        for sec in sections:
-            pdf_filenames = sec.get("pdf_filenames")
-            if not pdf_filenames and sec.get("pdf_filename"):
-                pdf_filenames = [sec.get("pdf_filename")]
-            if pdf_filenames:
-                for pdf_filename in pdf_filenames:
+        insertions_by_page = {}
+        for page_num, fnames in insertions:
+            idx = page_num - 1 # 0-indexed PyPDF2 page
+            insertions_by_page.setdefault(idx, []).extend(fnames)
+            
+        for i, page in enumerate(base_reader.pages):
+            writer.add_page(page)
+            if i in insertions_by_page:
+                for pdf_filename in insertions_by_page[i]:
                     pdf_path = os.path.join(base_dir, "uploads", "reports", pdf_filename)
                     if os.path.exists(pdf_path):
                         try:
                             sec_reader = PdfReader(pdf_path)
-                            for page in sec_reader.pages:
-                                writer.add_page(page)
+                            for sec_page in sec_reader.pages:
+                                writer.add_page(sec_page)
                         except Exception:
                             pass
                         

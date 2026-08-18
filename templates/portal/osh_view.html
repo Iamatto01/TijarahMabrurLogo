@@ -571,13 +571,11 @@
                     {% set is_sub = s.title.startswith('1.') or s.title.startswith('2.') or s.title.startswith('3.') or s.title.startswith('4.') or s.title.startswith('5.') or s.title.startswith('6.') or s.title.startswith('7.') or s.title.startswith('8.') %}
                     {% set is_sub = is_sub and not (s.title.startswith('1.0') or s.title.startswith('2.0') or s.title.startswith('3.0') or s.title.startswith('4.0') or s.title.startswith('5.0') or s.title.startswith('6.0') or s.title.startswith('7.0') or s.title.startswith('8.0')) %}
                     <li>
-                        <div class="osh-chapter-card {% if s.is_header %}is-header{% elif is_sub %}is-sub{% endif %} {% if loop.first and not page_num or page_num == s.page %}active{% endif %}"
-                             onclick="jumpToChapter({{ s.page }}, '{{ r.pdf_filename }}', this, '{{ s.id }}')">
-                            <div class="osh-ch-icon">{{ s.icon or '📄' }}</div>
+                        <div class="osh-chapter-card {% if s.is_header %}is-header{% elif is_sub %}is-sub{% endif %} {% if loop.first %}active{% endif %}"
+                             onclick="jumpToChapter(null, '{{ r.pdf_filename }}', this, '{{ s.id }}')">
                             <div class="osh-ch-info">
                                 <div class="osh-ch-title">{{ s.title }}</div>
                             </div>
-                            <div class="osh-ch-badge">Pg {{ s.page }}</div>
                         </div>
                     </li>
                     {% endfor %}
@@ -999,10 +997,26 @@ function jumpToChapter(page, filename, cardElem, secId) {
         var sec = sectionsData.find(s => String(s.id) === String(secId));
         if (sec) {
             document.getElementById('quickSecTitle').textContent = sec.title;
-            document.getElementById('quickSecPageBadge').textContent = 'Hlm. ' + (sec.page || 1);
+            // No page number logic here since we removed it
             document.getElementById('quickSecContent').value = sec.content || sec.desc || '';
             document.getElementById('quickSecStatus').textContent = '✓ Tersimpan';
             document.getElementById('quickSecStatus').style.color = '#16a34a';
+            
+            // Scroll editor into view
+            var editorCard = document.getElementById('sec-card-' + secId);
+            if (editorCard) {
+                editorCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                var body = document.getElementById('sec-body-' + secId);
+                if (body && body.style.display === 'none') {
+                    toggleSecCard(secId);
+                }
+            } else {
+                // If they are on the PDF tab, just scroll the quick editor into view
+                var quickEditor = document.getElementById('quickSecContent');
+                if (quickEditor) {
+                    quickEditor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
         }
     }
 }
@@ -1246,13 +1260,8 @@ function renderBuilder() {
 
         li.innerHTML = `
             <div class="drag-handle" title="Drag to reorder">⠿</div>
-            <input type="text" value="${sec.icon || '📄'}" style="width:36px;text-align:center;padding:6px 2px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px" onchange="updateSecField(${idx}, 'icon', this.value)">
             <input type="text" value="${escapeHtml(sec.title)}" style="flex:1;padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;font-weight:${sec.is_header ? '800':'600'}" placeholder="Section title" onchange="updateSecField(${idx}, 'title', this.value)">
-            <div style="display:flex;align-items:center;gap:4px">
-                <span style="font-size:11px;color:#64748b">Page:</span>
-                <input type="number" value="${sec.page || 1}" min="1" max="999" style="width:60px;padding:6px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px" onchange="updateSecField(${idx}, 'page', parseInt(this.value)||1)">
-            </div>
-            <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#475569;cursor:pointer;white-space:nowrap">
+            <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#475569;cursor:pointer;white-space:nowrap;margin-left:10px;">
                 <input type="checkbox" ${sec.is_header ? 'checked':''} onchange="updateSecField(${idx}, 'is_header', this.checked)">
                 Header
             </label>
@@ -1378,14 +1387,12 @@ function refreshSidebarTOC() {
         var li = document.createElement('li');
         var card = document.createElement('div');
         card.className = 'osh-chapter-card ' + (s.is_header ? 'is-header ' : (isSub ? 'is-sub ' : '')) + (loopIdx === 0 ? 'active' : '');
-        card.onclick = function() { jumpToChapter(s.page, activeDocFile, card, s.id); };
+        card.onclick = function() { jumpToChapter(null, activeDocFile, card, s.id); };
 
         card.innerHTML = `
-            <div class="osh-ch-icon">${s.icon || '📄'}</div>
             <div class="osh-ch-info">
                 <div class="osh-ch-title">${escapeHtml(s.title)}</div>
             </div>
-            <div class="osh-ch-badge">Pg ${s.page || 1}</div>
         `;
         li.appendChild(card);
         list.appendChild(li);
