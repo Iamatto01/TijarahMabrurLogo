@@ -912,40 +912,176 @@ def osh_list():
 
 
 DEFAULT_CHRA_TOC = [
-    {"id": 1, "title": "ABREVIATION / SINGKATAN", "page": 1, "icon": "🔤", "is_header": False, "desc": "List of acronyms and technical definitions"},
-    {"id": 2, "title": "EXECUTIVE SUMMARY", "page": 2, "icon": "📊", "is_header": True, "desc": "Executive summary of statutory assessment findings"},
-    {"id": 3, "title": "1.0 BACKGROUND", "page": 1, "icon": "🏢", "is_header": True, "desc": "Company background and statutory scope"},
-    {"id": 4, "title": "1.1 Introduction to the company and work place", "page": 1, "icon": "🏭", "is_header": False, "desc": "Introduction to premise, factory operations & workforce"},
-    {"id": 5, "title": "1.2 Objective of assessment", "page": 2, "icon": "🎯", "is_header": False, "desc": "Assessment objectives under OSHA 1994 / USECHH"},
-    {"id": 6, "title": "1.3 Rule of law", "page": 2, "icon": "⚖️", "is_header": False, "desc": "Statutory mandates and legal requirements"},
-    {"id": 7, "title": "1.4 Scope of assessment", "page": 3, "icon": "🔍", "is_header": False, "desc": "Operational boundaries & chemical work areas"},
-    {"id": 8, "title": "1.5 Summary of previous assessment and findings (if applicable)", "page": 3, "icon": "📑", "is_header": False, "desc": "Historical inspection and audit tracking"},
-    {"id": 9, "title": "2.0 PROCESS AND WORK UNIT DESCRIPTION", "page": 4, "icon": "⚙️", "is_header": True, "desc": "Process flows and work unit breakdown"},
-    {"id": 10, "title": "2.1 Description of whole process", "page": 4, "icon": "🔄", "is_header": False, "desc": "Fabrication, cutting, coating & assembly process"},
-    {"id": 11, "title": "2.2 Description of work unit", "page": 5, "icon": "👷", "is_header": False, "desc": "Work unit characteristics and chemical exposures"},
-    {"id": 12, "title": "3.0 ASSESSMENT METHODOLOGY", "page": 7, "icon": "🧪", "is_header": True, "desc": "Inspection protocols & risk evaluation metrics"},
-    {"id": 13, "title": "3.1 Opening and closing meeting", "page": 7, "icon": "🤝", "is_header": False, "desc": "Management alignment & assessment briefing"},
-    {"id": 14, "title": "3.2 Walk-through inspection", "page": 7, "icon": "🚶", "is_header": False, "desc": "Visual audit of LEV, PPE and process lines"},
-    {"id": 15, "title": "3.3 Determine degree of hazard", "page": 7, "icon": "⚠️", "is_header": False, "desc": "Hazard classification per CPL & CLASS regulations"},
-    {"id": 16, "title": "3.4 Determine degree of exposure", "page": 8, "icon": "⏱️", "is_header": False, "desc": "Duration, frequency & magnitude analysis"},
-    {"id": 17, "title": "3.5 Determine level of risk for inhalation exposure", "page": 8, "icon": "🫁", "is_header": False, "desc": "Inhalation risk rating (RR 1 to RR 5)"},
-    {"id": 18, "title": "3.6 Determine level of risk for dermal exposure", "page": 8, "icon": "🧤", "is_header": False, "desc": "Dermal contact and absorption risk rating"},
-    {"id": 19, "title": "3.7 Writing report and presentation", "page": 8, "icon": "📝", "is_header": False, "desc": "Technical compilation of CHRA dossier"},
-    {"id": 20, "title": "3.8 Action to control exposure", "page": 8, "icon": "🛡️", "is_header": False, "desc": "Hierarchy of risk control recommendations"},
-    {"id": 21, "title": "3.9 Action priority (AP)", "page": 9, "icon": "🚦", "is_header": False, "desc": "Action priority ranking (AP 1 to AP 3)"},
-    {"id": 22, "title": "4.0 ASSESSMENT FINDINGS", "page": 10, "icon": "📋", "is_header": True, "desc": "Comprehensive assessment findings summary"},
-    {"id": 23, "title": "5.0 DISCUSSION", "page": 11, "icon": "💬", "is_header": True, "desc": "Detailed analysis of LEV systems & worker health"},
-    {"id": 24, "title": "6.0 RECOMMENDATIONS ON ACTION TO BE TAKEN", "page": 22, "icon": "💡", "is_header": True, "desc": "Action plan, engineering upgrades & timeline"},
-    {"id": 25, "title": "7.0 REFERENCES", "page": 24, "icon": "📚", "is_header": True, "desc": "Statutory codes, ICOP & technical references"},
-    {"id": 26, "title": "8.0 APPENDICES", "page": 25, "icon": "📁", "is_header": True, "desc": "Supporting statutory forms, plans & records"},
-    {"id": 27, "title": "FORMS A, B, C AND D", "page": 26, "icon": "📝", "is_header": False, "desc": "Statutory DOSH CHRA assessment forms"},
-    {"id": 28, "title": "SPRAY COATING W.U", "page": 26, "icon": "🎨", "is_header": False, "desc": "Spray Coating Work Unit chemical risk profile"},
-    {"id": 29, "title": "ASSEMBLER W.U", "page": 36, "icon": "🔧", "is_header": False, "desc": "Assembly Work Unit risk assessment"},
-    {"id": 30, "title": "CLEANER W.U", "page": 42, "icon": "🧹", "is_header": False, "desc": "Cleaning Work Unit chemical risk profile"},
-    {"id": 31, "title": "LOCATION PLAN", "page": 48, "icon": "🗺️", "is_header": False, "desc": "Surrounding area & geographic site map"},
-    {"id": 32, "title": "FACTORY LAYOUT PLAN", "page": 49, "icon": "📐", "is_header": False, "desc": "Detailed plant layout & chemical storage locations"},
-    {"id": 33, "title": "PROCESS FLOWCHART", "page": 50, "icon": "🔀", "is_header": False, "desc": "Manufacturing process & chemical input flowchart"},
-    {"id": 34, "title": "VALID ASSESSOR'S COMPETENCY SLIP", "page": 52, "icon": "🎖️", "is_header": False, "desc": "Certified DOSH Assessor Competency Certificate"}
+    {
+        "id": 1, "title": "ABREVIATION / SINGKATAN", "page": 1, "icon": "🔤", "is_header": False,
+        "desc": "List of acronyms and technical definitions",
+        "content": "• CHRA: Chemical Health Risk Assessment (Penilaian Risiko Kesihatan Bahan Kimia)\n• USECHH: Occupational Safety and Health (Use and Standards of Exposure of Chemicals Hazardous to Health) Regulations 2000\n• DOSH / JKKP: Department of Occupational Safety and Health (Jabatan Keselamatan dan Kesihatan Pekerjaan)\n• PEL: Permissible Exposure Limit (Had Pendedahan Dibenarkan)\n• TWA: Time-Weighted Average (Purata Pemberat Masa 8 Jam)\n• LEV: Local Exhaust Ventilation (Sistem Pengalihudaraan Ekzos Setempat)\n• PPE: Personal Protective Equipment (Peralatan Perlindungan Diri)\n• SDS: Safety Data Sheet (Risalah Data Keselamatan)\n• CLASS: Occupational Safety and Health (Classification, Labelling and Safety Data Sheet of Hazardous Chemicals) Regulations 2013\n• ICOP: Industry Code of Practice (Tataamalan Industri)"
+    },
+    {
+        "id": 2, "title": "EXECUTIVE SUMMARY", "page": 2, "icon": "📊", "is_header": True,
+        "desc": "Executive summary of statutory assessment findings",
+        "content": "Penilaian Risiko Kesihatan Bahan Kimia (CHRA) ini telah dijalankan selaras dengan kehendak Peraturan-Peraturan Keselamatan dan Kesihatan Pekerjaan (Penggunaan dan Standard Pendedahan Bahan Kimia Berbahaya Kepada Kesihatan) 2000 (USECHH 2000).\n\nObjektif utama penilaian adalah untuk mengenal pasti hazad kimia di tempat kerja, menilai tahap pendedahan pekerja, mengkaji keberkesanan kawalan sedia ada, dan mencadangkan tindakan kawalan tambahan bagi memastikan pematuhan statutori dan melindungi kesihatan semua pekerja.\n\nSecara keseluruhan, operasi utama telah dinilai dan diklasifikasikan mengikut Tahap Keutamaan Tindakan (Action Priority). Kawalan kejuruteraan dan amalan kerja selamat telah diperincikan dalam laporan ini untuk tindakan pihak pengurusan."
+    },
+    {
+        "id": 3, "title": "1.0 BACKGROUND", "page": 1, "icon": "🏢", "is_header": True,
+        "desc": "Company background and statutory scope",
+        "content": "Dokumen ini menyediakan kerangka komprehensif bagi Pengurusan Keselamatan dan Kesihatan Pekerjaan. Pelaksanaan penilaian ini adalah bagi memenuhi tanggungjawab majikan di bawah Seksyen 15, Akta Keselamatan dan Kesihatan Pekerjaan 1994 (Akta 514 / Pindaan 2022)."
+    },
+    {
+        "id": 4, "title": "1.1 Introduction to the company and work place", "page": 1, "icon": "🏭", "is_header": False,
+        "desc": "Introduction to premise, factory operations & workforce",
+        "content": "Syarikat beroperasi di premis perindustrian yang menjalankan aktiviti pembuatan, fabrikasi, pemprosesan dan pemasangan. Operasi harian melibatkan penggunaan bahan mentah, peralatan mekanikal, dan bahan kimia berdaftar. Waktu operasi adalah dari jam 8:00 pagi hingga 5:00 petang dengan tenaga kerja yang terlatih dalam prosedur keselamatan."
+    },
+    {
+        "id": 5, "title": "1.2 Objective of assessment", "page": 2, "icon": "🎯", "is_header": False,
+        "desc": "Assessment objectives under OSHA 1994 / USECHH",
+        "content": "1. Mengenal pasti semua bahan kimia berbahaya kepada kesihatan (CCHH) yang digunakan, dihasilkan, disimpan atau dikendalikan di tempat kerja.\n2. Menilai risiko kesihatan kepada pekerja akibat pendedahan kepada bahan kimia melalui laluan penyedutan, sentuhan kulit, dan penyerapan.\n3. Menilai kecukupan dan keberkesanan langkah-langkah kawalan sedia ada (kejuruteraan, pentadbiran, dan PPE).\n4. Mengesyorkan program pemantauan pendedahan, pengawasan perubatan, dan langkah kawalan tambahan jika perlu."
+    },
+    {
+        "id": 6, "title": "1.3 Rule of law", "page": 2, "icon": "⚖️", "is_header": False,
+        "desc": "Statutory mandates and legal requirements",
+        "content": "Penilaian ini dijalankan berpandukan peruntukan perundangan Malaysia berikut:\n• Akta Keselamatan dan Kesihatan Pekerjaan 1994 (Akta 514 / Pindaan 2022)\n• Peraturan-Peraturan Keselamatan dan Kesihatan Pekerjaan (USECHH) 2000\n• Peraturan-Peraturan Keselamatan dan Kesihatan Pekerjaan (CLASS) 2013\n• Manual of Recommended Practice for CHRA (3rd Edition), JKKP / DOSH Malaysia"
+    },
+    {
+        "id": 7, "title": "1.4 Scope of assessment", "page": 3, "icon": "🔍", "is_header": False,
+        "desc": "Operational boundaries & chemical work areas",
+        "content": "Skop penilaian merangkumi semua aktiviti kerja di mana pekerja berkemungkinan terdedah kepada bahan kimia berbahaya, termasuk penerimaan bahan mentah, pemindahan bahan, proses pembancuhan, aplikasi salutan/semburan, pembersihan peralatan, dan pelupusan sisa berjadual."
+    },
+    {
+        "id": 8, "title": "1.5 Summary of previous assessment and findings (if applicable)", "page": 3, "icon": "📑", "is_header": False,
+        "desc": "Historical inspection and audit tracking",
+        "content": "Semakan ke atas penilaian terdahulu menunjukkan bahawa langkah-langkah penambahbaikan yang disyorkan telah dilaksanakan secara berfasa. Penilaian semasa ini merupakan semakan statutori berkala bagi mengesahkan status pematuhan terkini."
+    },
+    {
+        "id": 9, "title": "2.0 PROCESS AND WORK UNIT DESCRIPTION", "page": 4, "icon": "⚙️", "is_header": True,
+        "desc": "Process flows and work unit breakdown",
+        "content": "Bahagian ini menghuraikan aliran proses kerja secara keseluruhan dan pembahagian unit-unit kerja yang dinilai di dalam premis syarikat."
+    },
+    {
+        "id": 10, "title": "2.1 Description of whole process", "page": 4, "icon": "🔄", "is_header": False,
+        "desc": "Fabrication, cutting, coating & assembly process",
+        "content": "Aliran proses bermula dengan penerimaan dan pemeriksaan kualiti bahan mentah di kawasan stor. Bahan kemudiannya dipindahkan ke stesen pemotongan dan penyediaan. Seterusnya, proses rawatan permukaan, salutan, dan pemasangan dijalankan sebelum produk akhir diperiksa dan dibungkus untuk penghantaran."
+    },
+    {
+        "id": 11, "title": "2.2 Description of work unit", "page": 5, "icon": "👷", "is_header": False,
+        "desc": "Work unit characteristics and chemical exposures",
+        "content": "Unit-unit kerja dibahagikan mengikut tugasan homogen:\n1. Unit Kerja Penyemburan & Salutan (Spray Coating W.U)\n2. Unit Kerja Pemasangan & Fabrikasi (Assembler W.U)\n3. Unit Kerja Pembersihan & Penyelenggaraan (Cleaner W.U)\n4. Unit Kerja Kawalan Kualiti & Makmal (QC Lab W.U)"
+    },
+    {
+        "id": 12, "title": "3.0 ASSESSMENT METHODOLOGY", "page": 7, "icon": "🧪", "is_header": True,
+        "desc": "Inspection protocols & risk evaluation metrics",
+        "content": "Penilaian dijalankan mengikut metodologi standard CHRA yang ditetapkan oleh Jabatan Keselamatan dan Kesihatan Pekerjaan (JKKP)."
+    },
+    {
+        "id": 13, "title": "3.1 Opening and closing meeting", "page": 7, "icon": "🤝", "is_header": False,
+        "desc": "Management alignment & assessment briefing",
+        "content": "Mesyuarat pembukaan diadakan bersama pihak pengurusan dan wakil pekerja bagi menerangkan objektif dan jadual penilaian. Mesyuarat penutupan diadakan selepas pemeriksaan tapak bagi membentangkan penemuan awal dan cadangan tindakan segera."
+    },
+    {
+        "id": 14, "title": "3.2 Walk-through inspection", "page": 7, "icon": "🚶", "is_header": False,
+        "desc": "Visual audit of LEV, PPE and process lines",
+        "content": "Pemeriksaan fizikal dilakukan di semua kawasan kerja bagi meneliti amalan kerja sebenar, keadaan sistem pengalihudaraan (LEV), penstoran bahan kimia, label pada bekas, dan penggunaan PPE oleh pekerja."
+    },
+    {
+        "id": 15, "title": "3.3 Determine degree of hazard", "page": 7, "icon": "⚠️", "is_header": False,
+        "desc": "Hazard classification per CPL & CLASS regulations",
+        "content": "Tahap Hazad (Hazard Rating - HR 1 hingga HR 5) ditentukan berdasarkan maklumat dalam Risalah Data Keselamatan (SDS), pengelasan bahan kimia di bawah Peraturan CLASS 2013, dan sifat toksikologi bahan."
+    },
+    {
+        "id": 16, "title": "3.4 Determine degree of exposure", "page": 8, "icon": "⏱️", "is_header": False,
+        "desc": "Duration, frequency & magnitude analysis",
+        "content": "Tahap Pendedahan (Exposure Rating - ER 1 hingga ER 5) dinilai berdasarkan kekerapan pendedahan, tempoh kerja, kuantiti bahan yang digunakan, dan tahap kebolehvolatilan bahan kimia."
+    },
+    {
+        "id": 17, "title": "3.5 Determine level of risk for inhalation exposure", "page": 8, "icon": "🫁", "is_header": False,
+        "desc": "Inhalation risk rating (RR 1 to RR 5)",
+        "content": "Penarafan Risiko Penyedutan (Risk Rating) dikira menggunakan matriks risiko (RR = HR x ER):\n• RR 1 - 2: Risiko Rendah / Boleh Diterima (Kawalan sedia ada memadai)\n• RR 3 - 4: Risiko Sederhana (Kawalan tambahan diperlukan)\n• RR 5: Risiko Tinggi (Tindakan segera wajib diambil)"
+    },
+    {
+        "id": 18, "title": "3.6 Determine level of risk for dermal exposure", "page": 8, "icon": "🧤", "is_header": False,
+        "desc": "Dermal contact and absorption risk rating",
+        "content": "Risiko sentuhan kulit dinilai berdasarkan kawasan sentuhan fizikal, sifat kakisan/kerengsaan bahan kimia, dan kesesuaian sarung tangan perlindungan yang digunakan."
+    },
+    {
+        "id": 19, "title": "3.7 Writing report and presentation", "page": 8, "icon": "📝", "is_header": False,
+        "desc": "Technical compilation of CHRA dossier",
+        "content": "Laporan teknikal lengkap disediakan dengan menyertakan borang-borang statutori DOSH (Borang A, B, C, dan D) serta disahkan oleh Penilai Berdaftar (Competent Assessor)."
+    },
+    {
+        "id": 20, "title": "3.8 Action to control exposure", "page": 8, "icon": "🛡️", "is_header": False,
+        "desc": "Hierarchy of risk control recommendations",
+        "content": "Cadangan kawalan disusun mengikut Hierarki Kawalan Hazad:\n1. Penghapusan (Elimination)\n2. Penggantian (Substitution)\n3. Kawalan Kejuruteraan (Engineering Controls - LEV)\n4. Kawalan Pentadbiran (Administrative Controls - SOP, Syif, Latihan)\n5. Peralatan Perlindungan Diri (PPE)"
+    },
+    {
+        "id": 21, "title": "3.9 Action priority (AP)", "page": 9, "icon": "🚦", "is_header": False,
+        "desc": "Action priority ranking (AP 1 to AP 3)",
+        "content": "• AP 1 (Keutamaan 1): Tindakan pembetulan segera dalam tempoh 1 bulan\n• AP 2 (Keutamaan 2): Penambahbaikan kejuruteraan dalam tempoh 3-6 bulan\n• AP 3 (Keutamaan 3): Program penyelenggaraan berterusan dan semakan berkala"
+    },
+    {
+        "id": 22, "title": "4.0 ASSESSMENT FINDINGS", "page": 10, "icon": "📋", "is_header": True,
+        "desc": "Comprehensive assessment findings summary",
+        "content": "Penemuan penilaian mendapati bahawa sebahagian besar unit kerja telah mengamalkan prosedur kerja selamat. Walau bagaimanapun, beberapa penambahbaikan terhadap kecekapan sistem pengalihudaraan ekzos (LEV) dan pematuhan pemakaian respirator yang betul perlu ditingkatkan."
+    },
+    {
+        "id": 23, "title": "5.0 DISCUSSION", "page": 11, "icon": "💬", "is_header": True,
+        "desc": "Detailed analysis of LEV systems & worker health",
+        "content": "Perbincangan terperinci mengenai keberkesanan kawalan kejuruteraan semasa, kelajuan sedutan hud LEV, pengurusan bahan buangan berjadual, rekod latihan keselamatan pekerja, dan keperluan program pengawasan kesihatan perubatan (Medical Surveillance)."
+    },
+    {
+        "id": 24, "title": "6.0 RECOMMENDATIONS ON ACTION TO BE TAKEN", "page": 22, "icon": "💡", "is_header": True,
+        "desc": "Action plan, engineering upgrades & timeline",
+        "content": "1. Menjalankan ujian kecekapan tahunan ke atas semua unit LEV oleh Penguji Berdaftar (Hygiene Technician 1).\n2. Memastikan semua pekerja yang mengendalikan bahan kimia menjalani Ujian Kesesuaian Respirator (Fit Test).\n3. Mengemaskini label pada semua bekas sekunder mengikut Peraturan CLASS 2013.\n4. Mengadakan latihan induksi pengendalian bahan kimia selamat setiap tahun."
+    },
+    {
+        "id": 25, "title": "7.0 REFERENCES", "page": 24, "icon": "📚", "is_header": True,
+        "desc": "Statutory codes, ICOP & technical references",
+        "content": "1. Occupational Safety and Health Act 1994 (Act 514)\n2. USECHH Regulations 2000\n3. CLASS Regulations 2013\n4. Industry Code of Practice on Chemical Classification and Hazard Communication 2014\n5. ACGIH Threshold Limit Values (TLVs) and Biological Exposure Indices (BEIs)"
+    },
+    {
+        "id": 26, "title": "8.0 APPENDICES", "page": 25, "icon": "📁", "is_header": True,
+        "desc": "Supporting statutory forms, plans & records",
+        "content": "Lampiran dokumen statutori sokongan merangkumi Borang-borang CHRA, pelan lokasi, pelan susun atur premis, carta alir proses, dan salinan Sijil Kecekapan Penilai DOSH."
+    },
+    {
+        "id": 27, "title": "FORMS A, B, C AND D", "page": 26, "icon": "📝", "is_header": False,
+        "desc": "Statutory DOSH CHRA assessment forms",
+        "content": "Borang-borang rasmi CHRA DOSH:\n• Borang A: Maklumat Bahan Kimia Berbahaya\n• Borang B: Penilaian Unit Kerja dan Pendedahan Pekerja\n• Borang C: Penilaian Keberkesanan Kawalan Sedia Ada\n• Borang D: Rumusan Penilaian dan Syor Tindakan"
+    },
+    {
+        "id": 28, "title": "SPRAY COATING W.U", "page": 26, "icon": "🎨", "is_header": False,
+        "desc": "Spray Coating Work Unit chemical risk profile",
+        "content": "Profil risiko unit kerja penyemburan dan salutan: Penggunaan pelarut organik, primer dan cat aerosol. Kawalan utama melibatkan kebuk semburan bertapis (spray booth) dan respirator organik."
+    },
+    {
+        "id": 29, "title": "ASSEMBLER W.U", "page": 36, "icon": "🔧", "is_header": False,
+        "desc": "Assembly Work Unit risk assessment",
+        "content": "Profil risiko unit kerja pemasangan: Penggunaan pelekat industri, cecair pembersih kontak, dan minyak pelincir mesin. Kawalan utama melibatkan sarung tangan nitril dan pengudaraan am yang baik."
+    },
+    {
+        "id": 30, "title": "CLEANER W.U", "page": 42, "icon": "🧹", "is_header": False,
+        "desc": "Cleaning Work Unit chemical risk profile",
+        "content": "Profil risiko unit kerja pembersihan: Penggunaan detergen industri, bahan nyahcemar dan pelarut degreasing. Kawalan utama melibatkan apron kalis air, sarung tangan getah tebal, dan pelindung mata (goggles)."
+    },
+    {
+        "id": 31, "title": "LOCATION PLAN", "page": 48, "icon": "🗺️", "is_header": False,
+        "desc": "Surrounding area & geographic site map",
+        "content": "Pelan lokasi geografi menunjukkan kedudukan kilang berhampiran jalan utama perindustrian, zon penampan alam sekitar, dan laluan kecemasan."
+    },
+    {
+        "id": 32, "title": "FACTORY LAYOUT PLAN", "page": 49, "icon": "📐", "is_header": False,
+        "desc": "Detailed plant layout & chemical storage locations",
+        "content": "Pelan susun atur premis kilang memaparkan kedudukan stor penyimpanan bahan kimia berbahaya, stesen pancuran kecemasan (emergency eyewash/shower), alat pemadam api, dan laluan keluar kecemasan."
+    },
+    {
+        "id": 33, "title": "PROCESS FLOWCHART", "page": 50, "icon": "🔀", "is_header": False,
+        "desc": "Manufacturing process & chemical input flowchart",
+        "content": "Carta alir proses operasi dari penerimaan bahan mentah, peringkat pemprosesan, titik pelepasan emisi, sehingga pembungkusan produk akhir."
+    },
+    {
+        "id": 34, "title": "VALID ASSESSOR'S COMPETENCY SLIP", "page": 52, "icon": "🎖️", "is_header": False,
+        "desc": "Certified DOSH Assessor Competency Certificate",
+        "content": "Salinan rasmi Sijil Perakuan Kelayakan Penilai Berdaftar DOSH / JKKP Malaysia yang masih sah tempoh pendaftaran."
+    }
 ]
 
 
@@ -953,10 +1089,21 @@ DEFAULT_CHRA_TOC = [
 @login_required
 def osh_new():
     u = current_user()
+    is_admin = u.get("role", "").lower() in ("admin", "staff", "employee")
+
     if request.method == "POST":
         f = request.form
         title = f.get("title", "").strip()
-        company_id = f.get("company_id", type=int) or u.get("company_id")
+        
+        # Enforce client locking
+        if not is_admin:
+            company_id = u.get("company_id")
+            if not company_id:
+                flash("Akaun anda belum dihubungkan dengan mana-mana syarikat.", "err")
+                return redirect(url_for("osh_list"))
+        else:
+            company_id = f.get("company_id", type=int) or u.get("company_id")
+
         machinery_id = f.get("machinery_id", type=int) or None
         category = f.get("category", "Full Safety Manual")
         ref_no = f.get("ref_no", "").strip()
@@ -995,6 +1142,24 @@ def osh_new():
             except Exception:
                 pass
 
+        # If no physical PDF was uploaded, generate the official PDF on the fly!
+        if not pdf_name:
+            co_name = "Tijarah Mabrur Client"
+            if company_id:
+                co_row = q("SELECT name FROM companies WHERE id = ?", (company_id,), one=True)
+                if co_row:
+                    co_name = co_row["name"]
+            pdf_bytes = generate_oshwa_dossier_pdf(
+                title=title,
+                company_name=co_name,
+                ref_no=ref_no,
+                revision=revision,
+                sections=sections
+            )
+            pdf_name = f"osh_{uuid.uuid4().hex[:8]}_dossier.pdf"
+            with open(os.path.join(REPORT_PDF_DIR, pdf_name), "wb") as pf:
+                pf.write(pdf_bytes)
+
         now = datetime.utcnow().isoformat()
         oid = execute(
             """INSERT INTO osh_reports (
@@ -1011,13 +1176,15 @@ def osh_new():
         flash("OSHWA Document Report created successfully!", "ok")
         return redirect(url_for("osh_view", oid=oid))
 
-    # Non-admins can only assign their own company; admins see all
-    if u["role"] == "admin":
+    # Strict company dropdown list: Admin sees all, Client sees only their own company
+    if is_admin:
         companies = q("SELECT id, name FROM companies ORDER BY name")
     elif u.get("company_id"):
-        companies = q("SELECT id, name FROM companies WHERE id = ?", (u["company_id"],))
+        co_row = q("SELECT id, name FROM companies WHERE id = ?", (u["company_id"],), one=True)
+        companies = [co_row] if co_row else []
     else:
-        companies = q("SELECT id, name FROM companies ORDER BY name")
+        companies = []
+
     machines = q("SELECT id, name FROM machinery ORDER BY name")
     return render_template(
         "portal/osh_form.html",
@@ -1214,6 +1381,46 @@ def osh_delete_attachment(oid, att_id):
     return redirect(url_for("osh_view", oid=oid))
 
 
+@app.route("/portal/oshwa/<int:oid>/save-section", methods=["POST"])
+@login_required
+def osh_save_section(oid):
+    u = current_user()
+    r = q("SELECT * FROM osh_reports WHERE id = ?", (oid,), one=True)
+    if not r:
+        return {"ok": False, "error": "Report not found"}, 404
+    if u["role"] != "admin":
+        if not u.get("company_id") or not r["company_id"] or r["company_id"] != u["company_id"]:
+            return {"ok": False, "error": "Unauthorized"}, 403
+
+    payload = request.get_json(silent=True) or {}
+    sec_id = payload.get("id")
+    new_content = payload.get("content")
+    new_title = payload.get("title")
+    new_page = payload.get("page")
+
+    sections = json.loads(r["sections_json"] or "[]")
+    updated = False
+    for s in sections:
+        if str(s.get("id")) == str(sec_id):
+            if new_content is not None:
+                s["content"] = new_content
+            if new_title:
+                s["title"] = new_title
+            if new_page is not None:
+                try:
+                    s["page"] = int(new_page)
+                except ValueError:
+                    pass
+            updated = True
+            break
+
+    if updated:
+        execute("UPDATE osh_reports SET sections_json=?, updated_at=? WHERE id=?",
+                (json.dumps(sections), datetime.utcnow().isoformat(), oid))
+        return {"ok": True, "message": "Section saved successfully!"}
+    return {"ok": False, "error": "Section ID not found"}, 404
+
+
 @app.route("/portal/oshwa/<int:oid>/save-sections", methods=["POST"])
 @login_required
 def osh_save_sections(oid):
@@ -1233,6 +1440,36 @@ def osh_save_sections(oid):
             (json.dumps(payload), datetime.utcnow().isoformat(), oid))
 
     return {"ok": True, "count": len(payload)}
+
+
+@app.route("/portal/oshwa/<int:oid>/compile-pdf", methods=["GET", "POST"])
+@login_required
+def osh_compile_pdf(oid):
+    u = current_user()
+    r = q("SELECT o.*, c.name AS company_name FROM osh_reports o LEFT JOIN companies c ON c.id=o.company_id WHERE o.id = ?", (oid,), one=True)
+    if not r:
+        abort(404)
+    if u["role"] != "admin":
+        if not u.get("company_id") or not r["company_id"] or r["company_id"] != u["company_id"]:
+            abort(403)
+
+    sections = json.loads(r["sections_json"] or "[]")
+    pdf_bytes = generate_oshwa_dossier_pdf(
+        title=r["title"],
+        company_name=r["company_name"] or "Tijarah Mabrur Client",
+        ref_no=r["ref_no"] or "TM/OSHWA/2026/01",
+        revision=r["revision"] or "Rev 1.0",
+        sections=sections
+    )
+    compiled_filename = f"osh_compiled_{oid}_{uuid.uuid4().hex[:6]}.pdf"
+    with open(os.path.join(REPORT_PDF_DIR, compiled_filename), "wb") as f:
+        f.write(pdf_bytes)
+
+    execute("UPDATE osh_reports SET pdf_filename=?, updated_at=? WHERE id=?",
+            (compiled_filename, datetime.utcnow().isoformat(), oid))
+
+    flash("PDF Dossier telah dijana semula dan dikemaskini dengan teks seksyen terkini!", "ok")
+    return redirect(url_for("osh_view", oid=oid, file=compiled_filename))
 
 
 @app.route("/portal/oshwa/<int:oid>/reset-toc", methods=["POST"])
@@ -1286,21 +1523,35 @@ def osh_delete(oid):
 @login_required
 def osh_download(oid):
     u = current_user()
-    r = q("SELECT * FROM osh_reports WHERE id = ?", (oid,), one=True)
+    r = q("SELECT o.*, c.name AS company_name FROM osh_reports o LEFT JOIN companies c ON c.id=o.company_id WHERE o.id = ?", (oid,), one=True)
     if not r:
         abort(404)
     if u["role"] != "admin":
         if not u.get("company_id") or not r["company_id"] or r["company_id"] != u["company_id"]:
             abort(403)
 
-    fname = request.args.get("file") or r["pdf_filename"]
-    if not fname:
-        abort(404)
-    path = os.path.join(REPORT_PDF_DIR, fname)
-    if not os.path.exists(path):
-        abort(404)
-    download_name = re.sub(r"[^A-Za-z0-9_-]+", "_", r["title"]) + ".pdf"
-    return send_file(path, mimetype="application/pdf", as_attachment=True, download_name=download_name)
+    fname = request.args.get("file")
+    if fname and fname != r["pdf_filename"]:
+        path = os.path.join(REPORT_PDF_DIR, fname)
+        if os.path.exists(path):
+            return send_file(path, mimetype="application/pdf", as_attachment=True, download_name=fname)
+
+    sections = json.loads(r["sections_json"] or "[]")
+    pdf_bytes = generate_oshwa_dossier_pdf(
+        title=r["title"],
+        company_name=r["company_name"] or "Tijarah Mabrur Client",
+        ref_no=r["ref_no"] or "TM/OSHWA/2026/01",
+        revision=r["revision"] or "Rev 1.0",
+        sections=sections
+    )
+    clean_title = re.sub(r"[^A-Za-z0-9_-]+", "_", r["title"])
+    download_name = f"{clean_title}.pdf"
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=download_name
+    )
 
 
 

@@ -499,14 +499,22 @@
         </div>
 
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <a href="{{ url_for('osh_download', oid=r.id, file=active_file) }}" target="_blank" class="btn sm ghost">📥 Download PDF</a>
+            <button onclick="switchWorkspaceTab('tab-editor')" class="btn sm" style="background:#0284c7;color:#fff;font-weight:700">
+                📝 Tulis / Edit Kandungan Seksyen
+            </button>
+            <a href="{{ url_for('osh_compile_pdf', oid=r.id) }}" class="btn sm ghost" style="color:#0284c7;border-color:#bae6fd;background:#f0f9ff;font-weight:700">
+                🔄 Jana Semula PDF
+            </a>
+            <a href="{{ url_for('osh_download', oid=r.id, file=active_file) }}" target="_blank" class="btn sm ghost">
+                📥 Download PDF
+            </a>
             <button onclick="window.print()" class="btn sm ghost">🖨️ Print</button>
             {% if user and user.role in ['admin', 'staff', 'employee'] %}
-            <a href="{{ url_for('osh_edit', oid=r.id) }}" class="btn sm ghost">✏️ Edit</a>
-            <button onclick="switchWorkspaceTab('tab-builder')" class="btn sm ghost" style="color:#0284c7;border-color:#bae6fd;background:#f0f9ff">
-                🛠️ Manage &amp; Drag Sections
+            <a href="{{ url_for('osh_edit', oid=r.id) }}" class="btn sm ghost">✏️ Metadata</a>
+            <button onclick="switchWorkspaceTab('tab-builder')" class="btn sm ghost">
+                🛠️ Susun Seksyen
             </button>
-            <button onclick="openStageModal()" class="btn sm" style="background:#0284c7;color:#fff">➕ Attach Stage PDF</button>
+            <button onclick="openStageModal()" class="btn sm ghost">➕ Lampiran PDF</button>
             {% endif %}
         </div>
     </div>
@@ -515,6 +523,9 @@
     <div class="osh-tab-nav">
         <button class="osh-tab-btn active" onclick="switchWorkspaceTab('tab-reader')">
             📑 Official PDF &amp; Table of Contents
+        </button>
+        <button class="osh-tab-btn" onclick="switchWorkspaceTab('tab-editor')">
+            📝 Tulis / Edit Kandungan Seksyen (Live Writer)
         </button>
         {% if user and user.role in ['admin', 'staff', 'employee'] %}
         <button class="osh-tab-btn" onclick="switchWorkspaceTab('tab-builder')">
@@ -561,7 +572,7 @@
                     {% set is_sub = is_sub and not (s.title.startswith('1.0') or s.title.startswith('2.0') or s.title.startswith('3.0') or s.title.startswith('4.0') or s.title.startswith('5.0') or s.title.startswith('6.0') or s.title.startswith('7.0') or s.title.startswith('8.0')) %}
                     <li>
                         <div class="osh-chapter-card {% if s.is_header %}is-header{% elif is_sub %}is-sub{% endif %} {% if loop.first and not page_num or page_num == s.page %}active{% endif %}"
-                             onclick="jumpToChapter({{ s.page }}, '{{ r.pdf_filename }}', this)">
+                             onclick="jumpToChapter({{ s.page }}, '{{ r.pdf_filename }}', this, '{{ s.id }}')">
                             <div class="osh-ch-icon">{{ s.icon or '📄' }}</div>
                             <div class="osh-ch-info">
                                 <div class="osh-ch-title">{{ s.title }}</div>
@@ -574,7 +585,7 @@
 
                 <div style="padding:10px 14px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;font-size:11px">
                     <span style="color:#64748b">CHRA / DOSH Mandate</span>
-                    <button class="btn sm ghost" onclick="switchWorkspaceTab('tab-builder')" style="padding:2px 8px;font-size:11px;color:#0284c7">+ Add / Reorder</button>
+                    <button class="btn sm ghost" onclick="switchWorkspaceTab('tab-editor')" style="padding:2px 8px;font-size:11px;color:#0284c7">📝 Edit Kandungan</button>
                 </div>
             </div>
 
@@ -602,6 +613,114 @@
                             title="OSHWA Document Viewer">
                     </iframe>
                 </div>
+
+                <!-- Quick Section Editor Bar below PDF Viewer -->
+                <div id="quickSecBar" style="background:#f8fafc;border-top:1.5px solid #cbd5e1;padding:12px 16px;display:flex;flex-direction:column;gap:8px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+                        <div style="font-size:12px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:6px">
+                            <span>✏️ Edit Kandungan Seksyen Semasa:</span>
+                            <span id="quickSecTitle" style="color:#0284c7;font-weight:800">{{ sections[0].title if sections else 'Seksyen' }}</span>
+                            <span id="quickSecPageBadge" style="font-size:10px;background:#e0f2fe;color:#0284c7;padding:1px 6px;border-radius:4px;font-weight:700">Hlm. {{ sections[0].page if sections else '1' }}</span>
+                        </div>
+                        <div style="display:flex;gap:6px;align-items:center">
+                            <span id="quickSecStatus" style="font-size:11px;color:#16a34a;font-weight:600">✓ Tersimpan</span>
+                            <button type="button" onclick="saveQuickSection()" class="btn sm" style="background:#16a34a;color:#fff;font-weight:700;padding:4px 14px;font-size:11px">
+                                💾 Simpan Seksyen Ini
+                            </button>
+                            <button type="button" onclick="switchWorkspaceTab('tab-editor')" class="btn sm ghost" style="padding:4px 10px;font-size:11px;color:#0284c7">
+                                Buka Editor Penuh ↗
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="quickSecContent" rows="3" placeholder="Tulis atau edit teks laporan untuk seksyen yang dipilih ini..."
+                        style="width:100%;font-size:12.5px;padding:8px 12px;border:1.5px solid #cbd5e1;border-radius:6px;font-family:inherit;line-height:1.5;box-sizing:border-box"
+                        oninput="markQuickSecDirty()">{{ sections[0].content or sections[0].desc or '' if sections else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: LIVE SECTION CONTENT WRITER / DOSSIER EDITOR -->
+    <div id="tab-editor" class="osh-tab-panel">
+        <div class="panel" style="background:#ffffff;border-radius:14px;padding:24px;border:1px solid #e2e8f0;margin-bottom:20px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:20px;border-bottom:1px solid #f1f5f9;padding-bottom:16px">
+                <div>
+                    <div style="font-size:11px;color:#0284c7;font-weight:700;text-transform:uppercase;letter-spacing:.5px">OshOne Statutory Dossier Writer</div>
+                    <h2 style="margin:4px 0 6px;font-size:20px;font-weight:800;color:#0f172a">📝 Tulis &amp; Kemaskini Kandungan Setiap Seksyen</h2>
+                    <div style="font-size:12.5px;color:#64748b;max-width:680px;line-height:1.5">
+                        Tulis atau edit huraian, penemuan, dan nota pematuhan statutori di bawah setiap seksyen. Anda boleh simpan bila-bila masa (sebelum atau selepas jana PDF). Klik <b>"Jana Semula PDF"</b> untuk memasukkan semua teks terkini ke dalam dokumen PDF rasmi.
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                    <button type="button" onclick="saveAllSectionContents()" class="btn" style="background:#0284c7;color:#fff;font-weight:700;padding:9px 20px;font-size:13px">
+                        💾 Simpan Semua Seksyen
+                    </button>
+                    <a href="{{ url_for('osh_compile_pdf', oid=r.id) }}" class="btn ghost sm" style="color:#0284c7;border-color:#bae6fd;background:#f0f9ff;font-weight:700;padding:8px 16px">
+                        🔄 Jana Semula PDF
+                    </a>
+                    <a href="{{ url_for('osh_download', oid=r.id) }}" target="_blank" class="btn ghost sm" style="padding:8px 14px">
+                        📥 Download PDF
+                    </a>
+                </div>
+            </div>
+
+            <!-- Search / Filter Sections in Editor -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;flex-wrap:wrap">
+                <input type="text" id="editorFilterInput" onkeyup="filterEditorSections()" placeholder="🔍 Cari nama seksyen dalam editor..." style="flex:1;min-width:240px;padding:8px 14px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px">
+                <div style="display:flex;gap:6px">
+                    <button type="button" class="btn sm ghost" onclick="expandAllSections(true)" style="padding:6px 12px;font-size:12px">Buka Semua</button>
+                    <button type="button" class="btn sm ghost" onclick="expandAllSections(false)" style="padding:6px 12px;font-size:12px">Tutup Semua</button>
+                </div>
+            </div>
+
+            <!-- Section Accordion List -->
+            <div id="sectionEditorList" style="display:flex;flex-direction:column;gap:12px">
+                {% for s in sections %}
+                <div class="osh-sec-card" id="sec-card-{{ s.id }}" style="border:1.5px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#fff;transition:border-color .2s">
+                    <div class="osh-sec-head" onclick="toggleSecCard('{{ s.id }}')" style="padding:12px 16px;background:{% if s.is_header %}#f0f9ff{% else %}#f8fafc{% endif %};display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none">
+                        <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">
+                            <span style="font-size:16px">{{ s.icon or '📄' }}</span>
+                            <div style="min-width:0;flex:1">
+                                <div style="font-size:13px;font-weight:700;color:{% if s.is_header %}#0369a1{% else %}#0f172a{% endif %};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                                    {{ s.title }}
+                                </div>
+                                <div style="font-size:11px;color:#64748b;margin-top:2px">
+                                    {{ s.desc or 'Halaman ' ~ s.page }}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px" onclick="event.stopPropagation()">
+                            <span style="font-size:11px;background:#e0f2fe;color:#0284c7;font-weight:700;padding:2px 7px;border-radius:4px">Hlm. {{ s.page }}</span>
+                            <button type="button" onclick="saveSingleSection('{{ s.id }}')" class="btn sm" style="background:#16a34a;color:#fff;font-weight:700;padding:3px 10px;font-size:11px">
+                                💾 Simpan
+                            </button>
+                            <span class="osh-sec-arrow" id="sec-arrow-{{ s.id }}" style="font-size:12px;color:#64748b;transition:transform .2s">▼</span>
+                        </div>
+                    </div>
+                    <div class="osh-sec-body" id="sec-body-{{ s.id }}" style="padding:16px;border-top:1px solid #e2e8f0;display:block">
+                        <label style="display:block;font-size:11px;font-weight:700;color:#475569;margin-bottom:6px;text-transform:uppercase">
+                            Kandungan Laporan / Nota Penemuan Bagi Seksyen Ini:
+                        </label>
+                        <textarea id="sec-content-{{ s.id }}" rows="4" placeholder="Tuliskan nota statutori, penemuan audit, peraturan undang-undang, atau huraian terperinci untuk seksyen ini..." style="width:100%;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:7px;font-size:12.5px;color:#1e293b;line-height:1.55;font-family:inherit;box-sizing:border-box" oninput="markSecDirty('{{ s.id }}')">{{ s.content or s.desc or '' }}</textarea>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:11px;color:#64748b">
+                            <span id="sec-status-{{ s.id }}" style="color:#16a34a;font-weight:600">✓ Tersimpan dalam database</span>
+                            <div style="display:flex;gap:6px">
+                                <button type="button" class="btn sm ghost" onclick="insertBullet('{{ s.id }}')" style="padding:2px 8px;font-size:11px">+ Poin (•)</button>
+                                <button type="button" class="btn sm" onclick="saveSingleSection('{{ s.id }}')" style="background:#0284c7;color:#fff;font-weight:700;padding:3px 12px;font-size:11px">💾 Simpan Seksyen Ini</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+                <a href="{{ url_for('osh_compile_pdf', oid=r.id) }}" class="btn ghost sm" style="color:#0284c7;border-color:#bae6fd;background:#f0f9ff;font-weight:700">
+                    🔄 Jana Semula PDF Lengkap
+                </a>
+                <button type="button" onclick="saveAllSectionContents()" class="btn" style="background:#0284c7;color:#fff;font-weight:700;padding:10px 24px">
+                    💾 Simpan Semua Kandungan Seksyen
+                </button>
             </div>
         </div>
     </div>
@@ -843,6 +962,7 @@
 var sectionsData = {{ sections|tojson|safe }} || [];
 var reportOid = {{ r.id }};
 var activeDocFile = "{{ active_file }}";
+var currentActiveSecId = sectionsData.length > 0 ? sectionsData[0].id : null;
 
 function switchWorkspaceTab(tabId) {
     document.querySelectorAll('.osh-tab-panel').forEach(function(el) {
@@ -854,7 +974,7 @@ function switchWorkspaceTab(tabId) {
     var target = document.getElementById(tabId);
     if (target) target.classList.add('active');
 
-    var btn = Array.from(document.querySelectorAll('.osh-tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+    var btn = Array.from(document.querySelectorAll('.osh-tab-btn')).find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes(tabId));
     if (btn) btn.classList.add('active');
 
     if (tabId === 'tab-builder') {
@@ -862,7 +982,7 @@ function switchWorkspaceTab(tabId) {
     }
 }
 
-function jumpToChapter(page, filename, cardElem) {
+function jumpToChapter(page, filename, cardElem, secId) {
     var frame = document.getElementById('pdfViewerFrame');
     var targetFile = filename || activeDocFile;
     var baseUrl = "{{ url_for('serve_report_pdf', filename='') }}" + encodeURIComponent(targetFile);
@@ -872,6 +992,18 @@ function jumpToChapter(page, filename, cardElem) {
     if (cardElem) {
         document.querySelectorAll('.osh-chapter-card').forEach(c => c.classList.remove('active'));
         cardElem.classList.add('active');
+    }
+
+    if (secId) {
+        currentActiveSecId = secId;
+        var sec = sectionsData.find(s => String(s.id) === String(secId));
+        if (sec) {
+            document.getElementById('quickSecTitle').textContent = sec.title;
+            document.getElementById('quickSecPageBadge').textContent = 'Hlm. ' + (sec.page || 1);
+            document.getElementById('quickSecContent').value = sec.content || sec.desc || '';
+            document.getElementById('quickSecStatus').textContent = '✓ Tersimpan';
+            document.getElementById('quickSecStatus').style.color = '#16a34a';
+        }
     }
 }
 
@@ -923,6 +1055,171 @@ function showToast(msg) {
     document.getElementById('toastMsg').innerText = msg || 'Saved Successfully!';
     t.style.display = 'flex';
     setTimeout(function() { t.style.display = 'none'; }, 3000);
+}
+
+// ─── LIVE SECTION CONTENT WRITING ENGINE ───
+
+function markQuickSecDirty() {
+    var st = document.getElementById('quickSecStatus');
+    st.textContent = '⚠️ Belum Disimpan';
+    st.style.color = '#d97706';
+}
+
+function saveQuickSection() {
+    if (!currentActiveSecId) {
+        if (sectionsData.length > 0) currentActiveSecId = sectionsData[0].id;
+        else return;
+    }
+    var content = document.getElementById('quickSecContent').value;
+    var sec = sectionsData.find(s => String(s.id) === String(currentActiveSecId));
+    if (sec) sec.content = content;
+
+    // Sync to editor tab textarea if exists
+    var editorTa = document.getElementById('sec-content-' + currentActiveSecId);
+    if (editorTa) editorTa.value = content;
+
+    fetch('/portal/oshwa/' + reportOid + '/save-section', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            id: currentActiveSecId,
+            content: content
+        })
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.ok) {
+            document.getElementById('quickSecStatus').textContent = '✓ Tersimpan';
+            document.getElementById('quickSecStatus').style.color = '#16a34a';
+            var cardStatus = document.getElementById('sec-status-' + currentActiveSecId);
+            if (cardStatus) {
+                cardStatus.textContent = '✓ Tersimpan dalam database';
+                cardStatus.style.color = '#16a34a';
+            }
+            showToast('✅ Seksyen Disimpan!');
+        } else {
+            alert('Ralat menyimpan: ' + (res.error || 'Unknown error'));
+        }
+    })
+    .catch(err => alert('Ralat rangkaian: ' + err));
+}
+
+function markSecDirty(secId) {
+    var el = document.getElementById('sec-status-' + secId);
+    if (el) {
+        el.textContent = '⚠️ Belum Disimpan';
+        el.style.color = '#d97706';
+    }
+}
+
+function saveSingleSection(secId) {
+    var ta = document.getElementById('sec-content-' + secId);
+    var content = ta ? ta.value : '';
+
+    var sec = sectionsData.find(s => String(s.id) === String(secId));
+    if (sec) sec.content = content;
+
+    // Sync quick edit bar if matching
+    if (String(currentActiveSecId) === String(secId)) {
+        document.getElementById('quickSecContent').value = content;
+        document.getElementById('quickSecStatus').textContent = '✓ Tersimpan';
+        document.getElementById('quickSecStatus').style.color = '#16a34a';
+    }
+
+    fetch('/portal/oshwa/' + reportOid + '/save-section', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            id: secId,
+            content: content
+        })
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.ok) {
+            var st = document.getElementById('sec-status-' + secId);
+            if (st) {
+                st.textContent = '✓ Tersimpan dalam database';
+                st.style.color = '#16a34a';
+            }
+            showToast('✅ Seksyen Disimpan!');
+        } else {
+            alert('Ralat menyimpan: ' + (res.error || 'Unknown error'));
+        }
+    })
+    .catch(err => alert('Ralat rangkaian: ' + err));
+}
+
+function saveAllSectionContents() {
+    sectionsData.forEach(sec => {
+        var ta = document.getElementById('sec-content-' + sec.id);
+        if (ta) {
+            sec.content = ta.value;
+        }
+    });
+
+    fetch('/portal/oshwa/' + reportOid + '/save-sections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sectionsData)
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.ok) {
+            document.querySelectorAll('[id^="sec-status-"]').forEach(el => {
+                el.textContent = '✓ Tersimpan dalam database';
+                el.style.color = '#16a34a';
+            });
+            showToast('✅ Semua ' + res.count + ' Seksyen Berjaya Disimpan!');
+        } else {
+            alert('Ralat menyimpan semua: ' + (res.error || 'Unknown error'));
+        }
+    })
+    .catch(err => alert('Ralat rangkaian: ' + err));
+}
+
+function toggleSecCard(secId) {
+    var body = document.getElementById('sec-body-' + secId);
+    var arrow = document.getElementById('sec-arrow-' + secId);
+    if (!body) return;
+    if (body.style.display === 'none') {
+        body.style.display = 'block';
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
+    } else {
+        body.style.display = 'none';
+        if (arrow) arrow.style.transform = 'rotate(-90deg)';
+    }
+}
+
+function expandAllSections(expand) {
+    document.querySelectorAll('.osh-sec-body').forEach(el => {
+        el.style.display = expand ? 'block' : 'none';
+    });
+    document.querySelectorAll('.osh-sec-arrow').forEach(el => {
+        el.style.transform = expand ? 'rotate(0deg)' : 'rotate(-90deg)';
+    });
+}
+
+function filterEditorSections() {
+    var q = document.getElementById('editorFilterInput').value.toLowerCase();
+    document.querySelectorAll('.osh-sec-card').forEach(card => {
+        var text = card.innerText.toLowerCase();
+        card.style.display = text.includes(q) ? '' : 'none';
+    });
+}
+
+function insertBullet(secId) {
+    var ta = document.getElementById('sec-content-' + secId);
+    if (ta) {
+        var start = ta.selectionStart;
+        var end = ta.selectionEnd;
+        var val = ta.value;
+        var bullet = '\n• ';
+        ta.value = val.substring(0, start) + bullet + val.substring(end);
+        ta.selectionStart = ta.selectionEnd = start + bullet.length;
+        ta.focus();
+        markSecDirty(secId);
+    }
 }
 
 // ─── DRAG AND DROP BUILDER ENGINE ───
@@ -1020,7 +1317,8 @@ function insertSectionAt(index) {
         page: sectionsData[index] ? sectionsData[index].page : 1,
         icon: "📄",
         is_header: false,
-        desc: "Custom added section"
+        desc: "Custom added section",
+        content: ""
     };
     sectionsData.splice(index, 0, newSec);
     renderBuilder();
@@ -1034,7 +1332,8 @@ function addNewSectionEnd() {
         page: lastPage + 1,
         icon: "📄",
         is_header: false,
-        desc: "Custom added section"
+        desc: "Custom added section",
+        content: ""
     };
     sectionsData.push(newSec);
     renderBuilder();
@@ -1079,7 +1378,7 @@ function refreshSidebarTOC() {
         var li = document.createElement('li');
         var card = document.createElement('div');
         card.className = 'osh-chapter-card ' + (s.is_header ? 'is-header ' : (isSub ? 'is-sub ' : '')) + (loopIdx === 0 ? 'active' : '');
-        card.onclick = function() { jumpToChapter(s.page, activeDocFile, card); };
+        card.onclick = function() { jumpToChapter(s.page, activeDocFile, card, s.id); };
 
         card.innerHTML = `
             <div class="osh-ch-icon">${s.icon || '📄'}</div>

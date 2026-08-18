@@ -104,17 +104,26 @@
             <div class="form-grid-2 mb20">
                 <div>
                     <label class="field-lbl">Client / Company <span class="req">*</span></label>
-                    <select name="company_id" class="osh-select" id="inp-company" required>
-                        <option value="">— Pilih Syarikat —</option>
-                        {% for c in companies %}
-                        <option value="{{ c.id }}"
-                            {{ 'selected' if (r and r.company_id == c.id) or (not r and companies|length == 1 and loop.first) }}>
-                            {{ c.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    {% if not companies %}
-                    <small style="color:#ef4444;font-size:11px">⚠️ Tiada syarikat didaftarkan. Sila tambah syarikat dahulu.</small>
+                    {% if user and user.role not in ['admin', 'staff', 'employee'] and companies %}
+                        <!-- Client View: Strictly locked to own company -->
+                        <input type="hidden" name="company_id" value="{{ companies[0].id }}">
+                        <input type="text" class="osh-input" value="{{ companies[0].name }}" readonly
+                            style="background:#f1f5f9;cursor:not-allowed;font-weight:700;color:#0369a1;border:1.5px solid #cbd5e1"
+                            title="Akaun anda ditetapkan secara eksklusif kepada syarikat ini.">
+                    {% else %}
+                        <!-- Admin / Staff View: Dropdown to pick any company -->
+                        <select name="company_id" class="osh-select" id="inp-company" required>
+                            <option value="">— Pilih Syarikat —</option>
+                            {% for c in companies %}
+                            <option value="{{ c.id }}"
+                                {{ 'selected' if (r and r.company_id == c.id) or (not r and companies|length == 1 and loop.first) }}>
+                                {{ c.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if not companies %}
+                        <small style="color:#ef4444;font-size:11px">⚠️ Tiada syarikat didaftarkan. Sila tambah syarikat dahulu.</small>
+                        {% endif %}
                     {% endif %}
                 </div>
                 <div>
@@ -290,44 +299,58 @@ function renderToc() {
     ul.innerHTML = '';
     tocData.forEach((item, idx) => {
         const li = document.createElement('li');
-        li.className = 'toc-row' + (item.is_header ? ' is-header' : '');
-        li.draggable = true;
+        li.className = 'toc-row-wrap' + (item.is_header ? ' is-header' : '');
         li.dataset.idx = idx;
 
         li.innerHTML = `
-            <span class="toc-drag-handle" title="Seret untuk susun semula">⠿</span>
-            <input class="toc-icon-sel" type="text" value="${escHtml(item.icon || '📄')}"
-                title="Icon" maxlength="4"
-                onchange="tocData[${idx}].icon=this.value;syncHidden()">
-            <input class="toc-title-inp" type="text" value="${escHtml(item.title || '')}"
-                placeholder="Nama Seksyen…"
-                onchange="tocData[${idx}].title=this.value;syncHidden()"
-                oninput="tocData[${idx}].title=this.value;syncHidden()">
-            <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#64748b;white-space:nowrap;cursor:pointer" title="Tajuk Utama">
-                <input type="checkbox" class="toc-header-chk" ${item.is_header ? 'checked' : ''}
-                    onchange="tocData[${idx}].is_header=this.checked;renderToc();syncHidden()">
-                Tajuk
-            </label>
-            <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#64748b;white-space:nowrap">
-                Hlm.
-                <input class="toc-page-inp" type="number" min="1" value="${item.page || ''}"
-                    placeholder="—"
-                    onchange="tocData[${idx}].page=parseInt(this.value)||0;syncHidden()"
-                    oninput="tocData[${idx}].page=parseInt(this.value)||0;syncHidden()">
-            </label>
-            <button type="button" class="toc-del-btn" onclick="deleteTocRow(${idx})" title="Padam seksyen">🗑️</button>
+            <div class="toc-row ${item.is_header ? 'is-header' : ''}" draggable="true">
+                <span class="toc-drag-handle" title="Seret untuk susun semula">⠿</span>
+                <input class="toc-icon-sel" type="text" value="${escHtml(item.icon || '📄')}"
+                    title="Icon" maxlength="4"
+                    onchange="tocData[${idx}].icon=this.value;syncHidden()">
+                <input class="toc-title-inp" type="text" value="${escHtml(item.title || '')}"
+                    placeholder="Nama Seksyen…"
+                    onchange="tocData[${idx}].title=this.value;syncHidden()"
+                    oninput="tocData[${idx}].title=this.value;syncHidden()">
+                <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#64748b;white-space:nowrap;cursor:pointer" title="Tajuk Utama">
+                    <input type="checkbox" class="toc-header-chk" ${item.is_header ? 'checked' : ''}
+                        onchange="tocData[${idx}].is_header=this.checked;renderToc();syncHidden()">
+                    Tajuk
+                </label>
+                <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#64748b;white-space:nowrap">
+                    Hlm.
+                    <input class="toc-page-inp" type="number" min="1" value="${item.page || ''}"
+                        placeholder="—"
+                        onchange="tocData[${idx}].page=parseInt(this.value)||0;syncHidden()"
+                        oninput="tocData[${idx}].page=parseInt(this.value)||0;syncHidden()">
+                </label>
+                <button type="button" class="btn sm ghost" onclick="toggleFormSecBody(${idx})" title="Tulis / Edit Kandungan Seksyen" style="padding:3px 8px;font-size:11px;color:#0284c7">
+                    📝 Edit Teks
+                </button>
+                <button type="button" class="toc-del-btn" onclick="deleteTocRow(${idx})" title="Padam seksyen">🗑️</button>
+            </div>
+            <div class="toc-sec-content-box" id="form-sec-body-${idx}" style="display:none;padding:10px 14px 14px 44px;background:#f8fafc;border-top:1px dashed #e2e8f0">
+                <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">
+                    Kandungan Teks / Nota Laporan Bagi Seksyen Ini:
+                </label>
+                <textarea class="osh-textarea" rows="3" placeholder="Tuliskan huraian terperinci, penemuan, atau nota statutori bagi seksyen ini..."
+                    style="width:100%;font-size:12px;padding:8px 10px;border-radius:6px;border:1px solid #cbd5e1;box-sizing:border-box"
+                    onchange="tocData[${idx}].content=this.value;syncHidden()"
+                    oninput="tocData[${idx}].content=this.value;syncHidden()">${escHtml(item.content || item.desc || '')}</textarea>
+            </div>
         `;
 
-        // Drag events
-        li.addEventListener('dragstart', e => {
+        // Drag events on row
+        const dragRow = li.querySelector('.toc-row');
+        dragRow.addEventListener('dragstart', e => {
             li.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', idx);
         });
-        li.addEventListener('dragend', () => li.classList.remove('dragging'));
+        dragRow.addEventListener('dragend', () => li.classList.remove('dragging'));
         li.addEventListener('dragover', e => {
             e.preventDefault();
-            document.querySelectorAll('.toc-row').forEach(r => r.classList.remove('drag-over'));
+            document.querySelectorAll('.toc-row-wrap').forEach(r => r.classList.remove('drag-over'));
             li.classList.add('drag-over');
         });
         li.addEventListener('dragleave', () => li.classList.remove('drag-over'));
@@ -347,6 +370,13 @@ function renderToc() {
     });
     updateCount();
     syncHidden();
+}
+
+function toggleFormSecBody(idx) {
+    const el = document.getElementById(`form-sec-body-${idx}`);
+    if (el) {
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
 }
 
 function escHtml(str) {
