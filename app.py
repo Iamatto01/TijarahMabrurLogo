@@ -1189,12 +1189,19 @@ def osh_new():
         # Handle per-section PDF uploads
         for i, sec in enumerate(sections):
             sec_id = sec.get("id", i)
-            sec_pdf = request.files.get(f"sec_pdf_{sec_id}")
-            if sec_pdf and sec_pdf.filename and sec_pdf.filename.lower().endswith(".pdf"):
-                orig_name = secure_filename(sec_pdf.filename)
-                sec_pdf_name = f"sec_{uuid.uuid4().hex[:8]}_{orig_name}"
-                sec_pdf.save(os.path.join(REPORT_PDF_DIR, sec_pdf_name))
-                sec["pdf_filename"] = sec_pdf_name
+            existing = sec.get("pdf_filenames")
+            if existing is None:
+                existing = [sec["pdf_filename"]] if sec.get("pdf_filename") else []
+            sec["pdf_filenames"] = existing
+            sec.pop("pdf_filename", None)
+
+            sec_pdfs = request.files.getlist(f"sec_pdf_{sec_id}")
+            for sec_pdf in sec_pdfs:
+                if sec_pdf and sec_pdf.filename and sec_pdf.filename.lower().endswith(".pdf"):
+                    orig_name = secure_filename(sec_pdf.filename)
+                    sec_pdf_name = f"sec_{uuid.uuid4().hex[:8]}_{orig_name}"
+                    sec_pdf.save(os.path.join(REPORT_PDF_DIR, sec_pdf_name))
+                    sec["pdf_filenames"].append(sec_pdf_name)
 
         co_name = "Tijarah Mabrur Client"
         if company_id:
@@ -1324,12 +1331,19 @@ def osh_edit(oid):
         # Handle per-section PDF uploads
         for i, sec in enumerate(sections):
             sec_id = sec.get("id", i)
-            sec_pdf = request.files.get(f"sec_pdf_{sec_id}")
-            if sec_pdf and sec_pdf.filename and sec_pdf.filename.lower().endswith(".pdf"):
-                orig_name = secure_filename(sec_pdf.filename)
-                sec_pdf_name = f"sec_{uuid.uuid4().hex[:8]}_{orig_name}"
-                sec_pdf.save(os.path.join(REPORT_PDF_DIR, sec_pdf_name))
-                sec["pdf_filename"] = sec_pdf_name
+            existing = sec.get("pdf_filenames")
+            if existing is None:
+                existing = [sec["pdf_filename"]] if sec.get("pdf_filename") else []
+            sec["pdf_filenames"] = existing
+            sec.pop("pdf_filename", None)
+
+            sec_pdfs = request.files.getlist(f"sec_pdf_{sec_id}")
+            for sec_pdf in sec_pdfs:
+                if sec_pdf and sec_pdf.filename and sec_pdf.filename.lower().endswith(".pdf"):
+                    orig_name = secure_filename(sec_pdf.filename)
+                    sec_pdf_name = f"sec_{uuid.uuid4().hex[:8]}_{orig_name}"
+                    sec_pdf.save(os.path.join(REPORT_PDF_DIR, sec_pdf_name))
+                    sec["pdf_filenames"].append(sec_pdf_name)
                 
         sections_json_str = json.dumps(sections)
 

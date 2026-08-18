@@ -298,20 +298,25 @@ function renderToc() {
                 </label>
                 <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#64748b;white-space:nowrap">
                     Hlm.
-                    <input class="toc-page-inp" type="number" min="1" value="${item.page || ''}"
+                    <input class="toc-page-inp" type="text" value="${item.page || ''}"
                         placeholder="—"
-                        onchange="tocData[${idx}].page=parseInt(this.value)||0;syncHidden()"
-                        oninput="tocData[${idx}].page=parseInt(this.value)||0;syncHidden()">
+                        onchange="tocData[${idx}].page=this.value;syncHidden()"
+                        oninput="tocData[${idx}].page=this.value;syncHidden()">
                 </label>
                 
-                <div style="display:flex; flex-direction:column; align-items:center; gap:2px; margin-left:6px;">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:4px; margin-left:6px;">
                     <label class="btn sm ghost" style="padding:5px 12px;font-size:12px;color:#16a34a;border:1px dashed #bbf7d0;cursor:pointer;margin:0;" title="Upload PDF for this section">
                         📄 Upload PDF
-                        <input type="file" name="sec_pdf_${item.id || idx}" accept=".pdf" style="display:none;" onchange="updateUploadLabel(this, ${idx})">
+                        <input type="file" name="sec_pdf_${item.id || idx}" accept=".pdf" multiple style="display:none;" onchange="updateUploadLabel(this, ${idx})">
                     </label>
-                    <span id="upload-lbl-${idx}" style="font-size:10.5px;color:#16a34a;max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${item.pdf_filename || ''}">
-                        ${item.pdf_filename ? '✅ '+item.pdf_filename : ''}
-                    </span>
+                    <div id="upload-lbl-${idx}" style="font-size:10.5px;color:#16a34a;max-width:140px;display:flex;flex-direction:column;gap:2px;">
+                        ${(item.pdf_filenames || (item.pdf_filename ? [item.pdf_filename] : [])).map((fn, fidx) => `
+                            <div style="display:flex;justify-content:space-between;align-items:center;background:#f0fdf4;padding:2px 6px;border-radius:4px;border:1px solid #bbf7d0;">
+                                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;" title="${fn}">✅ ${fn}</span>
+                                <span style="cursor:pointer;color:#ef4444;margin-left:6px;font-size:12px;" onclick="deletePdfFile(${idx}, ${fidx})" title="Delete File">✕</span>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
 
                 <button type="button" class="btn sm ghost" onclick="toggleFormSecBody(${idx})" title="Tulis / Edit Kandungan Seksyen" style="padding:6px 12px;font-size:12px;color:#0284c7;border:1px solid #bae6fd;">
@@ -384,7 +389,7 @@ function syncHidden() {
         if (tocData[idx]) {
             tocData[idx].icon = inputs[0]?.value || '📄';
             tocData[idx].title = inputs[1]?.value || '';
-            tocData[idx].page = parseInt(inputs[3]?.value) || 0;
+            // Don't override page here since it's updated via onchange directly on the text input.
         }
     });
     document.getElementById('sections-json-hidden').value = JSON.stringify(tocData);
@@ -434,10 +439,27 @@ function resetTocToDefault() {
 function updateUploadLabel(inputEl, idx) {
     const lbl = document.getElementById('upload-lbl-' + idx);
     if (inputEl.files && inputEl.files.length > 0) {
-        lbl.innerHTML = '✅ ' + inputEl.files[0].name;
-    } else {
-        lbl.innerHTML = '';
+        let html = '';
+        for (let i = 0; i < inputEl.files.length; i++) {
+            html += `<div style="display:flex;align-items:center;background:#f0fdf4;padding:2px 6px;border-radius:4px;border:1px solid #bbf7d0;margin-top:2px;">
+                        <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;">✅ ${inputEl.files[i].name} (New)</span>
+                     </div>`;
+        }
+        lbl.innerHTML += html;
     }
+}
+
+function deletePdfFile(secIdx, fileIdx) {
+    if (!confirm('Buang fail PDF ini?')) return;
+    let files = tocData[secIdx].pdf_filenames || [];
+    if (!files.length && tocData[secIdx].pdf_filename) {
+        files = [tocData[secIdx].pdf_filename];
+    }
+    files.splice(fileIdx, 1);
+    tocData[secIdx].pdf_filenames = files;
+    tocData[secIdx].pdf_filename = files.length > 0 ? files[0] : null;
+    syncHidden();
+    renderToc();
 }
 
 // ── Sync before submit ──────────────────────────────────────────────────────

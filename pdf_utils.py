@@ -309,7 +309,7 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
     base_pdf_bytes = buf.getvalue()
 
     # Now merge uploaded section PDFs if any
-    has_section_pdfs = any(sec.get("pdf_filename") for sec in sections) if sections else False
+    has_section_pdfs = any(sec.get("pdf_filenames") or sec.get("pdf_filename") for sec in sections) if sections else False
     if not has_section_pdfs:
         return base_pdf_bytes
         
@@ -323,16 +323,19 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
         base_dir = os.path.abspath(os.path.dirname(__file__))
         
         for sec in sections:
-            pdf_filename = sec.get("pdf_filename")
-            if pdf_filename:
-                pdf_path = os.path.join(base_dir, "uploads", "reports", pdf_filename)
-                if os.path.exists(pdf_path):
-                    try:
-                        sec_reader = PdfReader(pdf_path)
-                        for page in sec_reader.pages:
-                            writer.add_page(page)
-                    except Exception:
-                        pass
+            pdf_filenames = sec.get("pdf_filenames")
+            if not pdf_filenames and sec.get("pdf_filename"):
+                pdf_filenames = [sec.get("pdf_filename")]
+            if pdf_filenames:
+                for pdf_filename in pdf_filenames:
+                    pdf_path = os.path.join(base_dir, "uploads", "reports", pdf_filename)
+                    if os.path.exists(pdf_path):
+                        try:
+                            sec_reader = PdfReader(pdf_path)
+                            for page in sec_reader.pages:
+                                writer.add_page(page)
+                        except Exception:
+                            pass
                         
         out_buf = io.BytesIO()
         writer.write(out_buf)
