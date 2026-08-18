@@ -922,6 +922,84 @@ def init_db():
         execute("UPDATE osh_reports SET sections_json = ? WHERE pdf_filename = ?",
                 (json.dumps(camoor_sections), "camoor safety manual.pdf"))
 
+    # Seed Top Chemical Sdn. Bhd.
+    top_chem = q("SELECT id FROM companies WHERE name LIKE ?", ("%Top Chemical%",), one=True)
+    if top_chem is None:
+        top_chem_id = execute(
+            "INSERT INTO companies (name, reg_no, address, phone, email, logo_filename, created_at) VALUES (?,?,?,?,?,?,?)",
+            ("Top Chemical Sdn. Bhd.", "201902034567 (678910-B)", "Lot 12, Jalan Perindustrian Meru, 41050 Klang, Selangor", "+603-3344 5566", "safety@topchemical.com.my", "", now)
+        )
+        execute(
+            "INSERT INTO users (name, email, password_hash, role, company, company_id, created_at) VALUES (?,?,?,?,?,?,?)",
+            ("Top Chemical HSE Officer", "hse@topchemical.com.my", generate_password_hash("hse2026"), "client", "Top Chemical Sdn. Bhd.", top_chem_id, now)
+        )
+    else:
+        top_chem_id = top_chem["id"] if _ENGINE == "pg" else top_chem[0]
+
+    top_chem_osh = q("SELECT id FROM osh_reports WHERE pdf_filename = ?", ("top_chemical_chra_dossier_2026.pdf",), one=True)
+    if top_chem_osh is None:
+        top_chem_sections = [
+            {"id": 1, "title": "ABREVIATION / SINGKATAN", "page": 1, "icon": "🔤", "is_header": False, "desc": "Senarai singkatan dan definisi teknikal"},
+            {"id": 2, "title": "EXECUTIVE SUMMARY", "page": 2, "icon": "📊", "is_header": True, "desc": "Ringkasan eksekutif penemuan penilaian statutori"},
+            {"id": 3, "title": "1.0 BACKGROUND", "page": 1, "icon": "🏢", "is_header": True, "desc": "Latar belakang syarikat dan skop penilaian"},
+            {"id": 4, "title": "1.1 Introduction to the company and work place", "page": 1, "icon": "🏭", "is_header": False, "desc": "Pengenalan kepada premis dan operasi kilang"},
+            {"id": 5, "title": "1.2 Objective of assessment", "page": 2, "icon": "🎯", "is_header": False, "desc": "Objektif penilaian CHRA"},
+            {"id": 6, "title": "1.3 Rule of law", "page": 2, "icon": "⚖️", "is_header": False, "desc": "Akta 514, Peraturan Kimia Berbahaya (USECHH) 2000"},
+            {"id": 7, "title": "1.4 Scope of assessment", "page": 3, "icon": "📍", "is_header": False, "desc": "Skop unit kerja dan kawasan penilaian"},
+            {"id": 8, "title": "1.5 Summary of previous assessment and findings (if applicable)", "page": 3, "icon": "📋", "is_header": False, "desc": "Ringkasan penilaian terdahulu"},
+            {"id": 9, "title": "2.0 PROCESS AND WORK UNIT DESCRIPTION", "page": 4, "icon": "⚙️", "is_header": True, "desc": "Deskripsi keseluruhan proses dan unit kerja"},
+            {"id": 10, "title": "2.1 Description of whole process", "page": 4, "icon": "🔀", "is_header": False, "desc": "Gambaran keseluruhan proses pengeluaran"},
+            {"id": 11, "title": "2.2 Description of work unit", "page": 5, "icon": "👷", "is_header": False, "desc": "Deskripsi unit kerja terperinci"},
+            {"id": 12, "title": "3.0 ASSESSMENT METHODOLOGY", "page": 7, "icon": "🔬", "is_header": True, "desc": "Kaedah dan prosedur penilaian"},
+            {"id": 13, "title": "3.1 Opening and closing meeting", "page": 7, "icon": "🤝", "is_header": False, "desc": "Mesyuarat pembukaan dan penutupan audit"},
+            {"id": 14, "title": "3.2 Walk-through inspection", "page": 7, "icon": "🚶", "is_header": False, "desc": "Pemeriksaan visual LEV, PPE dan talian proses"},
+            {"id": 15, "title": "3.3 Determine degree of hazard", "page": 7, "icon": "⚠️", "is_header": False, "desc": "Klasifikasi hazad mengikut CPL & peraturan CLASS"},
+            {"id": 16, "title": "3.4 Determine degree of exposure", "page": 8, "icon": "⏱️", "is_header": False, "desc": "Analisis tempoh, kekerapan & magnitud pendedahan"},
+            {"id": 17, "title": "3.5 Determine level of risk for inhalation exposure", "page": 8, "icon": "🫁", "is_header": False, "desc": "Penarafan risiko penyedutan (RR 1 hingga RR 5)"},
+            {"id": 18, "title": "3.6 Determine level of risk for dermal exposure", "page": 8, "icon": "🧤", "is_header": False, "desc": "Penarafan risiko sentuhan dan penyerapan dermal"},
+            {"id": 19, "title": "3.7 Writing report and presentation", "page": 8, "icon": "📝", "is_header": False, "desc": "Penyusunan teknikal dossier CHRA"},
+            {"id": 20, "title": "3.8 Action to control exposure", "page": 8, "icon": "🛡️", "is_header": False, "desc": "Hierarki kawalan risiko yang disyorkan"},
+            {"id": 21, "title": "3.9 Action priority (AP)", "page": 9, "icon": "🚦", "is_header": False, "desc": "Kedudukan keutamaan tindakan (AP 1 hingga AP 3)"},
+            {"id": 22, "title": "4.0 ASSESSMENT FINDINGS", "page": 10, "icon": "📋", "is_header": True, "desc": "Ringkasan penemuan penilaian komprehensif"},
+            {"id": 23, "title": "5.0 DISCUSSION", "page": 11, "icon": "💬", "is_header": True, "desc": "Analisis terperinci sistem LEV & kesihatan pekerja"},
+            {"id": 24, "title": "6.0 RECOMMENDATIONS ON ACTION TO BE TAKEN", "page": 22, "icon": "💡", "is_header": True, "desc": "Pelan tindakan, naik taraf kejuruteraan & garis masa"},
+            {"id": 25, "title": "7.0 REFERENCES", "page": 24, "icon": "📚", "is_header": True, "desc": "Kod berkanun, ICOP & rujukan teknikal"},
+            {"id": 26, "title": "8.0 APPENDICES", "page": 25, "icon": "📁", "is_header": True, "desc": "Borang statutori, pelan & rekod sokongan"},
+            {"id": 27, "title": "FORMS A, B, C AND D", "page": 26, "icon": "📝", "is_header": False, "desc": "Borang penilaian CHRA DOSH statutori"},
+            {"id": 28, "title": "MIXING / BLENDING W.U", "page": 26, "icon": "🧪", "is_header": False, "desc": "Unit kerja pencampuran bahan kimia"},
+            {"id": 29, "title": "QUALITY CONTROL LAB W.U", "page": 36, "icon": "🔬", "is_header": False, "desc": "Unit kerja makmal kawalan kualiti"},
+            {"id": 30, "title": "CHEMICAL STORAGE W.U", "page": 42, "icon": "🏭", "is_header": False, "desc": "Unit kerja penyimpanan bahan kimia berbahaya"},
+            {"id": 31, "title": "LOCATION PLAN", "page": 48, "icon": "🗺️", "is_header": False, "desc": "Pelan kawasan sekeliling & peta tapak geografi"},
+            {"id": 32, "title": "FACTORY LAYOUT PLAN", "page": 49, "icon": "📐", "is_header": False, "desc": "Pelan susun atur kilang & lokasi simpanan kimia"},
+            {"id": 33, "title": "PROCESS FLOWCHART", "page": 50, "icon": "🔀", "is_header": False, "desc": "Carta alir proses & input kimia"},
+            {"id": 34, "title": "VALID ASSESSOR'S COMPETENCY SLIP", "page": 52, "icon": "🎖️", "is_header": False, "desc": "Sijil Kecekapan Penilai Berdaftar DOSH"}
+        ]
+        execute(
+            """INSERT INTO osh_reports (
+                company_id, machinery_id, title, category, ref_no, revision, status,
+                summary, scope_of_work, prepared_by, approved_by, effective_date, review_due_date,
+                pdf_filename, sections_json, attachments_json, created_by, created_at, updated_at
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                top_chem_id, None,
+                "Top Chemical Sdn. Bhd. — Kimia Berbahaya (CHRA) Dossier 2026",
+                "CHRA Report",
+                "TM/OSHWA/2026/TC-01",
+                "Rev 1.0 (2026 Edition)",
+                "Approved",
+                "Penilaian Risiko Kimia Berbahaya (CHRA) lengkap merangkumi unit kerja Pencampuran, Makmal Kawalan Kualiti, dan Penyimpanan Kimia Berbahaya. Selaras dengan Peraturan Kimia Berbahaya (USECHH) 2000 dan OSHA 1994 (Pindaan 2022).",
+                "Kilang pengeluaran kimia, makmal QC, stor kimia berbahaya, dan kawasan penghantaran — Lot 12, Jalan Perindustrian Meru, 41050 Klang, Selangor.",
+                "Tijarah Mabrur OSH Consultancy Specialist",
+                "Encik Ahmad Zakuan (Managing Director, Top Chemical Sdn. Bhd.)",
+                "2026-04-01",
+                "2027-04-01",
+                "top_chemical_chra_dossier_2026.pdf",
+                json.dumps(top_chem_sections),
+                json.dumps([]),
+                admin_id, now, now
+            )
+        )
+
 
 def _fetch_rows(cur, rows):
     if _ENGINE == "pg":

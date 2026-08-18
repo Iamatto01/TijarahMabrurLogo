@@ -860,7 +860,8 @@ def osh_list():
     where_clauses = ["1=1"]
     params = []
 
-    if u["role"] != "admin":
+    is_admin = u.get("role", "").lower() in ("admin", "staff", "employee")
+    if not is_admin:
         if u.get("company_id"):
             where_clauses.append("o.company_id = ?")
             params.append(u["company_id"])
@@ -880,22 +881,19 @@ def osh_list():
         where_clauses.append("(o.title LIKE ? OR o.ref_no LIKE ? OR c.name LIKE ?)")
         params.extend([f"%{search_q}%", f"%{search_q}%", f"%{search_q}%"])
 
-    sql = f"""SELECT o.*, c.name AS company_name, c.logo_filename AS company_logo,
-                     m.name AS machinery_name, u.name AS author_name
+    sql = f"""SELECT o.*, c.name AS company_name, c.logo_filename AS company_logo
               FROM osh_reports o
               LEFT JOIN companies c ON c.id = o.company_id
-              LEFT JOIN machinery m ON m.id = o.machinery_id
-              LEFT JOIN users u ON u.id = o.created_by
               WHERE {' AND '.join(where_clauses)}
-              ORDER BY o.id DESC"""
-    rows = q(sql, params)
-    reports = [dict(r) for r in rows]
+              ORDER BY o.updated_at DESC"""
+
+    reports = [dict(r) for r in q(sql, params)]
 
     total_docs = len(reports)
     approved_docs = sum(1 for r in reports if r.get("status") in ("Approved", "Active"))
     review_docs = sum(1 for r in reports if r.get("status") in ("In Review", "Draft"))
 
-    companies = q("SELECT id, name FROM companies ORDER BY name") if u["role"] == "admin" else []
+    companies = q("SELECT id, name FROM companies ORDER BY name") if is_admin else []
 
     return render_template(
         "portal/osh_list.html",

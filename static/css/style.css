@@ -278,9 +278,16 @@ a.link:hover { background: rgba(1, 160, 255, .08); }
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,.5); z-index: 999;
 }
-.portal-main { padding: 32px 40px; transition: padding .25s ease; }
-.portal-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
-.portal-topbar h1 { margin: 0; font-size: 26px; }
+.portal-main {
+    padding: 24px 28px;
+    transition: padding .25s ease;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+.portal-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
+.portal-topbar h1 { margin: 0; font-size: 24px; font-weight: 800; color: #0f172a; }
 .portal-topbar .who { color: var(--muted); font-size: 13.5px; }
 .portal-topbar .who b { color: var(--text); }
 
