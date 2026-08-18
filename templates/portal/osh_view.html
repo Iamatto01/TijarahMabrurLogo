@@ -984,8 +984,20 @@ function jumpToChapter(page, filename, cardElem, secId) {
     var frame = document.getElementById('pdfViewerFrame');
     var targetFile = filename || activeDocFile;
     var baseUrl = "{{ url_for('serve_report_pdf', filename='') }}" + encodeURIComponent(targetFile);
-    frame.src = baseUrl + '#page=' + page + '&view=FitH&toolbar=1';
-    document.getElementById('quickPageInput').value = page;
+    
+    var hashParams = [];
+    if (secId) {
+        hashParams.push('nameddest=sec_' + secId);
+    } else if (page) {
+        hashParams.push('page=' + page);
+    }
+    hashParams.push('view=FitH');
+    hashParams.push('toolbar=1');
+    
+    frame.src = baseUrl + '#' + hashParams.join('&');
+    if (page) {
+        document.getElementById('quickPageInput').value = page;
+    }
 
     if (cardElem) {
         document.querySelectorAll('.osh-chapter-card').forEach(c => c.classList.remove('active'));

@@ -122,6 +122,17 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
             page_num = self.canv.getPageNumber()
             self.insertions_list.append((page_num, self.filenames))
 
+    section_pages = {}
+    class SectionTracker(Flowable):
+        def __init__(self, sec_id):
+            Flowable.__init__(self)
+            self.sec_id = sec_id
+            self.width = 0
+            self.height = 0
+        def draw(self):
+            # 0-indexed page number for PyPDF
+            section_pages[self.sec_id] = self.canv.getPageNumber() - 1
+
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter,
                             leftMargin=36, rightMargin=36, topMargin=36, bottomMargin=36)
@@ -240,6 +251,10 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
             if is_hdr:
                 if idx > 0:
                     story.append(PageBreak())
+                
+                sec_id = sec.get("id", idx)
+                story.append(SectionTracker(sec_id))
+
                 # Header Banner Table
                 hdr_cell = [[Paragraph(f"<b>{sec_title.upper()}</b>", h1_banner_style)]]
                 hdr_tbl = Table(hdr_cell, colWidths=[7.2 * inch])
@@ -254,6 +269,8 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
                 story.append(hdr_tbl)
                 story.append(Spacer(1, 8))
             else:
+                sec_id = sec.get("id", idx)
+                story.append(SectionTracker(sec_id))
                 story.append(Paragraph(f"<b>{sec_title}</b>", h2_style))
                 story.append(HRFlowable(width="100%", thickness=0.75, color=colors.HexColor("#e2e8f0"), spaceAfter=8))
 
@@ -319,9 +336,10 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
     ]
     fb = Table(final_box, colWidths=[7.2 * inch])
     fb.setStyle(TableStyle([
-        ('BOX', (0,0), (-1,-1), 1.5, colors.HexColor("#16a34a")),
-        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#f0fdf4")),
-        ('PADDING', (0,0), (-1,-1), 10),
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#f8fafc")),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#0284c7")),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor("#cbd5e1")),
+        ('PADDING', (0,0), (-1,-1), 12),
     ]))
     story.append(fb)
     
@@ -342,8 +360,14 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
             idx = page_num - 1 # 0-indexed PyPDF2 page
             insertions_by_page.setdefault(idx, []).extend(fnames)
             
+        offset = 0
         for i, page in enumerate(base_reader.pages):
             writer.add_page(page)
+            # Register named destinations for any section that starts on this base page
+            for sid, b_page in section_pages.items():
+                if b_page == i:
+                    writer.add_named_destination(f"sec_{sid}", i + offset)
+
             if i in insertions_by_page:
                 for pdf_filename in insertions_by_page[i]:
                     pdf_path = os.path.join(base_dir, "uploads", "reports", pdf_filename)
@@ -352,12 +376,14 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
                             sec_reader = PdfReader(pdf_path)
                             for sec_page in sec_reader.pages:
                                 writer.add_page(sec_page)
+                                offset += 1
                         except Exception:
                             pass
                         
-        out_buf = io.BytesIO()
-        writer.write(out_buf)
-        return out_buf.getvalue()
+        final_out = io.BytesIO()
+        writer.write(final_out)
+        return final_out.getvalue()
     except Exception as e:
-        print("Error merging section PDFs:", e)
+        import traceback
+        traceback.print_exc()
         return base_pdf_bytes
