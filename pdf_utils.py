@@ -112,15 +112,16 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
 
     from reportlab.platypus import Flowable
     class PdfInsertionFlowable(Flowable):
-        def __init__(self, filenames, insertions_list):
+        def __init__(self, filenames, pdf_data, insertions_list):
             Flowable.__init__(self)
             self.filenames = filenames
+            self.pdf_data = pdf_data
             self.insertions_list = insertions_list
             self.width = 0
             self.height = 0
         def draw(self):
             page_num = self.canv.getPageNumber()
-            self.insertions_list.append((page_num, self.filenames))
+            self.insertions_list.append((page_num, self.filenames, self.pdf_data))
 
     section_pages = {}
     class SectionTracker(Flowable):
@@ -313,10 +314,11 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
                 story.append(Spacer(1, 10))
                 
             pdf_filenames = sec.get("pdf_filenames")
+            pdf_data = sec.get("pdf_data", {})
             if not pdf_filenames and sec.get("pdf_filename"):
                 pdf_filenames = [sec.get("pdf_filename")]
             if pdf_filenames:
-                story.append(PdfInsertionFlowable(pdf_filenames, insertions))
+                story.append(PdfInsertionFlowable(pdf_filenames, pdf_data, insertions))
                 story.append(PageBreak())
 
     else:
@@ -356,9 +358,9 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
         base_dir = os.path.abspath(os.path.dirname(__file__))
         
         insertions_by_page = {}
-        for page_num, fnames in insertions:
+        for page_num, fnames, pdf_data in insertions:
             idx = page_num - 1 # 0-indexed PyPDF2 page
-            insertions_by_page.setdefault(idx, []).extend(fnames)
+            insertions_by_page.setdefault(idx, []).append((fnames, pdf_data))
             
         offset = 0
         for i, page in enumerate(base_reader.pages):
@@ -369,12 +371,21 @@ def generate_oshwa_dossier_pdf(title="OSHWA Safety & Health Management Manual",
                     writer.add_named_destination(f"sec_{sid}", i + offset)
 
             if i in insertions_by_page:
-                for pdf_filename in insertions_by_page[i]:
-                    storage_path = os.getenv("STORAGE_PATH", os.path.join(base_dir, "uploads"))
-                    pdf_path = os.path.join(storage_path, "reports", pdf_filename)
-                    if os.path.exists(pdf_path):
+                for fnames, pdf_data in insertions_by_page[i]:
+                    for pdf_filename in fnames:
                         try:
-                            sec_reader = PdfReader(pdf_path)
+                            if pdf_filename in pdf_data:
+                                import base64
+                                b64 = pdf_data[pdf_filename]
+                                pdf_bytes = base64.b64decode(b64)
+                                sec_reader = PdfReader(io.BytesIO(pdf_bytes))
+                            else:
+                                storage_path = os.getenv("STORAGE_PATH", os.path.join(base_dir, "uploads"))
+                                pdf_path = os.path.join(storage_path, "reports", pdf_filename)
+                                if not os.path.exists(pdf_path):
+                                    continue
+                                sec_reader = PdfReader(pdf_path)
+                                
                             for sec_page in sec_reader.pages:
                                 writer.add_page(sec_page)
                                 offset += 1

@@ -1214,8 +1214,20 @@ def osh_new():
             sec_pdfs = request.files.getlist(f"sec_pdf_{sec_id}")
             for sec_pdf in sec_pdfs:
                 if sec_pdf and sec_pdf.filename and sec_pdf.filename.lower().endswith(".pdf"):
+                    import base64
                     orig_name = secure_filename(sec_pdf.filename)
                     sec_pdf_name = f"sec_{uuid.uuid4().hex[:8]}_{orig_name}"
+                    
+                    # Read file for base64
+                    sec_pdf.seek(0)
+                    file_bytes = sec_pdf.read()
+                    b64_data = base64.b64encode(file_bytes).decode("utf-8")
+                    if "pdf_data" not in sec:
+                        sec["pdf_data"] = {}
+                    sec["pdf_data"][sec_pdf_name] = b64_data
+                    
+                    # Reset pointer and save to disk as fallback
+                    sec_pdf.seek(0)
                     sec_pdf.save(os.path.join(REPORT_PDF_DIR, sec_pdf_name))
                     sec["pdf_filenames"].append(sec_pdf_name)
 
@@ -1357,8 +1369,20 @@ def osh_edit(oid):
             sec_pdfs = request.files.getlist(f"sec_pdf_{sec_id}")
             for sec_pdf in sec_pdfs:
                 if sec_pdf and sec_pdf.filename and sec_pdf.filename.lower().endswith(".pdf"):
+                    import base64
                     orig_name = secure_filename(sec_pdf.filename)
                     sec_pdf_name = f"sec_{uuid.uuid4().hex[:8]}_{orig_name}"
+                    
+                    # Read file for base64
+                    sec_pdf.seek(0)
+                    file_bytes = sec_pdf.read()
+                    b64_data = base64.b64encode(file_bytes).decode("utf-8")
+                    if "pdf_data" not in sec:
+                        sec["pdf_data"] = {}
+                    sec["pdf_data"][sec_pdf_name] = b64_data
+                    
+                    # Reset pointer and save to disk as fallback
+                    sec_pdf.seek(0)
                     sec_pdf.save(os.path.join(REPORT_PDF_DIR, sec_pdf_name))
                     sec["pdf_filenames"].append(sec_pdf_name)
                 
