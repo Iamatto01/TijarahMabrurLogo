@@ -473,6 +473,52 @@ def _migrate(conn):
             else:
                 conn.commit()
 
+    # Auto-migrate: Create companies for any users that don't have a company_id
+    try:
+        from datetime import datetime
+        now = datetime.utcnow().isoformat()
+        
+        if _ENGINE == "pg":
+            cur = conn.cursor()
+            cur.execute("SELECT id, company FROM users WHERE company_id IS NULL AND company != '' AND company IS NOT NULL")
+            orphan_users = cur.fetchall()
+        else:
+            cur = conn.cursor()
+            cur.execute("SELECT id, company FROM users WHERE company_id IS NULL AND company != '' AND company IS NOT NULL")
+            orphan_users = cur.fetchall()
+
+        for uid, cname in orphan_users:
+            if not cname: continue
+            
+            # check if company already exists
+            if _ENGINE == "pg":
+                cur.execute("SELECT id FROM companies WHERE name = %s", (cname,))
+                crow = cur.fetchone()
+            else:
+                cur.execute("SELECT id FROM companies WHERE name = ?", (cname,))
+                crow = cur.fetchone()
+            
+            if crow:
+                cid = crow[0]
+            else:
+                if _ENGINE == "pg":
+                    cur.execute("INSERT INTO companies (name, created_at) VALUES (%s, %s) RETURNING id", (cname, now))
+                    cid = cur.fetchone()[0]
+                else:
+                    cur.execute("INSERT INTO companies (name, created_at) VALUES (?, ?)", (cname, now))
+                    cid = cur.lastrowid
+            
+            # update user
+            if _ENGINE == "pg":
+                cur.execute("UPDATE users SET company_id = %s WHERE id = %s", (cid, uid))
+            else:
+                cur.execute("UPDATE users SET company_id = ? WHERE id = ?", (cid, uid))
+                
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Error auto-migrating companies: {e}")
+
 
 def get_db():
     if _ENGINE == "pg":
